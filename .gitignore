@@ -7,3 +7,4 @@ prompts-out/
 *.log
 .DS_Store
 Thumbs.db
+tools/sample/stage1.json

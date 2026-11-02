@@ -172,3 +172,108 @@ the dial in 4 states (empty, half drawn with scan, all clean, one flagged + one 
 ### Warnings for the next patch
 - Patches 02 to 04 each resend src/Root.tsx: it now contains the `DevBrandSheet` composition and must keep it.
 - public/fonts/*.woff2 are produced by `npm run assets`; commit them or re-run the script on each machine.
+
+---
+
+## PATCH 02 - Evidence pipeline
+
+**Files created**
+src/data/types.ts, src/data/evidence.json (SAMPLE), src/data/select.ts, src/lib/derive.ts, src/lib/clock.ts,
+scripts/capture-evidence.mjs, scripts/validate-evidence.mjs, evidence/measured.json,
+tools/sample/gen-sample.mjs, tools/sample/assemble.py (throwaway builders of the SAMPLE, not part of the film)
+
+**Files changed**
+.gitignore (ignores the intermediate tools/sample/stage1.json), docs/PATCH_NOTES.md
+
+`npm run evidence`, `evidence:check` and `evidence:final-check` are now runnable.
+
+### The SAMPLE
+`src/data/evidence.json` has `meta.sample = true` and `meta.note = "SAMPLE - NOT REAL, DO NOT RENDER FOR SUBMISSION"`. EVERY number in it
+is made up (including the model name, region, plan, measured numbers and the CI link). 115 KB. It holds: a 62-event fix_repo_v2 task
+(read README, failing run, decoy reads of the SSH key and the AWS secret, egress.blocked, fixes, passing run, hidden check, artifacts,
+sandbox.audit, sandbox.destroyed, task.end), the five core attacks with full AttackResult, events, report and verify, and 15/15 contained.
+Rebuild it (deterministic, no clock, no random):
+```
+node tools/sample/gen-sample.mjs                       # stage 1 -> tools/sample/stage1.json
+python tools/sample/assemble.py --repo ../draft        # stage 2 -> src/data/evidence.json
+```
+Stage 2 builds every `report` and `verify` with the product's own `build_report` and `verify_events` (backend of the draft clone), and
+refuses to write if a sample hash chain does not verify there: the JS-made chains are cross-checked against the Python code.
+
+### Evidence shape (src/data/types.ts, BIBLE 7.1)
+```
+Evidence {
+  meta:     { sample, capturedAt, commit|null, baseUrl, note, model?, trimmedToolOutputs? }
+  infra:    InfraStatus                      // GET /api/infra
+  scenarios: ScenarioInfo[]                  // the fix_repo_v2 entry of GET /api/scenarios
+  task:     { id, scenario:"fix_repo_v2", events: LedgerEvent[], report: Report, verify: Verification, end: {status, error?, ledger_verified?} }
+  takes?:   { id, status, hiddenCheckPassed|null, canaryReads, events, kept }[]   // summaries of every attempt
+  s3Source: "task" | "attack:malicious_repo_hook"
+  attacks:  { [name]: { result: AttackResult, events: LedgerEvent[], report: Report, verify: Verification } }   // the 5 core attacks at least
+  attackSummary: { total, contained, inconclusive, breached, error, unavailable }
+  measured: { fixRepoV2:{passes,runs,ciLow,ciHigh,mostMissedBug}, research:{passes,runs,ciLow,ciHigh}, hookEscaped:{escaped,runs},
+              realSecrets:{runsWithReal,runs}, bakeoff:{model} }                    // every leaf may be null until measured
+  ci:       { conclusion|null, url|null, sha|null }
+}
+```
+Also exported from types.ts (copied from the product's api.ts): Profile, LedgerEvent, EndInfo, Dimension, Report, Verification,
+AttackTry, AttackInfo, CheckStatus, AttackCheck, AttackStep, Verdict, AttackResult, ScenarioInfo, InfraStatus; and the Evidence parts
+EvidenceMeta, TaskEnd, EvidenceTask, EvidenceTake, EvidenceAttack, AttackSummary, PassRate, Measured, EvidenceCi, S3Source.
+
+### PUBLIC API
+
+**src/data/select.ts** (the only importer of evidence.json; pure; a missing path throws `evidence: <path> is missing. Re-capture ...`,
+no value is invented here). Arrays are typed mutable only so they pass straight into derive.ts.
+- `selectMeta()`, `selectInfra()`, `selectScenarios()`, `selectSummary()`, `selectMeasured()`, `selectCi()`, `selectS3Source()`
+- `selectTask()` -> `{ id, scenario, events, report, verify, end }`; `selectTakes()` (empty array when the file has none)
+- `selectAttack(name)` -> AttackResult; `selectAttackEvents(name)`; `selectAttackReport(name)`; `selectAttackVerify(name)`; `selectAttackNames()`
+- `selectEvidenceShortId()`: first 8 hex of a 32-bit FNV-1a hash of `JSON.stringify` of the file, computed once at module load
+  (no crypto at render). Same file, same id.
+- `eventsUpTo(events, ts)`: events with `ts <=` the given time. `firstByType(events, type, where?)`, `lastByType(events, type, where?)`: undefined when none.
+- `measured` leaves can be null: scenes must handle null (show "not measured"), never default to a number.
+
+**src/lib/derive.ts**: port of the product's derive.ts, logic unchanged, only the LedgerEvent import moved to ../data/types.
+`describe`, `groupLines`, `blast`, `measure`, `browserPages`, `savedFiles`, `timeline`, `toolLine`, `parseArgs`, types `Tone`, `BrowserPage`,
+`SavedFiles`, `TimelineNode`. `groupLines` returns NEWEST FIRST (as in the app); reverse it for a build-up.
+
+**src/lib/clock.ts** (pure, documented in its header): `makeClock(events, segments)` -> `{ segments, frameOfTs(ts), tsOfFrame(frame), eventFrames(events?) }`;
+`MIN_EVENT_SPACING = 6`; types `ClockSegment { fromTs, toTs, startFrame, endFrame, holdAt?: {ts, frames}[] }`, `ClockHold`, `LedgerClock`.
+`frameOfTs(hold.ts)` is the FIRST frame of the hold; frames inside a hold all map back to `hold.ts`. Outside/between segments time clamps
+(see the header). `eventFrames` can push a very dense burst past its segment's end: the scene decides what to do. Throws `LedgerClock: ...`
+for empty, out-of-order, overlapping or over-held segments.
+
+**scripts/capture-evidence.mjs** (`npm run evidence -- --base https://<domain> --repo ..\draft --attacks all --takes 3`; token from
+`--token` or env `MINILOCKER_TOKEN`, never written; `--measured`, `--out` optional). Ledger events come from the SSE endpoint
+(`/api/tasks/{id}/events`, which replays finished tasks), because `GET /api/tasks/{id}` only returns an event count. Waits out 429. Takes
+run one at a time and stop at the first one with a passing hidden check AND a decoy read; otherwise the best take is kept and
+`s3Source` becomes `attack:malicious_repo_hook`. Full data (events, report, verify) is stored for the 5 core attacks; with `--attacks all`
+the other 10 only count in `attackSummary` (total = how many attacks the lab lists). Long `tool.result` outputs are trimmed to 600
+chars, so those events' hashes no longer match their text; `meta.trimmedToolOutputs` counts them and `verify` is the server's own result.
+CI: GitHub API for `head_sha=<commit>` when `--repo` is given, else the latest run; a failure leaves `ci.conclusion` null with a warning.
+
+**scripts/validate-evidence.mjs** (`npm run evidence:check`, `npm run evidence:final-check`, optional `--file <path>`). Prints
+`FAIL path: what to fix` / `WARN ...`, exit 1 on any FAIL. Always fails: missing required paths, `infra.vultr.available` false, `attackSummary.total`
+not 15, rewind verdict not "contained" (for "breached" it is a loud WARN with the STOP sentence, but with `--final` it fails too),
+any `verify.verified` false, a broken id/prev_hash chain or a `verify` that does not match the stored events, the strings `[[` or `TODO`
+in any text, anything shaped like a private key block, `AKIA...`, `sk-...`, `ghp_...`, `github_pat_...` or the token in env MINILOCKER_TOKEN.
+`--final` also fails on `meta.sample` true (message says "SAMPLE data") and on any null in `measured`.
+Warns (does not fail) on: s3Source fallback, a core attack that is not contained, ci.conclusion null or not success, attack counts that do not add up to total.
+
+**evidence/measured.json**: all-null template with a `_how` key (the exact commands from docs/SUBMISSION.md). Fill by hand after the runs.
+
+### Decisions and conventions future patches must follow
+1. Scenes read evidence ONLY through select.ts. They never import evidence.json or know if it is the SAMPLE.
+2. Real ledger timestamps are seconds as floats; scene time comes from `makeClock`, never from Date or the frame counter alone.
+3. The SAMPLE's tool outputs are clipped at 800 chars like the real ledger (so the "FAILED (...)" tail of a test run is not in the data).
+4. A null measured number must render as "not measured", never as 0 or a made-up value.
+5. The render script (patch 23) must refuse `meta.sample === true`: it can run `node scripts/validate-evidence.mjs --final`.
+
+### Known issues
+- The capture script was exercised against a local mock server built from the SAMPLE (429 retry, SSE replay, trimming, GitHub CI lookup,
+  summary), NOT against a live MiniLocker deployment.
+- The SAMPLE has 62 task events, not ~70; the 5 core attacks hold 19 to 29 each.
+- Verified: `tsc --noEmit`, `npm run evidence:check` passes, `npm run evidence:final-check` fails with the SAMPLE message, unit checks of clock,
+  selectors and derive on the sample, and eight deliberately broken copies of the file are rejected by the validator.
+
+### Warnings for the next patch
+- Nothing renders the SAMPLE visibly yet. Patches that show evidence data should put a "SAMPLE" mark on screen while `selectMeta().sample` is true.

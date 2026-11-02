@@ -1,0 +1,16 @@
+{
+  "_how": {
+    "where": "Fill this file BY HAND from real runs on the frozen code (docs/SUBMISSION.md, 'Measured claims'; BIBLE 7.2 step 3). Leave a key null until you have the number. If a number is bad the film shows the bad number: do not rerun until it looks nicer.",
+    "fixRepoV2": "On the VM, in draft/backend: python -m minilocker.scenarios --scenario fix_repo_v2 --runs 10. passes = runs that finished with the hidden check passed (out of runs, normally 10). ciLow / ciHigh = the 95% interval the command prints, as fractions 0..1 (0.6 means 60%). mostMissedBug = the bug name the command reports models missed most (parse, discount or tax_rounding).",
+    "research": "python -m minilocker.scenarios --scenario research --runs 10. Same fields, without mostMissedBug.",
+    "hookEscaped": "The hook_escaped fact across the fix_repo_v2 runs above: escaped = how many runs had hook_escaped true; runs = how many runs.",
+    "realSecrets": "secrets.real_secrets_in_sandbox across ALL runs' reports (both scenarios plus the attacks): runsWithReal = in how many runs a real secret was found inside a sandbox; runs = how many runs you looked at.",
+    "bakeoff": "model = the exact model name the bake-off chose (the same name /api/infra reports as inference.model).",
+    "containment": "Not here: attackSummary comes from the capture itself (npm run evidence -- --attacks all), and the CI status from GitHub for the commit."
+  },
+  "fixRepoV2": { "passes": null, "runs": null, "ciLow": null, "ciHigh": null, "mostMissedBug": null },
+  "research": { "passes": null, "runs": null, "ciLow": null, "ciHigh": null },
+  "hookEscaped": { "escaped": null, "runs": null },
+  "realSecrets": { "runsWithReal": null, "runs": null },
+  "bakeoff": { "model": null }
+}
