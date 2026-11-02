@@ -1,0 +1,36 @@
+{
+  "name": "minilocker-film",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Code-driven Remotion film for MiniLocker (Vultr Agent Rush, Challenge 1: Blast Radius Zero). 5100 frames, 1920x1080, 30 fps.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "assets": "node scripts/fetch-assets.mjs",
+    "evidence": "node scripts/capture-evidence.mjs",
+    "evidence:check": "node scripts/validate-evidence.mjs",
+    "evidence:final-check": "node scripts/validate-evidence.mjs --final",
+    "proof": "node scripts/check-proof.mjs",
+    "sfx": "node scripts/make-sfx.mjs",
+    "check": "node scripts/check-stills.mjs",
+    "render": "node scripts/render.mjs",
+    "render:4k": "node scripts/render.mjs --4k",
+    "render:frames": "node scripts/render.mjs --frames",
+    "submission": "node scripts/make-submission-assets.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.540",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.540"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "typescript": "5.9.3"
+  }
+}

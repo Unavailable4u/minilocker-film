@@ -1,0 +1,89 @@
+/* MiniLocker film: tokens as CSS variables (dark theme of the real app) and the type utilities.
+   Variables live on :root. Base text styles are scoped to .film-root so the Remotion Studio chrome is untouched.
+   No transitions, no animations: every motion is driven by the frame number. */
+:root {
+  color-scheme: dark;
+  --paper: #0a0a0c;
+  --sheet: #121216;
+  --raised: #17171d;
+  --sunken: #08080b;
+  --rule: #26262e;
+  --rule-2: #353541;
+  --ink: #f2f1ed;
+  --ink-2: #b4b2ab;
+  --ink-3: #8e8c86;
+  --accent: #f01a49;
+  --accent-ink: #ff7a96;
+  --accent-2: #a78bfa;
+  --on-accent: #ffffff;
+  --ok: #5b9dff;
+  --ok-wash: #1c2537;
+  --bad: #ff5a4f;
+  --bad-wash: #2c1a1c;
+  --warn: #f59e0b;
+  --warn-wash: #2b2115;
+  --on-warn: #1b1405;
+  --info: #b39cff;
+  --info-wash: #292537;
+  --ok-a: #1f46d9;
+  --ok-b: #3f86ff;
+  --ok-c: #86bcff;
+  --ok-grad: linear-gradient(135deg, var(--ok-a), var(--ok-b) 55%, var(--ok-c));
+  --term-bg: #08080b;
+  --term-fg: #f2f1ed;
+  --term-dim: #8e8c86;
+  --grid: rgba(255, 32, 82, 0.03);
+  --glow-a: rgba(255, 32, 82, 0.09);
+  --glow-b: rgba(167, 139, 250, 0.06);
+  --elev-panel: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 40px -28px rgba(0, 0, 0, 0.9);
+  --elev-lift: 0 30px 80px -24px rgba(0, 0, 0, 0.85);
+  --font-serif: "CMU Serif", "Latin Modern Roman", "Computer Modern", "Times New Roman", Georgia, serif;
+  --font-mono: "CMU Typewriter Text", "Latin Modern Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+.film-root {
+  margin: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  line-height: 1.45;
+  font-feature-settings: "kern", "liga", "onum" 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+.film-root *,
+.film-root *::before,
+.film-root *::after {
+  box-sizing: border-box;
+}
+.film-root code,
+.film-root pre,
+.film-root kbd,
+.film-root samp {
+  font-family: var(--font-mono);
+}
+
+/* labels: all small caps */
+.smcp {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+/* headlines */
+.display {
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  line-height: 1.04;
+}
+
+/* flagged things get hatching as well as color */
+.hatch-bad {
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255, 90, 79, 0.16) 5px 6px);
+}
+
+/* clean is a blue gradient, wherever it is drawn as a fill */
+.bg-ok {
+  background-image: var(--ok-grad);
+}
