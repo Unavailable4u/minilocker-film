@@ -25,6 +25,15 @@ export const brand = {
   builtOn: "Built on Vultr",
 } as const;
 
+/** Wording of the app chrome (patch 05): the header of the recreated MiniLocker window. Static, no measured values. */
+export const ui = {
+  wordmark: { lead: "Mini", tail: "Locker" },
+  subtitle: "a blast-radius ledger for AI agents",
+  /** The six screens, in nav order. */
+  screens: ["Workspace", "Timeline", "Attack Lab", "Report", "Sessions", "Infra"],
+  tokenPlaceholder: "API token",
+} as const;
+
 /** Badge texts, used with the Badge component (pill with a pulsing dot). */
 export const badges = {
   patternA: "Pattern A - sandboxed code execution",
@@ -114,6 +123,6 @@ export const s9 = {
 } as const;
 
 /** All groups in one object, for code that walks the whole deck (for example captions.srt). */
-export const copy = { urls, brand, badges, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9 } as const;
+export const copy = { urls, brand, ui, badges, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9 } as const;
 
 export type Copy = typeof copy;

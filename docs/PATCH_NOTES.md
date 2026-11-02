@@ -452,3 +452,39 @@ arguments (GLOBAL film frames); `TerminalView` never reads the frame; `GlitchLay
 ### Warnings for the next patch
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet` AND `DevText`: every patch that adds a Dev composition must keep all three.
 - Patch 06 builds the Workspace terminal around `TerminalView` and must pass `width`/`height` in logical px (the camera does the zooming).
+
+## PATCH 05 - UI kit A: window, header nav, primitives
+
+**New files:** `src/ui/AppWindow.tsx`, `src/ui/Header.tsx`, `src/ui/primitives.tsx`, `src/dev/DevShell.tsx` (+ composition `DevShell`, 1920x1080, 5 f).
+**Changed files:** `src/config/focus.ts` (geometry corrected), `src/config/copy.ts` (new `ui` group), `src/Root.tsx` (DevShell registered).
+
+### PUBLIC API
+
+**src/ui/AppWindow.tsx**
+- `<AppWindow header? rim? style?>body</AppWindow>`: the 1600 x 900 logical window (radius 14, 1 px border, deep shadow, app background, base text styles). The border is an overlay inside the box, so the content area is exactly 1600 x 900. `rim` 0..1 is the crimson rim light. The body slot is `<main>` (flex column, fills 832.53 px).
+- `WINDOW_RADIUS`.
+
+**src/ui/Header.tsx**
+- `<Header activeScreen taskId status tokenApplied tokenChars? tokenFocused? tabHighlight? themeIcon? themeHover? pulse? />`. `activeScreen` may be fractional (the underline slides; the caller eases it).
+- `navLayout(activeScreen)`, `navUnderline(activeScreen)`, `navItemRect(index, activeScreen?)` (window px, for cursor targets), `statusTone(status)`, `NAV_W_REG`, `NAV_W_BOLD`, `NAV_GAP`, `SCREEN_COUNT`.
+- Nav widths are fixed numbers measured in a browser with CMU Serif, so layout never depends on font loading.
+
+**src/ui/primitives.tsx**
+- Units: `rem(n)` (n x 17 px), `sp(n)` (n x 4.25 px). Text styles: `SMCP`, `DISPLAY`.
+- Tone tables: `INK`, `EDGE`, `WASH`, `BAR`, `VAR`; type `Tint` = `Tone | "mute"`.
+- Components: `Label`, `Chip`, `Card`, `Btn` (variants primary/ghost/danger/warn/info, `pressed`, `hover`, `disabled`, sizes sm/md), `Segmented`, `HairlineAccent`, `SectionHead`, `Kbd`, `Pulse`, `Spin`, `Meter`, `Donut`.
+- Frame helpers: `pulsePhase(frame)`, `PULSE_FRAMES` (30), `spinProgress(frame)`, `SPIN_FRAMES` (30).
+
+### Decisions and conventions future patches must follow
+1. Every primitive is pure: motion (Spin, Pulse, Meter and Donut fills) is passed in as a prop, computed by the scene. No hooks that read the frame, no CSS transitions.
+2. Colors come from `theme`, never from CSS variables. Tailwind classes are translated with `rem()` / `sp()` at the 17 px root.
+3. `focus.ts` was corrected: `GRID.headerH` 60 -> 67.47, new `GRID.headerInnerH` 65.47 and `GRID.navX` 375.11, and `FOCUS.nav` is now `{ x: 375.11, y: 0, w: 674, h: 65.47 }`. Every rect derived from `headerH` moved down by 7.47 px and the body is 832.53 px tall.
+4. `copy.ts` has a new `ui` group (wordmark, subtitle, six screen names, token placeholder). It holds no measured value.
+5. Place the window with `left: (STAGE.w - LOGICAL.w) / 2` etc. (see `DevShell.tsx`); the camera does the real placement.
+
+### Known issues
+- Verified: `tsc --noEmit` is clean. NOT verified here: stills of `DevShell` (no browser available in the build sandbox) and the side-by-side with the real app. Run `npx remotion still src/index.ts DevShell out/qa/shell-N.png --frame=N` for N = 0..4 and compare.
+- `Header` masks the token with `-webkit-text-security: disc` (Chromium, which Remotion renders with).
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText` AND `DevShell`: every patch that adds a Dev composition must keep all four.

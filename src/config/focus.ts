@@ -2,7 +2,8 @@
 // The virtual camera (src/fx/Camera.tsx) frames one of these per keyframe. Nothing else in the film types a UI coordinate.
 //
 // DERIVED FROM THE REAL LAYOUT (draft repo, frontend/src/App.tsx and BIBLE 10):
-//   - header about 60 px (logo + wordmark on the left, six nav items, status chip and token on the right)
+//   - header 67.47 px, MEASURED in patch 05 (65.47 inner + 1 px accent hairline + 1 px border; logo + wordmark on the left, six nav
+//     items starting at x 375.11, status chip, theme button and token on the right)
 //   - Workspace grid: 22rem | 1fr | 27rem at the 17 px root = 374 | 767 | 459 (they add up to 1600)
 //   - right column (BlastPanel): padding 16, the dial (about 232 px) on top, then a two-column gauge grid in the order
 //     Network, Policy / Filesystem, Secrets / Compute, Time, then the wide Sandboxes card
@@ -24,7 +25,12 @@ export const WINDOW = { w: 1600, h: 900 } as const;
 
 /** Layout facts the rectangles are computed from. */
 export const GRID = {
-  headerH: 60,
+  /** Whole header, measured (patch 05): 65.47 inner + 1 px hairline + 1 px border. The body under it is 832.53 px. */
+  headerH: 67.47,
+  /** The header without its hairline and border: the height of a nav item and of the badge row. */
+  headerInnerH: 65.47,
+  /** Left edge of the first nav item, measured (patch 05). */
+  navX: 375.11,
   /** Workspace columns: 22rem | 1fr | 27rem at 17 px. */
   colLeft: 374,
   colCenter: 767,
@@ -84,8 +90,8 @@ export const FOCUS_NAMES: readonly FocusName[] = [
 ];
 
 export const FOCUS: Record<FocusName, Rect> = {
-  /** the six nav items in the header */
-  nav: { x: 400, y: 0, w: 760, h: GRID.headerH },
+  /** the six nav items in the header (measured in patch 05; w is the widest case, Workspace active: 648.89 + 5 gaps + 14.05 bold) */
+  nav: { x: GRID.navX, y: 0, w: 674, h: GRID.headerInnerH },
   /** Workspace, left column, top: scenario select, free text, chips, profile, hold, "Run in sandbox" */
   taskForm: { x: 0, y: GRID.headerH, w: GRID.colLeft, h: 440 },
   /** Workspace, left column, below the form: the step list */
