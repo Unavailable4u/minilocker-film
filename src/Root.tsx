@@ -5,9 +5,10 @@ import { DevBrandSheet } from "./dev/DevBrandSheet";
 import { DEV_FX_FRAMES, DevFxSheet } from "./dev/DevFxSheet";
 import { DEV_TEXT_FRAMES, DevText } from "./dev/DevText";
 import { DEV_SHELL_FRAMES, DevShell } from "./dev/DevShell";
+import { DEV_WORKSPACE_FRAMES, DevWorkspace } from "./dev/DevWorkspace";
 import { FPS, STAGE, TOTAL } from "./config/timeline";
 
-// Dev-only compositions (DevBrandSheet, DevFxSheet, DevText, DevShell, ...) are added by the
+// Dev-only compositions (DevBrandSheet, DevFxSheet, DevText, DevShell, DevWorkspace, ...) are added by the
 // patches that introduce them. Each of those patches resends this whole file.
 export const RemotionRoot: React.FC = () => {
   return (
@@ -60,6 +61,15 @@ export const RemotionRoot: React.FC = () => {
         id="DevShell"
         component={DevShell}
         durationInFrames={DEV_SHELL_FRAMES}
+        fps={FPS}
+        width={STAGE.w}
+        height={STAGE.h}
+      />
+      {/* dev only (patch 06) */}
+      <Composition
+        id="DevWorkspace"
+        component={DevWorkspace}
+        durationInFrames={DEV_WORKSPACE_FRAMES}
         fps={FPS}
         width={STAGE.w}
         height={STAGE.h}

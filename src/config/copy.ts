@@ -34,6 +34,81 @@ export const ui = {
   tokenPlaceholder: "API token",
 } as const;
 
+/** Wording of the Workspace screen (patch 06), word for word from frontend/src/components.tsx and Terminal.tsx. Static, no measured values. */
+export const ws = {
+  taskForm: {
+    title: "New task",
+    runHintTail: "to run",
+    ownTask: "Your own task",
+    placeholder: "Describe a task for the agent…",
+    try: "Try",
+    /** The labels of the quick-fill chips (their full texts are never shown). */
+    examples: ["Explore the workspace", "Look for secrets", "Read a web page"],
+    profileOptions: [
+      { id: "strict", label: "strict" },
+      { id: "observe", label: "observe" },
+    ],
+    profileHelp: {
+      strict: "High-risk commands are denied and medium-risk ones wait for your approval.",
+      observe: "Risky commands run inside the sandbox on purpose, and every one is recorded.",
+    },
+    /** Hold select, by seconds. */
+    holds: { 0: "no hold", 60: "hold 1 min", 180: "hold 3 min", 600: "hold 10 min" },
+    run: "Run in sandbox",
+    running: "Running in sandbox",
+  },
+  steps: {
+    title: "Transcript",
+    toolCallOne: "tool call",
+    toolCallMany: "tool calls",
+    emptyLead: "Steps appear here as the agent works:",
+    emptyTail: " what it says, what it runs, and what the sandbox answers back.",
+    taskStarted: "task started ·",
+    agent: "Agent",
+    result: "result",
+    answered: "Answered · no commands run",
+    taskWord: "Task",
+    stepOne: "step",
+    stepMany: "steps",
+  },
+  terminal: {
+    tabs: ["terminal", "browser", "files"],
+    cwd: "sandbox",
+    path: "/workspace",
+    eventOne: "ledger event",
+    eventMany: "ledger events",
+    emptyTitle: "Nothing has run yet",
+    emptyBody: "Describe a task on the left. The agent works inside a sandbox, and everything it touches is measured and written to the ledger.",
+  },
+  blast: {
+    title: "Blast radius",
+    measuring: "measuring",
+    dialTitle: "Containment dial",
+    legendClean: "clean",
+    legendFlagged: "flagged",
+    legendUnmeasured: "not measured yet",
+    sealOk: "Ledger chain verified",
+    sealBad: "Ledger chain FAILED",
+    sealIdleTitle: "Ledger chain",
+    sealIdleBody: "Every event is hash-chained. The chain is verified when the task completes.",
+    ringOk: "CHAIN VERIFIED",
+    ringBad: "CHAIN BROKEN",
+    ringIdle: "UNVERIFIED",
+    chainTitle: "Hash chain",
+    chainEventOne: "event",
+    chainEventMany: "events",
+    chainLast: "last",
+    chainShown: "shown",
+    chainHead: "head",
+    chainEmpty: "Blocks appear as events are written.",
+    chainLegend: ["tool call", "needs review", "flagged", "agent text"],
+    logTitle: "Event log",
+    logLineOne: "line",
+    logLineMany: "lines",
+    logEmpty: "Nothing notable yet.",
+  },
+} as const;
+
 /** Badge texts, used with the Badge component (pill with a pulsing dot). */
 export const badges = {
   patternA: "Pattern A - sandboxed code execution",
@@ -123,6 +198,6 @@ export const s9 = {
 } as const;
 
 /** All groups in one object, for code that walks the whole deck (for example captions.srt). */
-export const copy = { urls, brand, ui, badges, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9 } as const;
+export const copy = { urls, brand, ui, ws, badges, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9 } as const;
 
 export type Copy = typeof copy;

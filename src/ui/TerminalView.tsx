@@ -19,7 +19,7 @@
 import React from "react";
 import { alpha, fonts, theme } from "../config/theme";
 
-export type TermTone = "out" | "cmd" | "err" | "dim";
+export type TermTone = "out" | "cmd" | "err" | "dim" | "warn" | "ok";
 
 export interface TermLine {
   text: string;
@@ -70,6 +70,10 @@ function toneColor(tone: TermTone): string {
       return theme.bad;
     case "dim":
       return theme.termDim;
+    case "warn":
+      return theme.warn;
+    case "ok":
+      return theme.ok;
     case "cmd":
     case "out":
     default:

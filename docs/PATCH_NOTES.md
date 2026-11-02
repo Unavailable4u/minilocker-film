@@ -488,3 +488,48 @@ arguments (GLOBAL film frames); `TerminalView` never reads the frame; `GlitchLay
 
 ### Warnings for the next patch
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText` AND `DevShell`: every patch that adds a Dev composition must keep all four.
+
+## PATCH 06 - UI kit B: Workspace and the Blast panel
+
+**New files:** `src/ui/chrome.tsx`, `src/ui/TaskForm.tsx`, `src/ui/StepStream.tsx`, `src/ui/TerminalPane.tsx`, `src/ui/BlastPanel.tsx`, `src/ui/Workspace.tsx`, `src/lib/gauges.ts`, `src/lib/rise.ts`, `src/lib/terminal-lines.ts`, `src/dev/DevWorkspace.tsx` (+ composition `DevWorkspace`, 1920x1080, 600 f).
+**Changed files:** `src/ui/TerminalView.tsx` (TermTone gains `warn` and `ok`), `src/config/copy.ts` (new `ws` group), `src/Root.tsx` (DevWorkspace registered).
+
+### PUBLIC API
+
+**src/lib/gauges.ts** (ported UNCHANGED from the product)
+- `gaugesOf(events, running): G[]` (seven gauges in display order), `phaseOf(events, running)`, `GAUGE_KEYS`, types `G`, `GaugeKey`, `Phase`. Every gauge value and subtitle comes out of this function; nothing in a component types one.
+
+**src/lib/rise.ts**
+- `riseProgress(frame, startFrame, duration = RISE_FRAMES)`, `riseStyle(p, px = RISE_PX)`; `RISE_FRAMES` 8, `RISE_PX` 14, curve `cubic-bezier(.2,.7,.2,1)`. A settled row (p = 1) gets an empty style.
+
+**src/lib/terminal-lines.ts**
+- `terminalRows(events): TermRow[]`: ledger events -> terminal rows, same strings and the same repeated-egress folding as the app's Terminal.tsx. `TermRow.src` is the index of the source event (use it to give each row the frame of its event).
+
+**src/ui/chrome.tsx**: `PaneHead`, `Hash`, `Seal`, `FieldSelect`, `fieldStyle`, `LISTING_STYLE`, `Md` (paragraphs, bold, inline code, fences), `NOTE`, `DOT`.
+
+**src/ui/TaskForm.tsx**: `<TaskForm scenario hasScenarios text textFocused caretOn textScrollRows selectFocused selectHover profile profileHover holdSeconds holdFocused holdHover chipHover running spin runHover runPressed error />`, `TEXTAREA_H`.
+
+**src/ui/StepStream.tsx**: `<StepStream events progress? scrollLag? />` (progress[i] = rise of `stepEvents(events)[i]`), `stepEvents(events)`. Bottom-anchored, so the newest step rests at the bottom with no measuring.
+
+**src/ui/TerminalPane.tsx**: `<TerminalPane tab tabHover lines caretLine caretCol caretOn scrollOffset tail eventCount emptyRise ringTurn width height>{browser/files}</TerminalPane>`, `terminalPaneLayout(width, height)`, `WORKSPACE_BODY_H`, `CENTER_W`.
+
+**src/ui/BlastPanel.tsx**: `<BlastPanel events running report? reveal? flash? flashAmount? pulse? breathe? scan? progressOf? scrollY? />`, `GaugeCard`, `dialVerdict(gauges, phase)`, `dialDims(gauges, reveal)`, `DIAL_SIZE`. `reveal[]` is indexed like `GAUGE_KEYS`: it is the card's entrance AND the draw of its dial arc. `report` is `{ verified, detail, headHash }`.
+
+**src/ui/Workspace.tsx**: `<Workspace form steps terminal blast />`, the real grid 374 | 767 | 459 inside the AppWindow body.
+
+### Decisions and conventions future patches must follow
+1. The transcript is the app's transcript (rail, agent card, tool listing, closed "result", describe() lines, final task card), not a new design. `StepStream` decides WHICH events show (STEP_TYPES); the scene decides WHEN, through `progress[]`.
+2. The dial is the patch 01 `RadiusDial`; `BlastPanel` maps gauge tones to dial states (bad -> flag, warn -> review, info/unmeasured -> unmeasured, else clean) and derives the verdict word exactly as the app does.
+3. `TermTone` now has `warn` (amber) and `ok` (blue) for `[policy:ask]`, `[approval needed]` and `[approved]` rows.
+4. Layout heights inside `TerminalPane` come from the source classes (see the constants at the top of the file), not from a browser measurement.
+5. `copy.ts` has a new `ws` group. It holds no measured value.
+
+### Known issues
+- Verified: `tsc --noEmit` is clean, and stills of `DevWorkspace` at frames 0 (no task), 300 (mid-run), 590 (after destroy) and 599 (panel scrolled to the seal, chain and log) were rendered and read: the gauge subtitles read "blocked · N allowed · N host(s)", "denied · N approval(s) · N checked", "real in sandbox · N of N decoys read · N used" and "peak of 512 · N/128 pids · N s cpu". NOT verified: a side-by-side with the real app.
+- `src/config/focus.ts` was NOT refined. The Blast panel's real dial is 16.5rem (280.5 px) and the gauge gap is 10.625 px (gap-2.5), so `GRID.dial` (232) and `GRID.gaugeGap` (12), and the focus rectangles derived from them (`dial`, `gaugeNetwork`, `gaugeSecrets`, `gaugeCompute`), are off by a few px to tens of px. Measure in a browser against the app, then update focus.ts (that is the camera's single source).
+- The browser and files tabs are empty slots (`children` of `TerminalPane`) until their patch.
+- `Md` draws paragraphs, bold, inline code and fences only (the app uses react-markdown).
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell` AND `DevWorkspace`: every patch that adds a Dev composition must keep all five.
+- Rebuilding the stills needs a browser: `npx remotion still src/index.ts DevWorkspace out/qa/ws-300.png --frame=300`.
