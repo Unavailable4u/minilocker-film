@@ -95,3 +95,80 @@ Each later patch that adds a Dev composition resends this whole file.
 ### Warnings for the next patch
 - Patch 01 must create public/fonts via `npm run assets` and public/brand/manifest.json.
 - Patches 01 to 04 all edit src/Root.tsx when they add a Dev composition: paste the current file into the session.
+
+---
+
+## PATCH 01 - Brand: fonts, Mark, dial arcs, Vultr logo slot, asset script
+
+**Files created**
+scripts/fetch-assets.mjs, public/brand/manifest.json,
+src/ui/Mark.tsx, src/ui/RadiusDial.tsx, src/ui/VultrLogo.tsx, src/dev/DevBrandSheet.tsx
+
+**Files changed**
+src/Root.tsx (registers `DevBrandSheet`), docs/PATCH_NOTES.md
+
+`npm run assets` is now runnable (the script entry already existed in package.json).
+
+### PUBLIC API
+
+**scripts/fetch-assets.mjs** (`npm run assets`, pure Node 20, idempotent)
+- `npm run assets -- --from <path-to-draft-clone>` or env `MINILOCKER_REPO` (reads `<path>/frontend/src/fonts`), else downloads
+  from raw.githubusercontent.com/Unavailable4u/draft/main/frontend/src/fonts. `--force` overwrites files that are already valid.
+- Copies the 7 CMU woff2 files and OFL.txt into public/fonts. Each font must be non-empty and start with the wOF2 magic bytes;
+  an invalid file that is already there is replaced. Exit code 1 if any font could not be installed.
+- Writes `public/brand/manifest.json` = `{ "vultrLogo": boolean, "vultrLogoFile": "vultr-logo.svg" }` (true only if
+  public/brand/vultr-logo.svg exists, is non-empty and contains `<svg`). Prints the instruction to download the official logo.
+  The manifest is committed with `vultrLogo: false`; re-run `npm run assets` after saving the logo.
+
+**src/ui/Mark.tsx**
+- `<Mark size progress? mode? color? accent? />`: `mode: "static" | "build" | "collapse"` (default "static"), `progress` 0..1
+  (ignored when static), `color` default theme.ink, `accent` default theme.accent. Geometry, stroke widths and opacities are
+  BIBLE Appendix A. At progress 1 (build) and progress 0 (collapse) the output equals the static mark.
+- `MARK_BUILD_FRAMES = 60` (nominal length of a build or collapse), `markProgress(frame, startFrame, durationFrames = 60): number`.
+- `MARK_BUILD` (progress terms, [start, end]): core [0, .25], ring1 (r 6) [.167, .667], ring2 (r 10.4) [.417, .917],
+  dots (r 14.8) [.7, 1], and `ring2Offset` = 15 f / 60 = .25 (ring 2 starts 15 f after ring 1).
+- `MARK_COLLAPSE`: dots [0, .4], ring2 [.12, .62], ring1 [.26, .86], punch [.7, 1]. Rings shrink into the dot while fading; the
+  core gets a small punch (up to 1.18x) as the last ring lands. Only the core remains at progress 1.
+- Rings draw clockwise from 12 o'clock.
+
+**src/ui/RadiusDial.tsx**
+- `<RadiusDial dims verdictWord verdictTone size showLabels glow pulseFlagged pulsePhase? scan? scanOpacity? />`
+  - `dims: { key: "net"|"pol"|"fs"|"sec"|"cpu"; label: string; state: "clean"|"flag"|"review"|"unmeasured"; draw: number; value?: string }[]`
+    (`value` is an optional extra: pre-formatted text from the evidence selectors, shown after the label; unmeasured arcs show a dash).
+    Arcs sit at fixed radii by `key` (net 104, pol 88, fs 72, sec 56, cpu 40); a missing key draws nothing.
+  - `verdictWord: string` (icons for "clean", "flagged", "review", "measuring", "partial", "no data"), `verdictTone: "ok"|"bad"|"warn"|"info"|"mute"`.
+  - `showLabels` 0..1 fades the labels in one after another. `glow` 0..1 (1 = the real app's look, above 1 = hero moment).
+  - `pulseFlagged` makes flagged arcs breathe (opacity .55..1) following `pulsePhase` (0..1 within a cycle; default .5 = fully lit).
+  - `scan` = rotation in turns of the scan wedge (omit to hide); `scanOpacity` default 1.
+- Also exported: `DIAL_KEYS`, `CX`, `CY`, `RADII`, `arcPath`, `TICKS` (verbatim from the source), `DIAL_PULSE_FRAMES = 72`,
+  `dialPulsePhase(frame, period = 72)`, types `DialKey`, `DialState`, `DialTone`, `DialDim`, `RadiusDialProps`.
+- Draw-on is an SVG mask along the arc, so dashed and dotted arcs draw on cleanly. The component never reads the frame.
+
+**src/ui/VultrLogo.tsx**
+- `<VultrLogo height opacity? />`, and `hasVultrLogo: boolean`. Uses `<Img src={staticFile("brand/vultr-logo.svg")}>` when the manifest
+  says the file exists, else a text "Vultr" wordmark in the body font and ONE console warning. The manifest is imported at build
+  time (`../../public/brand/manifest.json`): no fs or network access while rendering.
+
+**src/dev/DevBrandSheet.tsx** + composition `DevBrandSheet` (1920x1080, 180 f): Mark in build/static/collapse at 0/25/50/75/100 %,
+the dial in 4 states (empty, half drawn with scan, all clean, one flagged + one not measured), the type specimens
+(150 / 56 / 22 / 18 px) and the Vultr slot. Frame 0 is the QA still; later frames only animate the scan and the pulse.
+
+### Decisions and conventions future patches must follow
+1. Partial arcs and rings use explicit dash lengths (circumference or 1.5 * PI * r), not `pathLength`, so every renderer agrees.
+2. Every SVG id inside a component (gradient, masks) is built from `useId()`, so several dials or Marks can share one frame.
+3. Dial motion is driven only by props. Scenes compute `draw`, `showLabels`, `glow`, `scan` and `pulsePhase` from the frame
+   (`dialPulsePhase(frame)` for the breathing).
+4. The dial uses the film's theme colors (blue gradient okA/okB/okC), not CSS variables, so it renders the same outside `.film-root`.
+5. Dial label text (Network, Policy, Filesystem, Secrets, Compute) is passed in via `dims[].label`. It is not in copy.ts yet;
+   patch 06 should pass the labels from the evidence/derive layer.
+
+### Known issues
+- Verified by `tsc --noEmit`, a Remotion bundle (`remotion bundle`), the asset script (local copy, download, logo detection, repair
+  of a corrupt font) and a raster of server-rendered Mark and dial markup. NOT verified with `remotion still` (no browser in the
+  build environment): please run the CHECK and look at out/qa/brand.png.
+- The drop-shadow glow uses CSS `filter` on SVG paths, which Chrome (Remotion) supports but other renderers may ignore.
+- The text "Vultr" fallback is a placeholder. The final render needs the official logo (public/brand/vultr-logo.svg).
+
+### Warnings for the next patch
+- Patches 02 to 04 each resend src/Root.tsx: it now contains the `DevBrandSheet` composition and must keep it.
+- public/fonts/*.woff2 are produced by `npm run assets`; commit them or re-run the script on each machine.

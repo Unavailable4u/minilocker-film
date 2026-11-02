@@ -1,6 +1,7 @@
 import React from "react";
 import { Composition } from "remotion";
 import { MiniLockerFilm } from "./MiniLockerFilm";
+import { DevBrandSheet } from "./dev/DevBrandSheet";
 import { FPS, STAGE, TOTAL } from "./config/timeline";
 
 // Dev-only compositions (DevBrandSheet, DevFxSheet, DevText, DevShell, ...) are added by the
@@ -23,6 +24,15 @@ export const RemotionRoot: React.FC = () => {
         fps={FPS}
         width={STAGE.w / 2}
         height={STAGE.h / 2}
+      />
+      {/* dev only (patch 01) */}
+      <Composition
+        id="DevBrandSheet"
+        component={DevBrandSheet}
+        durationInFrames={180}
+        fps={FPS}
+        width={STAGE.w}
+        height={STAGE.h}
       />
     </>
   );
