@@ -1,0 +1,15 @@
+PATCH 24 - QA and polish pass.
+
+Work through BIBLE section 12 as a strict reviewer. For each item say PASS or FIX, and for every FIX resend the FULL corrected file. Specifically hunt for:
+1. Determinism: any Math.random, Date, setTimeout, CSS transitions/animations, network calls, fs reads at render time.
+2. Evidence honesty (rule 8): grep every string in src/scenes, src/gfx, src/ui, src/config/copy.ts for digits, hashes, hosts and command text that are not read from evidence; list each with its evidence path or FIX.
+3. Honesty words (rule 9): "secure", "provably", "zero risk", "unhackable", competitor names, vision verification claims, per-task Vultr instance claims.
+4. Legibility: key UI text at least 22 px on the final 1080p frame at the moment it matters; captions at least 56 px; mono labels in explainers at least 20 px.
+5. Overlays covering what they describe; static frames lasting longer than 1.5 s; camera jitter at keyframe handoffs; cursor hover/press states.
+6. Beat alignment at f300, f600, f1500, f2100, f2340, f2400, f3300, f3720, f4260, f4560, f4980; the silence window f2370-2399.
+7. Only crimson as accent; status colors only for status; hatching on every flagged item (greyscale-safe).
+8. Vultr coverage (BIBLE section 1): one containment moment visible, Pattern A and B named, the four containment-focus items hit, the three Vultr products named, demo URL and repo shown, under 3:00.
+9. Anything that could fail on a clean Windows machine (paths, Node version, ffmpeg, Chrome download).
+Finally, fill the rubric self-check from docs/SUBMISSION.md for the FILM only (Application of Technology, Presentation, Business Value, Originality, 1-5 each with the single improvement you would still make).
+
+PROBLEMS I FOUND (paste here):

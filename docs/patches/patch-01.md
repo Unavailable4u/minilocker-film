@@ -1,0 +1,21 @@
+### PATCH 01 - Brand: fonts, Mark, dial arcs, Vultr logo slot, asset script
+
+**Needs:** 00
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/lib/ease.ts`, `src/lib/spring.ts`, `src/config/timeline.ts`, `src/Root.tsx`
+**Paste reference (draft repo):** `frontend/src/ui.tsx` (only the `Mark` function), `frontend/src/components.tsx` (only `RadiusDial`, `DIAL_KEYS`, `CX/CY/RADII/arcPath/TICKS`)
+**Attach from BIBLE:** section 4 (Mark and dial), Appendix A
+
+```
+PATCH 01 - Brand: fonts, Mark, RadiusDial geometry, Vultr logo slot, asset script.
+
+GOAL: the exact MiniLocker Mark (static and animated), the 5-arc RadiusDial as a pure props-driven component, offline fonts, and the slot for the official Vultr logo.
+
+CREATE:
+- scripts/fetch-assets.mjs: pure Node (no deps), Windows-friendly, idempotent. Copies the 7 CMU woff2 files plus OFL.txt into public/fonts/. Source order: (1) a local clone path from --from <path> or env MINILOCKER_REPO (frontend/src/fonts), else (2) download from https://raw.githubusercontent.com/Unavailable4u/draft/main/frontend/src/fonts/<file>. Verify each file is non-empty and starts with the wOF2 magic bytes. Also create public/brand/ and print clear instructions: "Download the official Vultr logo (white or monochrome version) from Vultr's brand/press resources and save it as public/brand/vultr-logo.svg. Do not redraw it." Add npm script "assets".
+- src/ui/Mark.tsx: the exact SVG from BIBLE Appendix A as a component. Props { size, progress (0..1), mode: "static" | "build" | "collapse", color?, accent? }. "build": the core dot scales in, ring 1 (r 6) draws as an arc, ring 2 (r 10.4) draws 15 f later (expose offsets in progress terms), the dotted outer ring (r 14.8) fades in last. "collapse": reverse, rings shrink into the dot. Stroke widths and opacities exactly as the source. Pure.
+- src/ui/RadiusDial.tsx: the 5-arc dial ported from the source RadiusDial (same CX, CY, RADII, TICKS, arc geometry, same solid / dashed / dotted encoding for clean / flagged / not-measured). Props: { dims: { key: "net"|"pol"|"fs"|"sec"|"cpu"; label: string; state: "clean"|"flag"|"review"|"unmeasured"; draw: number /*0..1*/ }[], verdictWord: string, verdictTone, size, showLabels: number /*0..1*/, glow: number, pulseFlagged: boolean }. The dial must be drawable from nothing (draw 0 everywhere) to complete, one arc at a time, with an optional "scan" highlight sweeping across arcs. No reading of the frame inside; all motion comes from props.
+- src/ui/VultrLogo.tsx: renders public/brand/vultr-logo.svg via staticFile in an <Img>, props { height, opacity }. If the file is absent at render, render a plain text "Vultr" wordmark in the body font and log ONE warning (do this check through a tiny generated manifest public/brand/manifest.json written by fetch-assets.mjs, not by a network or fs call at render time).
+- A dev-only composition "DevBrandSheet" (register in Root.tsx, resend whole Root.tsx) showing: the Mark in build/static/collapse at progress 0/25/50/75/100; the RadiusDial in 4 states (empty, half drawn, all clean, one flagged + one unmeasured); the two font families at the sizes the film uses (150 px display, 56 px caption, 22 px UI, 18 px mono); the VultrLogo slot.
+
+CHECK: npm run assets ; npx tsc --noEmit ; npx remotion still src/index.ts DevBrandSheet out/qa/brand.png --frame=0 ; the Mark and dial must match the real app (compare with the draft repo UI), fonts must be CMU, not a fallback.
+```

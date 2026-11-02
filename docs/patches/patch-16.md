@@ -1,0 +1,21 @@
+### PATCH 16 - S4b Rewind: restore, checks, ledger, proof clip (f2400-3299), the hero
+
+**Needs:** 15
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/scenes/S4Rewind.tsx`, `src/scenes/s4/S4a.tsx`, `src/scenes/s4/S4b.tsx` (stub), `src/config/script.ts`, `src/config/camera.ts`, `src/gfx/FileLattice.tsx`, `src/gfx/HashTile.tsx`, `src/gfx/HashChain.tsx`, `src/gfx/GhostContainer.tsx`, `src/fx/Badge.tsx`, `package.json`
+**Attach from BIBLE:** section 6 (S4b), section 7 (proof clip), section 11 (B), section 8
+
+```
+PATCH 16 - Scene S4 part B. Replace src/scenes/s4/S4b.tsx completely (and S4Rewind.tsx only if assembly needs a change). Also create scripts/check-proof.mjs.
+
+Part B covers f2400-f3299:
+- f2400-2459 caption "Rewind." A pulse travels from snapshot node 1 to a GhostContainer that draws on (the fresh sandbox); the SnapshotTimeline shows later nodes greyed and a blue "rewound" node.
+- f2460-2579 the shards return into the lattice with overshoot; each tile's HashTile locks the real SHA-256 (first 16 hex shown, full string in the tooltip-less lower line) left to right against the snapshot's hash with a tick per tile, 2 f stagger, ticking sound cue anchors exported; counter "N files re-hashed - all matched" from the real verified payload.
+- f2580-2699 the real `cat` result prints the restored file's first line in mono.
+- f2700-2819 the checks in the Attack Lab detail pane turn on one by one with their REAL labels and details ("Deleted file came back", "Restored workspace matches the snapshot", "Rewind is not counted as a kill"); the verdict tile turns blue-clean, the donut moves from 0 to 1 of 15, stamp "CONTAINED".
+- f2820-3029 HashChain: the attack's real ledger events as linked blocks; the delete block is highlighted vermilion/hatched and STAYS; callout "Undone, not erased."; then a "Verify ledger" press runs the verification sweep and ends with the real "intact - N events - head <8 hex>" from the verify payload.
+- f3030-3299 PROOF: a 62%-width window on the left plays public/proof/rewind.mp4 with <OffthreadVideo> (muted, trimmed so that exactly the rewind moment is covered, start/end frames from a constant in script.ts) with Badge "LIVE - recorded on the Vultr VM - unedited"; on the right 38% a stack of three StatNumerals (snapshot files re-hashed, checks passed, seconds). If public/proof/manifest.json says the clip is absent, render instead a code replay of the real step timeline from the evidence with Badge "RECONSTRUCTED FROM LEDGER" and never the word LIVE. Caption f3060 "Real wipe. Real rewind. Real hashes." Camera: slow push on the clip; hand-off on the beat at f3300.
+- scripts/check-proof.mjs: pure Node; checks public/proof/rewind.mp4 exists, is under 40 MB, and uses ffprobe (if present) to print resolution, fps and duration, warning if not 1920x1080 or longer than 14 s; writes public/proof/manifest.json {present, durationFrames}. Add it to PATCH_NOTES as the way the scene knows whether the clip exists (no fs access at render time).
+Export S4B_CAMERA, S4B_CURSOR, overlay.
+
+CHECK: npm run proof ; npx tsc --noEmit ; stills at f2420, f2500, f2560, f2640, f2740, f2800, f2900, f3000, f3100, f3250 (with and without the clip).
+```

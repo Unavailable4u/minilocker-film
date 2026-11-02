@@ -1,0 +1,18 @@
+### PATCH 10 - Explainers C: architecture on Vultr, competitive table, limits card
+
+**Needs:** 01, 03
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/config/copy.ts`, `src/ui/VultrLogo.tsx`, `src/ui/Mark.tsx`
+**Paste reference (draft repo):** `README.md` (the Architecture mermaid block and the "How we use Vultr" table from `docs/SUBMISSION.md`)
+**Attach from BIBLE:** section 11 (C), section 6 (S7, S8)
+
+```
+PATCH 10 - Explainer graphics C (src/gfx): ArchitectureDiagram, CompareTable, LimitsCard.
+
+CREATE:
+- src/gfx/ArchitectureDiagram.tsx: the README flowchart as an animated technical drawing INSIDE a large frame labelled with the Vultr VM facts passed as props (hostname/region/plan text come from evidence). Nodes: Browser UI, Caddy (TLS + static UI), Control plane (FastAPI), docker-socket-proxy, Host Docker, Code sandbox (no route out), Browser sandbox (no route out), Egress proxy (host allowlist + log), Ledger (hash-chained). Outside the VM frame: the LLM provider node (Vultr Serverless Inference, host in props), Artifact store (Vultr Object Storage), Internet (allowlisted only). Props: nodeProgress[], edgeProgress[], highlight: "task"|"model"|"storage"|"none", vultrChip: number[] (which of the three Vultr product chips are lit). Edges are hairlines with arrowheads and small moving packets; the highlighted path glows crimson.
+- src/gfx/CompareTable.tsx: 4 rows x 3 columns (text from copy.ts, generic categories only, no product names): rows "Typical agent sandbox", "Hosted code interpreter", "Policy layer or LLM judge", "MiniLocker"; columns "Boundary you control", "Measured, not asserted", "Recovery and a suite anyone can run". Cells show a check, a dash, or a partial mark. Props: rowProgress[], emphasis (0..1, the MiniLocker row grows and gets the accent edge).
+- src/gfx/LimitsCard.tsx: three limits lines with a thin vermilion-hatched rule and a mono footnote "SECURITY.md"; props lineProgress[]. Text from copy.ts.
+- A dev-only composition "DevGfxC" (register in Root.tsx, resend whole file) building each over 240 frames.
+
+CHECK: npx tsc --noEmit ; stills of the architecture complete with each highlight, the table with emphasis, the limits card.
+```

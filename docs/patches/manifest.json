@@ -1,0 +1,333 @@
+{
+  "00": {
+    "title": "PATCH 00 - Scaffold, config, core math",
+    "sections": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "appendices": [],
+    "needs": "nothing",
+    "pasteExisting": "nothing",
+    "pasteReference": "nothing",
+    "attachRaw": "sections 2, 3, 4 (tokens only), 5"
+  },
+  "01": {
+    "title": "PATCH 01 - Brand: fonts, Mark, dial arcs, Vultr logo slot, asset script",
+    "sections": [
+      4
+    ],
+    "appendices": [
+      "A"
+    ],
+    "needs": "00",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/lib/ease.ts`, `src/lib/spring.ts`, `src/config/timeline.ts`, `src/Root.tsx`",
+    "pasteReference": "`frontend/src/ui.tsx` (only the `Mark` function), `frontend/src/components.tsx` (only `RadiusDial`, `DIAL_KEYS`, `CX/CY/RADII/arcPath/TICKS`)",
+    "attachRaw": "section 4 (Mark and dial), Appendix A"
+  },
+  "02": {
+    "title": "PATCH 02 - Evidence pipeline",
+    "sections": [
+      7
+    ],
+    "appendices": [
+      "C",
+      "D"
+    ],
+    "needs": "00",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/timeline.ts`, `src/lib/prng.ts`, `package.json`",
+    "pasteReference": "`frontend/src/api.ts` (all), `frontend/src/derive.ts` (all), `backend/minilocker/api/app.py` (routes only: lines for /api/tasks, /events, /report, /ledger/verify, /api/attacks, /api/infra), `docs/SUBMISSION.md` (\"Measured claims\" table)",
+    "attachRaw": "section 7 (all), Appendix C, Appendix D"
+  },
+  "03": {
+    "title": "PATCH 03 - FX toolkit",
+    "sections": [
+      4,
+      5,
+      8
+    ],
+    "appendices": [],
+    "needs": "00",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/config/timeline.ts`, `src/config/copy.ts`, `src/lib/ease.ts`, `src/lib/spring.ts`, `src/lib/prng.ts`",
+    "pasteReference": "",
+    "attachRaw": "section 4 (motion language), section 5 (camera), section 8 (caption and callout rules)"
+  },
+  "04": {
+    "title": "PATCH 04 - Text engines",
+    "sections": [
+      6,
+      10
+    ],
+    "appendices": [],
+    "needs": "00",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/lib/prng.ts`, `src/ui/theme.css`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S0 terminal beat, S4 hash lock), section 10 (Terminal)"
+  },
+  "05": {
+    "title": "PATCH 05 - UI kit A: window, header nav, primitives",
+    "sections": [
+      4,
+      10
+    ],
+    "appendices": [],
+    "needs": "00, 01",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/config/copy.ts`, `src/config/focus.ts`, `src/ui/Mark.tsx`, `src/ui/theme.css`",
+    "pasteReference": "`frontend/src/index.css` (all), `frontend/src/ui.tsx` (all), `frontend/src/App.tsx` (the header JSX and the SCREENS array only)",
+    "attachRaw": "section 4, section 10 (Window and header)"
+  },
+  "06": {
+    "title": "PATCH 06 - UI kit B: Workspace and the Blast panel",
+    "sections": [
+      10
+    ],
+    "appendices": [
+      "C"
+    ],
+    "needs": "01, 02, 04, 05",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/ui/primitives.tsx`, `src/ui/RadiusDial.tsx`, `src/ui/TerminalView.tsx`, `src/lib/derive.ts`, `src/data/types.ts`",
+    "pasteReference": "`frontend/src/components.tsx` (all), `frontend/src/Terminal.tsx`, `frontend/src/App.tsx` (the Workspace function only)",
+    "attachRaw": "section 10 (Workspace, Blast panel), Appendix C"
+  },
+  "07": {
+    "title": "PATCH 07 - UI kit C: Attack Lab, Report, Infra",
+    "sections": [
+      10
+    ],
+    "appendices": [
+      "D"
+    ],
+    "needs": "02, 05",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/ui/primitives.tsx`, `src/lib/derive.ts`, `src/data/types.ts`, `src/data/select.ts`",
+    "pasteReference": "`frontend/src/AttackLab.tsx`, `frontend/src/Report.tsx`, `frontend/src/Infra.tsx`, `frontend/src/Timeline.tsx`",
+    "attachRaw": "section 10 (Attack Lab, Report, Infra), Appendix D"
+  },
+  "08": {
+    "title": "PATCH 08 - Explainers A: hardened container, decoy rack, egress wall",
+    "sections": [
+      11,
+      6
+    ],
+    "appendices": [
+      "B"
+    ],
+    "needs": "01, 03",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/lib/ease.ts`, `src/lib/prng.ts`, `src/fx/Glow.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 11 (A), section 6 (S3), Appendix B"
+  },
+  "09": {
+    "title": "PATCH 09 - Explainers B: file lattice, hash lock, hash chain, snapshot timeline",
+    "sections": [
+      11,
+      6
+    ],
+    "appendices": [],
+    "needs": "03, 04",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/lib/ease.ts`, `src/lib/prng.ts`, `src/lib/hash.ts`",
+    "pasteReference": "",
+    "attachRaw": "section 11 (B), section 6 (S4)"
+  },
+  "10": {
+    "title": "PATCH 10 - Explainers C: architecture on Vultr, competitive table, limits card",
+    "sections": [
+      11,
+      6
+    ],
+    "appendices": [],
+    "needs": "01, 03",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/config/copy.ts`, `src/ui/VultrLogo.tsx`, `src/ui/Mark.tsx`",
+    "pasteReference": "`README.md` (the Architecture mermaid block and the \"How we use Vultr\" table from `docs/SUBMISSION.md`)",
+    "attachRaw": "section 11 (C), section 6 (S7, S8)"
+  },
+  "11": {
+    "title": "PATCH 11 - Film script and the persistent FilmApp",
+    "sections": [
+      6,
+      10,
+      7
+    ],
+    "appendices": [],
+    "needs": "02-07 (and 08-10 for types)",
+    "pasteExisting": "`docs/PATCH_NOTES.md` and ALL files in `src/ui/`, `src/config/`, `src/data/`, `src/lib/`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (all scenes: the frame numbers), section 10, section 7 (evidence selectors)"
+  },
+  "12": {
+    "title": "PATCH 12 - Master timeline + S0 Hook + S1 Title",
+    "sections": [
+      4,
+      5,
+      6
+    ],
+    "appendices": [
+      "B"
+    ],
+    "needs": "00-11",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/Root.tsx`, `src/MiniLockerFilm.tsx`, `src/config/timeline.ts`, `src/config/camera.ts`, `src/config/copy.ts`, `src/fx/Camera.tsx`, `src/fx/KineticText.tsx`, `src/fx/Glow.tsx`, `src/fx/GridPaper.tsx`, `src/ui/Mark.tsx`, `src/ui/RadiusDial.tsx`, `src/ui/GlitchLayer.tsx`, `src/ui/FilmApp.tsx`",
+    "pasteReference": "",
+    "attachRaw": "sections 4, 5, 6 (S0, S1), Appendix B"
+  },
+  "13": {
+    "title": "PATCH 13 - S2 Real work (f600-1499)",
+    "sections": [
+      6,
+      8,
+      5
+    ],
+    "appendices": [],
+    "needs": "11, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S2Work.tsx` (stub), `src/config/script.ts`, `src/config/anchors.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, `src/fx/Callout.tsx`, `src/fx/Caption.tsx`, `src/fx/Badge.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S2), section 8 (S2 copy), section 5 (camera)"
+  },
+  "14": {
+    "title": "PATCH 14 - S3 Decoys + egress (f1500-2099), containment moment 1",
+    "sections": [
+      6,
+      11,
+      8
+    ],
+    "appendices": [
+      "B",
+      "C"
+    ],
+    "needs": "08, 11, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S3Decoys.tsx` (stub), `src/config/script.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, all of `src/gfx/ContainerBox.tsx`, `DecoyRack.tsx`, `EgressWall.tsx`, `Packet.tsx`, `src/fx/Callout.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S3), section 11 (A), section 8 (S3 copy), Appendix B, Appendix C"
+  },
+  "15": {
+    "title": "PATCH 15 - S4a Rewind: Attack Lab and the wipe (f2100-2699)",
+    "sections": [
+      6,
+      11,
+      8
+    ],
+    "appendices": [
+      "D"
+    ],
+    "needs": "09, 11, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S4Rewind.tsx`, `src/scenes/s4/S4a.tsx`, `src/scenes/s4/S4b.tsx` (stubs), `src/config/script.ts`, `src/config/anchors.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/gfx/FileLattice.tsx`, `src/gfx/SnapshotTimeline.tsx`, `src/ui/AttackLabScreen.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S4a), section 11 (B), section 8 (S4 copy), Appendix D"
+  },
+  "16": {
+    "title": "PATCH 16 - S4b Rewind: restore, checks, ledger, proof clip (f2400-3299), the hero",
+    "sections": [
+      6,
+      7,
+      11,
+      8
+    ],
+    "appendices": [],
+    "needs": "15",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S4Rewind.tsx`, `src/scenes/s4/S4a.tsx`, `src/scenes/s4/S4b.tsx` (stub), `src/config/script.ts`, `src/config/camera.ts`, `src/gfx/FileLattice.tsx`, `src/gfx/HashTile.tsx`, `src/gfx/HashChain.tsx`, `src/gfx/GhostContainer.tsx`, `src/fx/Badge.tsx`, `package.json`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S4b), section 7 (proof clip), section 11 (B), section 8"
+  },
+  "17": {
+    "title": "PATCH 17 - S5 Hostile page (f3300-3719), Pattern B",
+    "sections": [
+      6,
+      8
+    ],
+    "appendices": [
+      "B",
+      "C"
+    ],
+    "needs": "11, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S5Page.tsx` (stub), `src/config/script.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, `src/ui/primitives.tsx`, `src/fx/Callout.tsx`, `src/fx/Badge.tsx`",
+    "pasteReference": "`images/browser/fixtures/injection.html`, `frontend/src/Browser.tsx`",
+    "attachRaw": "section 6 (S5), section 8, Appendix B, Appendix C"
+  },
+  "18": {
+    "title": "PATCH 18 - S6 Evidence report (f3720-4259)",
+    "sections": [
+      6,
+      8,
+      7
+    ],
+    "appendices": [],
+    "needs": "07, 11, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S6Evidence.tsx` (stub), `src/config/script.ts`, `src/config/anchors.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, `src/fx/StatNumeral.tsx`, `src/fx/Callout.tsx`, `src/fx/Cursor.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S6), section 8, section 7 (measured)"
+  },
+  "19": {
+    "title": "PATCH 19 - S7 Value + competitive (f4260-4559)",
+    "sections": [
+      6,
+      8
+    ],
+    "appendices": [],
+    "needs": "10, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S7Value.tsx` (stub), `src/config/camera.ts`, `src/config/copy.ts`, `src/gfx/CompareTable.tsx`, `src/fx/KineticText.tsx`, `src/fx/Caption.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S7), section 8"
+  },
+  "20": {
+    "title": "PATCH 20 - S8 On Vultr + limits (f4560-4979)",
+    "sections": [
+      6,
+      8,
+      11,
+      1
+    ],
+    "appendices": [],
+    "needs": "10, 12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S8Vultr.tsx` (stub), `src/config/script.ts`, `src/config/camera.ts`, `src/config/copy.ts`, `src/gfx/ArchitectureDiagram.tsx`, `src/gfx/LimitsCard.tsx`, `src/ui/VultrLogo.tsx`, `src/ui/InfraScreen.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S8), section 8, section 11 (C), section 1 (Vultr coverage map)"
+  },
+  "21": {
+    "title": "PATCH 21 - S9 Outro (f4980-5099)",
+    "sections": [
+      6,
+      8
+    ],
+    "appendices": [],
+    "needs": "12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/scenes/S9Outro.tsx` (stub), `src/scenes/S1Title.tsx`, `src/ui/Mark.tsx`, `src/ui/RadiusDial.tsx`, `src/ui/VultrLogo.tsx`, `src/config/camera.ts`, `src/config/copy.ts`, `src/fx/KineticText.tsx`, `src/fx/GridPaper.tsx`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (S9), section 8"
+  },
+  "22": {
+    "title": "PATCH 22 - Audio",
+    "sections": [
+      9,
+      8
+    ],
+    "appendices": [],
+    "needs": "12-21",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `src/MiniLockerFilm.tsx`, `src/config/timeline.ts`, `src/config/script.ts`, `src/lib/typing.ts`, `src/lib/hash.ts`, `package.json`",
+    "pasteReference": "",
+    "attachRaw": "section 9 (all), section 8 (voice-over)"
+  },
+  "23": {
+    "title": "PATCH 23 - Render pipeline, submission assets, README",
+    "sections": [
+      12,
+      8
+    ],
+    "appendices": [],
+    "needs": "12",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `package.json`, `src/Root.tsx`, `src/config/copy.ts`",
+    "pasteReference": "`docs/SUBMISSION.md` (the \"Submission form\" checklist)",
+    "attachRaw": "section 12 (all), section 8 (captions)"
+  },
+  "24": {
+    "title": "PATCH 24 - QA and polish",
+    "sections": [
+      12,
+      1,
+      2
+    ],
+    "appendices": [],
+    "needs": "all",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, plus any files you suspect (or the problem list below)",
+    "pasteReference": "",
+    "attachRaw": "section 12 (quality bar), section 1 (coverage map), section 2 (rules)"
+  }
+}

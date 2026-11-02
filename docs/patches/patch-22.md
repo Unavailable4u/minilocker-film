@@ -1,0 +1,16 @@
+### PATCH 22 - Audio
+
+**Needs:** 12-21
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/MiniLockerFilm.tsx`, `src/config/timeline.ts`, `src/config/script.ts`, `src/lib/typing.ts`, `src/lib/hash.ts`, `package.json`
+**Attach from BIBLE:** section 9 (all), section 8 (voice-over)
+
+```
+PATCH 22 - Audio: SFX synthesizer, cue map, music slot, voice-over slot.
+
+CREATE / REPLACE:
+- scripts/make-sfx.mjs: pure Node (no dependencies) synthesizing 48 kHz 16-bit WAVs into public/audio/: key tick (3 variants, soft, mechanical-light), UI tick, click, whoosh (filtered noise sweep), sub-impact, shimmer, chime, ledger tick, alarm blip (decoy read, amber, short two-tone), thud (egress refusal), glass-shatter (the wipe, noise + resonant partials), silence is a rule not a file, rewind riser (pitch-up sweep, 1.5 s), lock tick (pitch-stepping scale, 8 pitches for the hash locks), stamp (CONTAINED), verify sweep, success chord (soft, open fifth), tail. Seeded noise so output is reproducible. Levels: SFX peaks about -12 dBFS, keys about -24 dBFS. No copyrighted material. Write public/audio/manifest.json listing generated files and whether music.mp3 and voice.wav exist.
+- src/config/sfx.ts: typed cue list { frame, file, volume } built from script.ts and the storyboard: S0 glitch hits and terminal slams; S1 sub-impact f300, ring builds, shimmer f420; S2 key ticks per typed character (from typing.ts, matching exactly), click f750, ledger ticks at step reveals, chime at the hidden check; S3 alarm blips at each decoy-read frame, thud at the refusal, verify sweep at the audit, stamp; S4 key ticks for the wipe command, glass-shatter f2340, TOTAL SILENCE f2370-2399 (every cue in this window is forbidden; add a unit-style assertion that throws if one lands there), rewind riser f2400, lock ticks per locked tile (from hash.ts lockedCount), stamp f2780, verify sweep; S5 hits on each ledger line; S6 card ticks, numerals' ticks; S7 soft ticks; S8 node pops; S9 tail.
+- src/MiniLockerFilm.tsx wiring via Remotion <Audio> in <Sequence>s; the OPTIONAL music slot public/audio/music.mp3 (if present: -18 dB, 1.5 s fade-in, auto-duck -6 dB under impacts, hard duck to silence in the f2370 window, fade out the last 2 s) and the OPTIONAL voice slot public/audio/voice.wav (full-length narration; if present, duck music -9 dB under speech by a fixed schedule from copy.ts voiceBlocks). Presence is read from the generated manifest, never at render time from disk.
+
+CHECK: npm run sfx ; npx tsc --noEmit ; Studio plays audio in sync ; silence at f2370 ; no clipping.
+```

@@ -1,0 +1,12 @@
+PATCH 08 - Explainer graphics A (src/gfx): ContainerBox, DecoyRack, EgressWall, Packet.
+
+GOAL: designed motion graphics that explain the containment of S3, in the app's visual language (graphite panels, hairlines, CMU Typewriter labels), fully props-driven (a scene passes progress values; components never read the frame).
+
+CREATE:
+- src/gfx/ContainerBox.tsx: a large rounded box drawn as a hairline "technical drawing" with corner ticks. Six property chips attach to its edge one by one (props chipProgress[6]): "non-root", "read-only root", "no capabilities", "128 processes", "512 MB - no swap", "no route out" (text from copy.ts, which takes them from the README facts). Interior slot for children. A "seal" ring that closes around the box (prop sealProgress) and a scanning line for the teardown audit (prop auditProgress) with a result stamp slot.
+- src/gfx/DecoyRack.tsx: N decoy credential tiles (icon + label + state: idle | read | used) laid out 3x2, labels from props (they come from evidence canary events). "read" lights amber with a ripple; "used" vermilion with hatching. A small mono ledger line rises beside a tile when it is read (prop lineProgress).
+- src/gfx/EgressWall.tsx: a vertical wall (the allowlisting proxy) with an allowlist plaque listing the allowed hosts passed in as props; incoming Packet objects (props: array of { y, progress, label, blocked: boolean }) fly from the container, and blocked ones stop at the wall with an impact (shockwave ring, particle burst seeded, a hatched "refused" tag with the host name). Allowed packets pass through.
+- src/gfx/Packet.tsx: small data packet glyph with a trailing streak; linear motion.
+- A dev-only composition "DevGfxA" (register in Root.tsx, resend whole file): the full S3 sequence over 600 frames using placeholder props from the sample evidence.
+
+CHECK: npx tsc --noEmit ; stills at box-chips-complete, decoy-read, packet-refused, audit-stamp ; nothing is invented text (labels come from props).

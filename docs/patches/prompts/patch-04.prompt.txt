@@ -1,0 +1,13 @@
+PATCH 04 - Typing, streaming, terminal, hash-lock text, counters.
+
+GOAL: deterministic text effects and a terminal renderer that stays correct on partial text.
+
+CREATE:
+- src/lib/typing.ts: typedText(fullText, frame, startFrame, opts) with seeded per-character delay (about 38 chars/s, +-40% jitter, micro-pause after punctuation and spaces), pure; helpers typingEndFrame(text, startFrame, opts) and caretVisible(frame) (16-frame blink).
+- src/lib/stream.ts: streamLines(lines, frame, startFrame, endFrame, seed) revealing an array of terminal lines with irregular bursts (monotonic, deterministic), plus partial-line support; returns { visibleLines, caretLine, caretCol }.
+- src/lib/hash.ts: lockHex(finalHex, frame, startFrame, lockFrames, seed): returns a string of the same length as finalHex where characters resolve left to right (scrambled hex digits from a seeded PRNG that change every 2 frames until locked); lockedCount(frame...) for sound cues; shortHash(h, n=8). Pure.
+- src/ui/TerminalView.tsx: faithful to the app's terminal surface (term-bg, term-fg, term-dim, CMU Typewriter 15 px, line height 1.45, prompt "$" in dim), props { lines: { text, tone?: "out"|"cmd"|"err"|"dim" }[], caretLine?, caretCol?, scrollOffset, width, height }. ANSI is NOT needed. Long lines clip with ellipsis, no wrapping surprises. Includes a "tail" mode that keeps the newest line near the bottom with spring-eased scroll offset passed in by props.
+- src/ui/GlitchLayer.tsx: seeded RGB-split + horizontal slice displacement for the S0 hook, strength 0..1 by prop, deterministic.
+- A dev-only composition "DevText" (register in Root.tsx, resend whole file): typing a command, streaming 12 terminal lines, the hash lock resolving a 64-hex SHA-256, the glitch at 0, .5, 1.
+
+CHECK: npx tsc --noEmit ; stills of DevText mid-typing, mid-hash-lock, fully locked ; no layout jumps.

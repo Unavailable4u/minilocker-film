@@ -1,0 +1,11 @@
+PATCH 14 - Scene S3 Decoys + egress. Replace src/scenes/S3Decoys.tsx completely.
+
+Provide: S3_CAMERA (whip to gaugeSecrets f1500-1530 and hold with drift; push in; hand over to the explainer full-bleed at f1560 with the app dimmed 55% and blurred 6 px; back to the app at f2010 to show the gauges; settle on nav at f2070-2099); S3_CURSOR (empty); overlay:
+- f1500 caption "Containment, measured." and the real Secrets gauge line visible (real in sandbox / decoys read / used) read from evidence.
+- f1560-1799 ContainerBox build: the six property chips land on beats (f1575, 1590, 1605, 1620, 1635, 1650); the six decoys appear in DecoyRack inside; the hostile module name shown in mono is shop/_telemetry.py (Appendix B; if evidence.s3Source is "attack:malicious_repo_hook" use that attack's label instead and show the tag "Attack Lab - malicious_repo_hook"); the real "Decoy read: ..." ledger lines rise as each decoy turns amber (frames come from the events via the clock).
+- f1800-1929 the exfil attempt: Packet leaves toward EgressWall, labelled with the real blocked host from the egress.blocked event; the wall refuses it (impact, shockwave, hatched "refused" tag); the real Network gauge value counts up; caption "It tried to phone home. Refused." 
+- f1930-2039 teardown audit: scanning line across ContainerBox, stamp "real secrets in sandbox: <n>" read from the report (n must be 0 for this beat to be shown; if it is not 0 the build must throw, because the film must not hide it), caption "Bait, not secrets."
+- f2040-2099 pull back, sealing ring closes, camera swings to the header nav toward "Attack Lab" landing on the beat at f2100.
+Callouts max 5 words: "Random per task", "Reading one sets off an alarm", "Allowlist only". The captions must never overlap the chips.
+
+CHECK: npx tsc --noEmit ; stills at f1530, f1620, f1700, f1830, f1900, f1980, f2060. Verify every label/number traces to evidence.

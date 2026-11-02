@@ -1,0 +1,16 @@
+### PATCH 20 - S8 On Vultr + limits (f4560-4979)
+
+**Needs:** 10, 12
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/scenes/S8Vultr.tsx` (stub), `src/config/script.ts`, `src/config/camera.ts`, `src/config/copy.ts`, `src/gfx/ArchitectureDiagram.tsx`, `src/gfx/LimitsCard.tsx`, `src/ui/VultrLogo.tsx`, `src/ui/InfraScreen.tsx`
+**Attach from BIBLE:** section 6 (S8), section 8, section 11 (C), section 1 (Vultr coverage map)
+
+```
+PATCH 20 - Scene S8 On Vultr. Replace src/scenes/S8Vultr.tsx completely.
+
+- f4560-4619 the camera whips to the Infra screen in the app (nav tab 6) for 1 bar so the real Infra panels (host, docker, egress, inference, storage, vultr) flash with real values, then the app recedes and ArchitectureDiagram takes the stage.
+- f4620-4799 ArchitectureDiagram builds on beats inside the Vultr VM frame: the three Vultr product chips light in turn with lower-third captions from copy.ts and evidence: "Vultr VM - <region> - <plan>", "Vultr Serverless Inference - api.vultrinference.com/v1 - <model>", "Vultr Object Storage - artifacts, SHA-256 in the ledger". Highlight path "task" (UI to control plane to Docker to sandbox to egress), then "model" (control plane to inference), then "storage". If evidence.infra.vultr.available is false, throw: the film must be captured on the real VM.
+- f4800-4979 (3 bars) LimitsCard "Said plainly": the three limits lines fade in on beats (container shares the host kernel; the policy engine is an early warning, not the boundary; a per-task Vultr instance is the next step and is not built). Footnote "SECURITY.md". Caption f4900 "What it does, and what it does not."
+Provide S8_CAMERA, S8_CURSOR (empty), overlay.
+
+CHECK: npx tsc --noEmit ; stills at f4580, f4650, f4720, f4780, f4850, f4960.
+```

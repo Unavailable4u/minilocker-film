@@ -1,0 +1,17 @@
+### PATCH 13 - S2 Real work (f600-1499)
+
+**Needs:** 11, 12
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/scenes/S2Work.tsx` (stub), `src/config/script.ts`, `src/config/anchors.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, `src/fx/Callout.tsx`, `src/fx/Caption.tsx`, `src/fx/Badge.tsx`
+**Attach from BIBLE:** section 6 (S2), section 8 (S2 copy), section 5 (camera)
+
+```
+PATCH 13 - Scene S2 Real work (Pattern A). Replace src/scenes/S2Work.tsx completely.
+
+Provide: S2_CAMERA (hold the full window f600-659; ease to taskForm f690; to the Run button f740; push to stepStream and terminal f760-1100 following the newest line; a gentle pull to blastPanel at the sandbox-destroyed moment ~f1260; widen f1380-1499); S2_CURSOR (enters from bottom-right, opens the scenario select and picks "Fix a broken repo (v2)" f700, strict is already selected (a small hover), hold 1 min f730, clicks "Run in sandbox" at f750 with press + ripple, then rests over the terminal); overlay with: eyebrow badge "Pattern A - sandboxed code execution" (f600-720) and the 4-node flow strip "model writes code - runs in a container - real output returns - model explains, errors fed back" with a packet travelling along it (f660-780); caption "A real task. Real execution." (f660); a "Vultr Serverless Inference - <model>" chip (model from evidence) that PULSES each time the stream shows an assistant step (derive the pulse frames from the clock, not by hand); callout "A check the model never sees" at the hidden-check line (f1200-1260); callout "Audited as it is destroyed" when fs/sec/cpu gauges flip from "-" to measured (f1260-1330); caption "Plan. Dispatch. Execute. Verify." f1440; the cut to S3 is a camera whip toward the Secrets gauge on the beat at f1500.
+
+All terminal and step text, durations, the check result and the gauge numbers come from evidence through filmState (rule 8). Never leave a static frame longer than about 1.5 s: if the clock has a quiet stretch, use micro camera drift and a callout pulse.
+
+If FilmApp, script or fx files need small fixes, resend those FULL files and list them.
+
+CHECK: npx tsc --noEmit ; stills at f700, f750, f860, f1000, f1150, f1230, f1300, f1440.
+```

@@ -1,0 +1,30 @@
+## C. QUICK CHECKLIST (print this)
+
+- [ ] 00 Scaffold
+- [ ] 01 Brand and assets (run `npm run assets`)
+- [ ] 02 Evidence pipeline (sample now, real later)
+- [ ] 03 FX toolkit
+- [ ] 04 Text engines
+- [ ] 05 UI kit A (window, header, primitives)
+- [ ] 06 UI kit B (Workspace, Blast panel)
+- [ ] 07 UI kit C (Attack Lab, Report, Infra)
+- [ ] 08 Explainers A (container, decoys, egress)
+- [ ] 09 Explainers B (lattice, hash, chain, snapshots)
+- [ ] 10 Explainers C (architecture, compare, limits)
+- [ ] 11 Script + FilmApp
+- [ ] 12 Master timeline + S0 + S1
+- [ ] 13 S2 Real work
+- [ ] 14 S3 Decoys + egress
+- [ ] 15 S4a Wipe
+- [ ] 16 S4b Rewind + proof
+- [ ] 17 S5 Hostile page
+- [ ] 18 S6 Evidence
+- [ ] 19 S7 Value
+- [ ] 20 S8 On Vultr
+- [ ] 21 S9 Outro
+- [ ] 22 Audio
+- [ ] 23 Render + submission assets
+- [ ] 24 QA
+- [ ] **On the Vultr VM, code frozen:** `npm run evidence` then `npm run evidence:final-check`
+- [ ] Record `public/proof/rewind.mp4` (1920x1080, 30 fps, under 14 s), `npm run proof`
+- [ ] Final: `npm install`, `npm run assets`, `npm run sfx`, `npm run render`, `npm run submission`

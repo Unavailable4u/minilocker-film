@@ -1,0 +1,17 @@
+### PATCH 18 - S6 Evidence report (f3720-4259)
+
+**Needs:** 07, 11, 12
+**Paste existing:** `docs/PATCH_NOTES.md`, `src/scenes/S6Evidence.tsx` (stub), `src/config/script.ts`, `src/config/anchors.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, `src/fx/StatNumeral.tsx`, `src/fx/Callout.tsx`, `src/fx/Cursor.tsx`
+**Attach from BIBLE:** section 6 (S6), section 8, section 7 (measured)
+
+```
+PATCH 18 - Scene S6 Evidence. Replace src/scenes/S6Evidence.tsx completely.
+
+Provide: S6_CAMERA (nav tab 4 "Report" f3720-3750; wide on reportGrid f3780; push to individual cards with micro moves, a pull to verifyButton f3950; to the claims strip f4080; settle f4240-4259), S6_CURSOR (to the Verify ledger button, click at f3960 with press + ripple, then rests), overlay:
+- f3720 the header underline slides to Report; caption "Every run leaves evidence."
+- f3780-3959 the nine DimensionCards flip in on beats (3 f stagger) with their real Headline pictures, in the real order from report.dimensions; a card that is "not measured" must be shown in its dotted style with its italic note, and the callout "Not measured says so" points at it (if all nine are measured, skip that callout).
+- f3960-4079 Verify ledger: spinner, then the real result line "intact - N events - head <8 hex>".
+- f4080-4259 the claims strip: four big StatNumerals counting on beats from evidence.measured and attackSummary, each with a small mono label: "fix_repo_v2: N/10 finished (95% CI lo-hi)", "N/15 attacks contained", "N/10 hook escapes", "N real secrets in N runs" (use the exact figures; if a figure is not flattering, show it anyway), plus a "CI green" chip only when evidence.ci.conclusion is "success"; footer line in mono: "numbers read from run <evidenceId> - commit <short sha>". Caption "Measured, not asserted."
+
+CHECK: npx tsc --noEmit ; stills at f3740, f3800, f3880, f3950, f4010, f4100, f4200.
+```

@@ -1,0 +1,20 @@
+### PATCH 23 - Render pipeline, submission assets, README
+
+**Needs:** 12
+**Paste existing:** `docs/PATCH_NOTES.md`, `package.json`, `src/Root.tsx`, `src/config/copy.ts`
+**Paste reference (draft repo):** `docs/SUBMISSION.md` (the "Submission form" checklist)
+**Attach from BIBLE:** section 12 (all), section 8 (captions)
+
+```
+PATCH 23 - Render scripts, submission assets, README. All pure Node, Windows-friendly.
+
+CREATE / REPLACE:
+- scripts/render.mjs: first runs the evidence final check and REFUSES to render when evidence is sample or invalid unless --allow-sample; fails if duration is over 180 s; runs the Remotion render of MiniLockerFilm (H.264, crf 16, yuv420p, +faststart, AAC 192 kbps) to out/minilocker-demo.mp4; ffmpeg loudness normalisation (I=-16, TP=-1.5, LRA=11); poster.png from the best hero frame (f480: title + dial); out/preview.gif (720 px wide, 15 fps, at most 8 MB). Clear progress; fails loudly with fix hints (ffmpeg not on PATH, Chrome download, out of memory so suggest --concurrency).
+- scripts/check-stills.mjs: PNG stills at f60, f200, f330, f480, f760, f1000, f1260, f1700, f1900, f2230, f2350, f2560, f2780, f2900, f3100, f3420, f3560, f3850, f4010, f4150, f4420, f4520, f4700, f4900, f5099 into out/stills/.
+- scripts/make-submission-assets.mjs: (a) out/cover.png 1920x1080 (16:9) from the poster frame, no video frame text smaller than 28 px; (b) out/captions.srt built from copy.ts captions + callouts + evidence-derived numbers, with the caption timings; (c) out/voice-script.txt from copy.ts voice blocks; (d) out/slides-pack/ PNG stills of the six best frames for the PDF slide deck (container chips complete, lattice mid-reassemble, hash chain verified, report nine cards, competitive table, architecture on Vultr, limits card); (e) out/SUBMISSION_FILM_NOTES.md listing, for each number said in the film, which evidence path it came from.
+- Scripts for 4K (--scale=2) and PNG sequence matching package.json.
+- README.md: install; the whole flow (npm install, npm run assets, npm run sfx, record proof, npm run proof, npm run evidence, npm run evidence:final-check, npm run check, npm run render, npm run submission); where to edit text, timings, colors, camera, and which values are NOT editable (evidence-derived); the exact Remotion render command; the pure-ffmpeg route; troubleshooting (Chrome download, fonts, ffmpeg PATH on Windows, OOM and --concurrency, slow renders); licensing note (Remotion license, see remotion.dev/license); the lablab checklist (MP4 H.264 under the size limit, 3:00 cap, plays logged out).
+- Make sure Root.tsx registers only the final compositions (MiniLockerFilm, MiniLockerFilm-Preview) plus the dev compositions behind a clear comment, and resend Root.tsx whole.
+
+CHECK: npm run check ; npm run render -- --allow-sample (works) ; npm run render (REFUSES on sample data: correct) ; out/ has mp4, poster, gif, cover, srt, slides-pack.
+```
