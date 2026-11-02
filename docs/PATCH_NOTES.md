@@ -277,3 +277,103 @@ Warns (does not fail) on: s3Source fallback, a core attack that is not contained
 
 ### Warnings for the next patch
 - Nothing renders the SAMPLE visibly yet. Patches that show evidence data should put a "SAMPLE" mark on screen while `selectMeta().sample` is true.
+
+---
+
+## PATCH 03 - FX toolkit
+
+**Files created**
+src/config/camera.ts, src/config/focus.ts,
+src/fx/Camera.tsx, Cursor.tsx, Caption.tsx, KineticText.tsx, Callout.tsx, StatNumeral.tsx, Glow.tsx, Grain.tsx, Vignette.tsx,
+Spotlight.tsx, GridPaper.tsx, Toast.tsx, KeyCap.tsx, Badge.tsx, util.ts,
+src/dev/DevFxSheet.tsx
+
+**Files changed**
+src/Root.tsx (registers `DevFxSheet`, 1920x1080, 360 f; keeps `DevBrandSheet`), docs/PATCH_NOTES.md
+
+Everything here is pure and frame-driven (no CSS transitions, no timers, no Math.random). All frame arguments are GLOBAL film frames:
+render these components in the global frame space, never inside a `<Sequence>` with a non-zero `from`.
+
+### PUBLIC API
+
+**src/config/camera.ts**
+- `CameraEase = "spring" | "signature" | "linear"`; `CameraKeyframe { frame, target: FocusName, padding, scaleBias, rotateX, rotateY, rotateZ, ease?, frames?, shake? }`
+- `CursorWaypoint { frame, x, y, click?, hover?, hide? }` (x, y in the LOGICAL 1600 x 900 space; `frame` is the frame the cursor ARRIVES)
+- `CAMERA_LIMITS` (scale 1.0..2.6, tilt 6/5 deg, 14/14 in S1 and S9, roll 3, perspective 1800, drift 2 px, shake 8 f, DOF 1.2 px / 12%).
+- `kf(frame, target, opts?)`: keyframe shorthand. Defaults: padding 96, scaleBias 1, no tilt, spring.
+
+**src/config/focus.ts**
+- `FocusName` (nav, taskForm, stepStream, terminal, blastPanel, dial, gaugeSecrets, gaugeNetwork, gaugeCompute, attackSummary, attackGrid,
+  attackDetail, reportGrid, verifyButton, infraDiagram, fullWindow), `FOCUS_NAMES`, `FOCUS: Record<FocusName, Rect>`, `WINDOW`, `GRID`,
+  `focusRect(name)` (throws on an unknown name), `rectCenter(rect)`, `rectPoint(rect, fx, fy)`, type `Rect`.
+- The rectangles are CLOSE, not pixel-exact. UI patches 05-07 MAY REFINE THEM and MUST UPDATE THIS FILE (keep the names).
+
+**src/fx/Camera.tsx**
+- `<Camera keyframes dof? wideTilt?>`: children are laid out in LOGICAL coordinates; overlays in stage space go OUTSIDE it.
+- `getCameraState(frame, keyframes, fps?, { wideTilt? }): CameraState` (`scale, tx, ty, rotateX/Y/Z, driftX/Y, shakeX/Y, focusW/H`),
+  `cameraTransform(state)`, `worldToStage(state, {x, y})`, `cameraProgress(frame, startFrame, fps?)`.
+- Geometry: world point p lands on the stage at `T + s * p`, `T = (960, 540) - s * rectCenter(target)`. At scale 1 the 1600 x 900 window is centred.
+- A focus that fits at scale <= 1 is clamped to 1.0: it is centred, not zoomed (blastPanel is 840 px tall, so it frames at 1.0).
+  Use `scaleBias` (> 1) to punch in, or a smaller `padding`.
+
+**src/fx/Cursor.tsx** (inside `<Camera>`)
+- `<Cursor waypoints size? zoom?>`: `size` is the arrow height in logical px (26); pass `zoom` (= `getCameraState(...).scale`) to keep the arrow the same size
+  on screen while the camera zooms.
+- `getCursorState(frame, waypoints): { x, y, pressed, hover, opacity, scale, ripple }`. The first four are the spec'd fields.
+- Behaviour: rests at the last waypoint, departs so it arrives exactly on the next waypoint's frame (trip = clamp(distance / 22, 14, 48) frames,
+  never longer than the gap), cubic Bezier with seeded control points (never straight), overshoot-and-correct (about 5%).
+  Click: scale 1 -> .88 -> 1 over 4 f, crimson ring 6 -> 28 px, opacity .5 -> 0 over 14 f. `hide`: fades out 8 f after that waypoint, fades in over
+  the 8 f ending on the next one, no travel. Before the first waypoint it is hidden. Out-of-order waypoints throw.
+- Constants: `CURSOR_CLICK_FRAMES = 4`, `CURSOR_RIPPLE_FRAMES = 14`, `CURSOR_FADE_FRAMES = 8`.
+
+**src/fx/Caption.tsx** (stage space): `<Caption text highlight? sub? startFrame endFrame size? />`. `text` is a string or an array of lines. CMU Serif 700, 56..76 px
+(default 72, shrinks to fit the 1728 px safe width, never below 56), bottom-centre 110 px above the edge, masked line rise (20 f in, 12 f out upwards;
+gone at `endFrame`). `highlight` is drawn in accent-ink; `sub` is a mono 24 px line.
+
+**src/fx/KineticText.tsx** (stage space): `<KineticText text startFrame endFrame? fontSize? family? weight? italic? align? color? highlight? underline? stagger? riseFrames? />`.
+Words rise out of their own masks, 3 f apart (`stagger`). `underline: { word, delay?, frames? }` draws a crimson line (the only glow) after the last word lands.
+`endFrame` makes the words leave upwards in the same order. A word that is not in the text throws.
+
+**src/fx/Callout.tsx** (stage space): `<Callout text variant? target camera? side? lead? along? mono? size? startFrame endFrame />`.
+`variant`: "note" | "ok" | "flag". `target`: a `FocusName` or `{x, y}` in LOGICAL coordinates when `camera` (the same keyframes as the `<Camera>`) is given; without
+`camera` only a stage-pixel point is allowed. The chip sits OUTSIDE the focus rectangle (`lead` = 72 px beyond the edge, dot 12 px inside it) and flips to the opposite
+side if it would leave the 96 px safe margin. Text over 5 words throws. Dot pops, leader draws, chip is revealed by a clip from the dot's side; it leaves in reverse
+during the last 10 f. Frame the shot with about 170 px of padding on the callout's side so a chip fits.
+
+**src/fx/StatNumeral.tsx**: `<StatNumeral value from? unit? startFrame durationFrames? decimals? group? size? color? hideBefore? />`. Signature-ease count; digits that already
+match the final value from the left are full ink, the rest dim; a 2.5% punch on landing. The caller must show "not measured" for a null measurement; never pass 0 for it.
+
+**src/fx/Glow.tsx**: `<Glow x y radius? color? intensity? period? depth? startFrame? endFrame? fadeFrames? />` (radial bloom, cosine breath). Only for the accent underline, the dial and the decoys.
+**src/fx/Grain.tsx**: `<Grain opacity? frequency? />` (3%, feTurbulence re-seeded per frame with `grainSeed(frame)`). **src/fx/Vignette.tsx**: `<Vignette strength? />` (12%).
+**src/fx/Spotlight.tsx**: `<Spotlight startFrame durationFrames? rect? angle? band? intensity? radius? />` (one specular sweep).
+**src/fx/GridPaper.tsx**: `<GridPaper perspective? tilt? speed? lines? opacity? />` (44 px engineering grid over the two glows; `perspective` lays it on a receding floor).
+**src/fx/Toast.tsx** (stage space): `<Toast title text? tone? startFrame endFrame corner? width? />`, `tone`: "ok" | "bad" | "warn" | "info" (status only). Slides in from the stage edge (masked by it).
+**src/fx/KeyCap.tsx**: `<KeyCap label startFrame? pressAt? size? />` (pressAt = global frames at which the key goes down, 6 f).
+**src/fx/Badge.tsx**: `<Badge label tone? pulse? reveal? dot? size? />` is "dumb": scenes pass `pulse` (0..1) and `reveal` (0..1). Helpers `badgePulse(frame, period = 45)`, `badgeReveal(frame, startFrame, frames = 14)`.
+`tone`: "accent" | "ok" | "bad" | "warn" | "info" | "mute". Mono, at least 20 px.
+**src/fx/util.ts** (internal helpers): `inOut`, `estimateWidth`, `checkRange`, `splitHighlight`, `SERIF_ADVANCE`, `MONO_ADVANCE`.
+
+**src/dev/DevFxSheet.tsx**: composition `DevFxSheet` (360 f). Exercises the camera over taskForm, blastPanel, dial and back (tilt, DOF, a shake on f180), a cursor path with clicks on
+f96 and f180 and a hide/return, a caption, a kinetic line, the three callout variants plus an `ok` one on the dial, numerals, two badges, two toasts, key caps, glow, spotlight, grain and vignette.
+Exports `DEV_FX_FRAMES`, `DEV_FX_CAMERA`, `DEV_FX_CURSOR`. Its labels and numbers are developer notes and made-up values, not film copy and not evidence.
+
+### Decisions and conventions future patches must follow
+1. Scene files export `SN_CAMERA: CameraKeyframe[]` and `SN_CURSOR: CursorWaypoint[]` and build keyframes with `kf(frame, "focusName", {...})`; nobody else types a UI coordinate.
+2. Layers: window content and `<Cursor>` go INSIDE `<Camera>` (logical px). Captions, callouts, badges, toasts, KineticText, Grain and Vignette go OUTSIDE it (stage px).
+   A callout follows the camera because it receives the same `camera` keyframes; give it the scene's `SN_CAMERA`.
+3. Callouts are 5 words at most (it throws). Captions are one line: a caption that cannot fit 1728 px at 56 px must be given as two lines. `copy.s7.caption` (69 characters)
+   is one: S7 should pass it as an array of two lines (split after "promise.").
+4. Cursor visibility follows BIBLE 5: it is shown in S2, S4a and S6 only; elsewhere give no waypoints (nothing renders).
+5. Impacts: put `shake` on a keyframe that lands on a beat (f180, f2340, ...). The shake is smooth, seeded, decays over 8 f and adds to the drift, so there is no jitter at hand-offs.
+
+### Known issues
+- Verified: `tsc --noEmit`; stills of `DevFxSheet` rendered with Remotion on a real Chrome at f30, 52, 100, 150, 170, 200, 232, 310 and inspected; numeric checks (not committed) of the cursor
+  (arrives exactly on every waypoint frame, 4 f press at .88, 14 f ripple, curved with overshoot, hide/fade, determinism, out-of-order throws) and the camera (deterministic, shake lasts 8 f,
+  tilt clamps at 5 deg Y and 14 deg when wide, scale within 1.0..2.6). NOT checked: motion by eye in the Studio, and the S1/S9 wide-tilt range in a real scene.
+- The camera spring (BIBLE 5, {26, 90, 1.1}) is fast: a 1700 px pan peaks near 250 px/frame in the first frames. For long moves that should feel gentler use `ease: "signature", frames: 40`.
+- `Grain` uses an SVG `feTurbulence` at 1920 x 1080 every frame; it is the slowest overlay in a render. If a render is slow, lower `frequency` or render it only on some scenes.
+- `Spotlight` and `Badge` clip with `clip-path`, which also clips their own shadows.
+
+### Warnings for the next patch
+- Patches 05 to 07 build the real UI: if a panel's real position differs from `src/config/focus.ts`, update that file (the camera follows automatically).
+- Patch 04 (text engines) and patches 05+ also edit `src/Root.tsx`: it now contains `DevBrandSheet` AND `DevFxSheet` and must keep both.
