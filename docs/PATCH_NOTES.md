@@ -377,3 +377,78 @@ Exports `DEV_FX_FRAMES`, `DEV_FX_CAMERA`, `DEV_FX_CURSOR`. Its labels and number
 ### Warnings for the next patch
 - Patches 05 to 07 build the real UI: if a panel's real position differs from `src/config/focus.ts`, update that file (the camera follows automatically).
 - Patch 04 (text engines) and patches 05+ also edit `src/Root.tsx`: it now contains `DevBrandSheet` AND `DevFxSheet` and must keep both.
+
+---
+
+## PATCH 04 - Text engines
+
+**Files created**
+src/lib/typing.ts, src/lib/stream.ts, src/lib/hash.ts, src/ui/TerminalView.tsx, src/ui/GlitchLayer.tsx, src/dev/DevText.tsx
+
+**Files changed**
+src/lib/prng.ts (adds `mixSeed`, nothing else touched), src/Root.tsx (registers `DevText`, 1920x1080, 300 f; keeps `DevBrandSheet` and `DevFxSheet`), docs/PATCH_NOTES.md
+
+Everything here is pure and deterministic (no frame reads in the libs, no timers, no Math.random, no CSS transitions). The libs take frames as
+arguments (GLOBAL film frames); `TerminalView` never reads the frame; `GlitchLayer` reads `useCurrentFrame()` only to seed its noise (override with `frame`).
+
+### PUBLIC API
+
+**src/lib/prng.ts** (added): `mixSeed(a, b): number` mixes two integers into one well-spread 32-bit seed. Use `rand(mixSeed(seed, i))` for a stateless value per (seed, index).
+
+**src/lib/typing.ts**
+- `interface TypingOpts { cps?=38, jitter?=0.4, seed?, pausePunct?=2.6 (frames), pauseSpace?=0.7 (frames), fps?=30 }`
+- `typedText(fullText, frame, startFrame, opts?): string` visible prefix. "" before `startFrame`; the first character lands ON `startFrame`.
+- `typedCount(fullText, frame, startFrame, opts?): number` characters visible (code points).
+- `typingEndFrame(fullText, startFrame, opts?): number` first frame on which the whole text is visible (empty text: `startFrame`).
+- `caretVisible(frame): boolean` 16 frames on / 16 off, ON at frame 0.
+- `typingCaret(fullText, frame, startFrame, opts?): boolean` solid while typing, then blinks starting ON on `typingEndFrame`.
+- Speed: ~38 chars/s of base delay (+-40% jitter) PLUS the pauses, so the effective rate of ordinary prose is ~30 chars/s. Pass `cps` to retime a line.
+- Default seed is derived from the text, so the same text always types the same way; pass `opts.seed` for a different rhythm. Use integer start frames.
+
+**src/lib/stream.ts**
+- `streamLines<T extends { text: string }>(lines, frame, startFrame, endFrame, seed): { visibleLines: T[]; caretLine: number; caretCol: number }`
+  Reveals the lines in irregular bursts (stalls, trickles, floods), counted in characters, so the line being written is partial. Monotonic; everything is visible at `endFrame`.
+  The last visible line is cut short while it arrives; other fields of a line (`tone`) are copied through. `caretLine` = last visible row, `caretCol` = its visible length.
+  There is NO trailing newline: when the stream is done the caret sits at the end of the last line. A row is visible (maybe empty) as soon as the newline before it has been consumed. Throws if `endFrame <= startFrame`.
+- `streamArrivals(lines, startFrame, endFrame, seed): number[]` first frame on which each line is visible (line 0 = `startFrame`). For per-line sound ticks and the tail scroll.
+- `tailScrollOffset(frame, fps, arrivalFrames): number` (<= 0, in rows) spring-eased lag for `TerminalView tail`: every new row pushes the content up at once and this lets it settle on the "panel" spring. Pass the arrival frame of EVERY row in order.
+
+**src/lib/hash.ts**
+- `lockHex(finalHex, frame, startFrame, lockFrames, seed = 0): string` same length as `finalHex`; characters lock left to right, the rest are seeded hex digits that change every 2 frames (halves of the string alternate frames). Non-hex characters (separators) are always shown. Upper-case input gets upper-case scramble.
+- `lockedCount(finalHex | length, frame, startFrame, lockFrames): number` 0 at or before `startFrame`, all from `startFrame + lockFrames`, linear between. Use it for sound cues (one tick per newly locked character).
+- `shortHash(h, n = 8)`; `HASH_SCRAMBLE_FRAMES = 2`.
+
+**src/ui/TerminalView.tsx**
+- `<TerminalView lines caretLine? caretCol? caretOn? scrollOffset tail? width height />`; `TermLine { text: string; tone?: "out" | "cmd" | "err" | "dim" }`, `TermTone`, `TerminalViewProps`.
+- Draws only the text surface (term-bg, term-fg, term-dim, CMU Typewriter 15 px, line height 1.45). NOT the window chrome (traffic lights, "sandbox - /workspace" strip, event count): the Workspace patch (06) wraps it.
+- Tones: `out` = termFg, `dim` = termDim, `err` = bad (text color only, no hatching: the app's terminal does not hatch), `cmd` = termFg with a dim "$ " prompt drawn by the component (`text` is the command only, and `caretCol` counts the text only).
+- Rows are exactly `TERM_LINE_PX` (21.75 px) tall, never wrap, clip with an ellipsis, and are clipped at the text area (padding `TERM_PAD_X` 13, `TERM_PAD_Y` 9), like the app's xterm.
+- The caret is absolutely positioned in `ch` units (no layout effect). Blink it with `caretOn`, never by dropping `caretLine`: the row count includes the caret row, and the tail scroll depends on the row count. `caretLine` may equal `lines.length` (an empty row below the last line).
+- Scroll, in ROWS: `tail=false`: `scrollOffset` = rows scrolled up from the top. `tail=true`: the newest row rests at the bottom and `scrollOffset` (<= 0, from `tailScrollOffset`) is added to that resting position.
+- Control characters are stripped, tabs become 4 spaces (the app strips them too).
+- Also exported: `TERM_FONT_PX`, `TERM_LINE_HEIGHT`, `TERM_LINE_PX`, `TERM_PAD_X`, `TERM_PAD_Y`, `TERM_PROMPT`, `terminalCapacity(height)`.
+
+**src/ui/GlitchLayer.tsx**
+- `<GlitchLayer strength seed? frame?>children</GlitchLayer>` (position:absolute, inset 0: put it in a positioned box). Strength 0 renders the children untouched, with no filter. Above 0: RGB split (up to ~12 px), hard-edged slice displacement (up to ~70 px), a few faint accent bars (<= 12% opacity). The pattern holds 2 frames (`GLITCH_HOLD_FRAMES`).
+- `glitchParams(strength, seed, frame): GlitchParams` the pure parameters of one pattern (exported for checks).
+- Wrap OPAQUE content: the three channel copies are added back together, which is exact for opaque pixels only.
+
+**src/dev/DevText.tsx** + composition `DevText` (1920x1080, 300 f). Exports `DEV_TEXT_FRAMES`. A command typed into the terminal (f8 to ~f48), 12 lines streamed (to ~f150, 10-row terminal so the tail scroll shows), a 64-hex hash locking f170 to f266, the glitch at 0 / .5 / 1. Its text is developer notes, not film copy or evidence; the hash is the real SHA-256 of "abc".
+
+### Decisions and conventions future patches must follow
+1. Terminal rows come from `TermLine[]`. The Workspace terminal (patch 06) maps ledger events to lines the way the app's `render()` does (commands as `cmd`, `[exit N]` and policy lines as `dim`/`err`) and passes them in; it should NOT re-implement typing or streaming.
+2. For a typed command followed by streamed output (S0, S2): render `[typed cmd line]` while typing, then `[full cmd, ...streamLines(...).visibleLines]` with `caretLine + 1`. `DevText.tsx` is the worked example, including the arrival list for the tail scroll.
+3. A caret never blinks while characters arrive: use `typingCaret` for typed text, and `frame < endFrame ? true : caretVisible(frame - endFrame)` for a stream.
+4. Hash text: show `lockHex(...)` in a monospace box of fixed width (it has the length of the final value, so nothing jumps) and tick sounds from `lockedCount`. Never type a hash in a component: the final hex comes from `src/data/select.ts`.
+5. `mixSeed` is the way to derive per-index seeds. Do not use `seed + i`.
+6. The S0 hook wraps its OPAQUE stage layer in `<GlitchLayer strength={...}>` (BIBLE 6: 0 to 1 over f165-179, then the collapse).
+
+### Known issues
+- Verified: `tsc --noEmit`; property checks of the pure helpers (monotonic, prefix-consistent, deterministic, exact at the endpoints, left-to-right locking, code points, bad range throws); stills of `DevText` rendered with Remotion on a real Chromium at f26 (mid-typing), f110 (mid-stream), f218 (mid-hash-lock, 32/64) and f290 (fully locked) and inspected. NOT checked: the motion by eye in the Studio.
+- The glitch is cheap (one SVG filter, only while strength > 0), but it is a full-size feTurbulence + displacement filter: render it only on the frames that need it (S0 f165-179).
+- The slice displacement pulls in transparent pixels at the right and left edges of the glitched box, which shows as thin dark bars. That is part of the look; put the layer over an opaque backdrop if it should not show.
+- `TerminalView` measures columns with the 0.525 em advance of CMU Typewriter; with the fallback monospace font the caret still lines up (it uses `ch`), only the clamp of a caret past the right edge is approximate.
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet` AND `DevText`: every patch that adds a Dev composition must keep all three.
+- Patch 06 builds the Workspace terminal around `TerminalView` and must pass `width`/`height` in logical px (the camera does the zooming).

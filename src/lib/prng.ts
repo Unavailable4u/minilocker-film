@@ -36,3 +36,18 @@ export function hashStringToSeed(text: string): number {
   }
   return h >>> 0;
 }
+
+/**
+ * Mixes two integers into one well-spread 32-bit seed (an integer finalizer, no state, no clock).
+ * Use it to derive one stateless seed per (seed, index) pair: rand(mixSeed(seed, i)).
+ * Plain sums like seed + i give correlated neighbours; this does not.
+ */
+export function mixSeed(a: number, b: number): number {
+  let h = Math.imul(a | 0, 0x9e3779b1) ^ Math.imul((b | 0) + 0x7f4a7c15, 0x85ebca6b);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x2c1b3c6d);
+  h ^= h >>> 12;
+  h = Math.imul(h, 0x297a2d39);
+  h ^= h >>> 15;
+  return h >>> 0;
+}
