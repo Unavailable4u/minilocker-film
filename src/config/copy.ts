@@ -412,6 +412,23 @@ export const s3 = {
   chips: ["non-root", "read-only root", "no capabilities", "128 processes", "512 MB, no swap", "no route out"],
 } as const;
 
+/**
+ * Words used by the S3 explainer graphics (patch 08, src/gfx). Words only: every host, label, hash and number shown with them
+ * comes from the evidence through src/data/select.ts. The container chips are in `s3.chips`.
+ */
+export const gfxA = {
+  /** DecoyRack state words. "planted" is the product's own word for a decoy that was seeded and not touched. */
+  decoyIdle: "planted",
+  decoyRead: "read",
+  decoyUsed: "used",
+  /** Hatched tag at the egress wall (the host is added from the evidence). */
+  refused: "refused",
+  /** Heading of the allowlist plaque (the hosts come from infra.egress.allowed_hosts). */
+  allowlist: "allowlist",
+  /** Audit stamp text; the count is appended from the sandbox.audit measurement. */
+  stampSecrets: "real secrets in sandbox",
+} as const;
+
 export const s4 = {
   captionWorks: "The agent works. Snapshot after every step.",
   captionGone: "Everything gone.",
@@ -461,6 +478,6 @@ export const s9 = {
 } as const;
 
 /** All groups in one object, for code that walks the whole deck (for example captions.srt). */
-export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9 } as const;
+export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, gfxA, s4, s5, s6, s7, s8, s9 } as const;
 
 export type Copy = typeof copy;

@@ -591,3 +591,60 @@ Stills: `npx remotion still src/index.ts DevScreens out/qa/screens-N.png --frame
 - EVIDENCE GAP: the attack CATALOG (title, summary, category, profile, expected, tries, check labels of all 15 attacks) is not in evidence.json: patch 02's capture keeps only `AttackResult`s of the 5 core attacks and `attackSummary` counts. The Attack Lab cards need an `AttackInfo` for every attack, so S4 needs `evidence.attackCatalog` (store the `attacks` array of GET /api/attacks in scripts/capture-evidence.mjs, add the type to types.ts and a `selectAttackCatalog()` to select.ts, and add it to the sample builders). Until then `src/dev/devCatalog.ts` holds the product's own `describe()` output for the 15 attacks as a DEV fixture. It is not evidence and must not reach a render.
 - Tiles for the 10 non-core attacks have no `AttackResult` in the evidence: their state can only come from `attackSummary` (15/15 contained), so a scene that shows them as contained should say so from that summary rather than invent per-attack verdicts.
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace` AND `DevScreens`: every patch that adds a Dev composition must keep all six.
+
+## PATCH 08 - Explainers A: hardened container, decoy rack, egress wall
+
+**New files:** `src/gfx/Packet.tsx`, `src/gfx/ContainerBox.tsx`, `src/gfx/DecoyRack.tsx`, `src/gfx/EgressWall.tsx`, `src/dev/DevGfxA.tsx` (+ composition `DevGfxA`, 1920x1080, 600 f, default prop `specimenUsed: false`).
+**Changed files:** `src/config/copy.ts` (new group `gfxA`, added to the `copy` object), `src/Root.tsx` (DevGfxA registered), `docs/PATCH_NOTES.md`.
+
+Everything in `src/gfx` is pure and props-driven (nothing reads the frame, no CSS transitions, no timers, randomness only through `mixSeed`/`rand`). Scenes pass 0..1 progress values. Components apply their own easing to a LINEAR progress, so pass `lin = clamp01((frame - start) / len)`, not an eased value (the one exception is `auditProgress`, which is the sweep position: the scene eases it).
+
+### PUBLIC API
+
+**src/gfx/Packet.tsx**
+- `<Packet x y streak? size? color? opacity? label? labelOpacity? />` stage px, `x`/`y` = centre of the glyph, the streak trails to its left. `label` is mono 20 px above it (an evidence host).
+- `PACKET_SIZE = 22`, `PACKET_STREAK = 72`.
+
+**src/gfx/ContainerBox.tsx**
+- `<ContainerBox x y chips chipProgress drawProgress? sealProgress? auditProgress? stamp? stampProgress? stampAnchor? >children</ContainerBox>`
+  - `x`, `y`: top-left of the 1100 x 600 box in STAGE px. `children`: BOX-LOCAL px (origin = box top-left).
+  - `chips: readonly string[]` exactly 6 (pass `copy.s3.chips`), `chipProgress: readonly number[]` one 0..1 per chip. A wrong length throws. Landing order is clockwise from the top-left: 3 on the top edge, 1 on the right edge, 2 on the bottom edge (`CHIP_SLOTS`). Per chip: stem draws, chip is revealed from the stem side, the crimson attach dot pops with a ring.
+  - `drawProgress` (default 1): outline, corner ticks, registration crosses and the grid interior draw on. `sealProgress` (default 0): the crimson seal ring closes from top centre to bottom centre, 22 px outside the box. `auditProgress` (default 0): scan line left to right with a trailing wash and a tick ruler that lights behind it. `stamp` + `stampProgress` + `stampAnchor` (default centre): the result stamp slot.
+- `<StampBox tone? size?>text</StampBox>`: the stamp plate to put in the slot (`tone` "ok" | "bad" | "warn" | "info", default "ok").
+- Exports `BOX_W = 1100`, `BOX_H = 600`, `BOX_RADIUS = 24`, `CHIP_SLOTS`, type `ChipSlot`, `ContainerBoxProps`.
+
+**src/gfx/DecoyRack.tsx**
+- `<DecoyRack x y tiles stateLabels dim? columns? />`, positioned in its parent's space (inside the box slot: box-local px). 3 columns by default (3 x 2 for six decoys).
+  - `tiles: DecoyTile[]` = `{ id, label, state: "idle" | "read" | "used", reveal?, stateProgress?, line?, lineProgress? }`. `id` only picks the icon (key, id badge, cloud, token, database, card, document), it is never shown. `label` comes from the `canary.seeded` event. `stateProgress` 0..1 develops the current state: read = amber light-up and a two-ring ripple, used = vermilion with diagonal hatching (no ripple). `line` is the mono ledger line that rises under the tile (use `describe(event).text`), `lineProgress` 0..1 raises it. `reveal` 0..1 is the entrance.
+  - `stateLabels: Record<DecoyState, string>`: pass `{ idle: copy.gfxA.decoyIdle, read: copy.gfxA.decoyRead, used: copy.gfxA.decoyUsed }`. `dim` 0..1 steps the whole rack back (used while the audit stamp is shown).
+- Exports `decoyRackSize(count, columns?)` -> `{ w, h, lineRoom }` (tile area, plus the room a last-row ledger line needs), `TILE_W 300`, `TILE_H 160`, `COL_GAP 48`, `ROW_GAP 84`, `LINE_ROOM 70`, types `DecoyState`, `DecoyTile`, `DecoyRackProps`.
+
+**src/gfx/EgressWall.tsx**
+- `<EgressWall fromX allowedHosts plaqueTitle refusedLabel packets wallX? top? bottom? toX? proxyLabel? reveal? seed? />`: a FULL-STAGE layer (absolute, 1920 x 1080, all coordinates are stage px). Wall at `wallX` (default 1500), `top` 200, `bottom` 880. Plaque on its right with the allowed hosts (`infra.egress.allowed_hosts`), a heading (`copy.gfxA.allowlist`) and an optional proxy line (`infra.egress.proxy`).
+  - `packets: EgressPacket[]` = `{ y, progress, label, blocked }`. `progress` = distance travelled / route length (`fromX` to `toX`, default 1800), NOT clamped at 1, so a refusal keeps playing after the route ends and its tag stays. Get it from `packetProgress(frame, startFrame, fromX, toX?)`, which moves at the BIBLE speed of 18 px/frame.
+  - allowed: crosses the wall (the gate lights blue where it passes) and fades out near `toX`. blocked: stops at the wall; shockwave ring (radius 0 to 140 in 12 f) plus a thin second ring, 24 seeded shards (3 to 9 px/f, fade over 24 f, clipped to the container's side of the wall), a wall flash, a mark left on the wall, and a hatched tag with `refusedLabel` over the host that rises from frame 3 to 13 after the hit.
+- Exports `packetProgress`, `packetWallFrame(startFrame, fromX, wallX?)` (frame at which a packet touches the wall), `PACKET_PX_PER_FRAME = 18`, `SHOCKWAVE_FRAMES = 12`, `SHOCKWAVE_RADIUS = 140`, `SHARD_COUNT = 24`, `SHARD_LIFE_FRAMES = 24`, `EGRESS_WALL_X = 1500`, `EGRESS_TO_X = 1800`, types `EgressPacket`, `EgressWallProps`.
+
+**src/config/copy.ts**: new group `gfxA` = `decoyIdle` "planted", `decoyRead` "read", `decoyUsed` "used", `refused` "refused", `allowlist` "allowlist", `stampSecrets` "real secrets in sandbox". Words only: no host, label, hash or number.
+
+**src/dev/DevGfxA.tsx** + composition `DevGfxA` (600 f, S3 timing of BIBLE 6 with scene frame = frame + 1500): f60 box draws, f75/90/105/120/135/150 the six chips, f158 decoys rise, f212 and f252 the two real `canary.read` events light their tiles with their `describe()` line, f270 wall and plaque, f300 the real `egress.blocked` packet (hit at about f312, tag complete at about f325), f360 an allowed packet, f450 to f490 the audit sweep, f496 the stamp, f540 to f585 the seal ring. Exports `DEV_GFX_A_FRAMES`, type `DevGfxAProps`.
+Stills: `npx remotion still src/index.ts DevGfxA out/qa/gfxa-N.png --frame=N` for N = 165 (box-chips-complete), 262 (decoy-read), 335 (packet-refused), 515 (audit-stamp). The `used` look: `--frame=330 --props='{"specimenUsed":true}'`.
+
+### Decisions and conventions future patches must follow
+1. Layout (stage px) used by the S3 scene: box at (150, 240), so its right edge is x = 1250 and packets start there (`fromX`); wall at x = 1500; plaque and `toX` to the right. BIBLE 11 A says "about 1100 x 600 centered" and "wall at x = 1500", but a centred box would end at x = 1510 and sit ON the wall, so the box moves left. The size and the wall position are as specified.
+2. The DecoyRack goes in the box's children slot (box-local px); the EgressWall is a separate full-stage layer ABOVE the box (it needs the stage-wide space to the right of it).
+3. All words come from props. Chip texts: `copy.s3.chips` (its "512 MB, no swap" uses a comma where the spec text has a dash; copy.ts is the source). Decoy labels: the `canary.seeded` items. Ledger lines: `describe()` of `canary.read` / `canary.tripped`. Packet and tag hosts: `egress.blocked` / `egress.allowed` events. Allowlist: `infra.egress.allowed_hosts`.
+4. The audit stamp is the scene's job, not the component's: build it only if `measure(events)` says the inside was scanned (`audited && scanned`) and found no real secrets, otherwise throw (BIBLE 6 S3). `DevGfxA` shows the pattern.
+5. Do not put a packet on screen for an allowed request that is not in the ledger. The sample has no `egress.allowed` event, so `DevGfxA` flies an allowed packet labelled with the first allowlist host as a DEV DEMO and says so in a note. S3 must not copy that: it shows blocked packets from `egress.blocked` events and, if the evidence has any, allowed ones from `egress.allowed`.
+6. Status colors: amber = a decoy was read, vermilion with hatching = used or refused, blue = allowed and the clean audit stamp, crimson = the one accent (attach dots, seal ring). Packets are neutral (ink).
+
+### Known issues
+- Verified: `tsc --noEmit` is clean and `remotion bundle` succeeds. A throwaway Node harness (not committed) rendered `DevGfxA` to markup for all 600 frames twice (no throw, identical output) and checked: all six chips present at f165 and attached one by one, the ledger line from `describe()` after the first read and not before, the refused tag with the real blocked host after the hit and not before, the stamp "real secrets in sandbox: 0" at f515 and not at f480, the plaque hosts, the `used` word only with the specimen, and the packet speed.
+- NOT verified: stills and motion by eye. The build environment had no browser (the Remotion browser download is blocked), so none of the four stills was rendered. Please run the four still commands above and look at them. Things most likely to need a nudge: chip 4 (right edge) next to the wall, the tag position over the wall, the ripple size, and the density of the audit ruler.
+- The plaque's right edge is at about x = 1823, just inside the 96 px safe margin (1824) for the three-host sample allowlist; a longer allowlist makes the plaque taller, and a longer host makes it wider than the margin.
+- The seal ring and the stamp use CSS `filter: drop-shadow` / box-shadow glows, which Chrome (Remotion) renders; other renderers may ignore them.
+- `ContainerBox` and `DecoyRack` throw on a wrong chip count only; a tile `id` that matches no icon rule draws the generic document icon.
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens` AND `DevGfxA`: every patch that adds a Dev composition must keep all seven.
+- Patch 09 (explainers B) shares `src/gfx`; reuse `Packet` and the shard approach of `EgressWall` (`mixSeed` per index) rather than writing another particle helper.
