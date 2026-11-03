@@ -533,3 +533,61 @@ arguments (GLOBAL film frames); `TerminalView` never reads the frame; `GlitchLay
 ### Warnings for the next patch
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell` AND `DevWorkspace`: every patch that adds a Dev composition must keep all five.
 - Rebuilding the stills needs a browser: `npx remotion still src/index.ts DevWorkspace out/qa/ws-300.png --frame=300`.
+
+## PATCH 07 - UI kit C: Attack Lab, Report, Infra (+ Timeline)
+
+**New files:** `src/ui/page.tsx`, `src/ui/AttackLabScreen.tsx`, `src/ui/ReportScreen.tsx`, `src/ui/InfraScreen.tsx`, `src/ui/TimelineScreen.tsx`, `src/dev/DevScreens.tsx` (+ composition `DevScreens`, 1920x1080, 600 f), `src/dev/devCatalog.ts` (dev-only fixture, see Warnings).
+**Changed files:** `src/config/copy.ts` (new groups `lab`, `rep`, `inf`, `tl`; added to the `copy` object), `src/Root.tsx` (DevScreens registered), `docs/PATCH_NOTES.md`.
+
+### PUBLIC API
+
+**src/ui/page.tsx** (shared parts, ported from the app's ui.tsx): `PageHead { eyebrow, title, sub, right }`, `Row { k, mono }` (key ...... value), `Stat { label, value, sub, tone, size }`,
+`Disclosure { summary, open }` (a `<details>` drawn closed or open), style helpers `TABULAR`, `CLAMP_2`, `BREAK_ALL`, `TRUNCATE`, `inkOf(tone)`. All pure.
+
+**src/ui/AttackLabScreen.tsx**
+- `<AttackLabScreen attacks tiles selected runningName results stepsVisible stepProgress checksVisible checkProgress verdictStamp press? hover? runAllRunning? spin? pulse? donutFill? openDetails? listScrollY? detailScrollY? />`
+  - `attacks: AttackInfo[]` (lab order, BIBLE Appendix D): titles, summaries, categories, `tries`, `checks`, `expected` are DATA, never typed here.
+  - `tiles: { name; state: "notrun"|"running"|"contained"|"breached"|"inconclusive"|"error"|"unavailable" }[]` (the spec'd five plus the app's `error` = "could not run" and `unavailable`). The donut, "N/15" and the status sentences are COUNTED from the tiles (`labTally`), as the app counts its runs.
+  - `results: Record<name, AttackResult | undefined>`; the selected attack shows its result when one exists and any of stepsVisible / checksVisible / verdictStamp is > 0, otherwise its preview (what the attacker tries, what will be checked).
+  - `stepsVisible` / `stepProgress[i]`: how many steps of the selected result are drawn and each row's rise 0..1. `checksVisible` / `checkProgress[i]`: same for the checks, in DISPLAY order (`orderedChecks(checks)`: the attack's own first, then "Checked on every attack"); a check rises over the first 0.4 of its progress, then its mark lights grey -> pass/fail/not-proven.
+  - `verdictStamp` 0..1: the verdict banner lands (12% larger, settles). The banner keeps its space from the first result frame, so the pane never jumps (it is blank until the stamp starts).
+  - `press: "runAll" | "run"` presses the summary button / the selected card's Run button. `hover: { tile?, card?, run?, runAll?, openReport? }`.
+  - `donutFill` 0..1 grows the donut arcs; `listScrollY` / `detailScrollY` scroll the two columns (px).
+- Also exported: `labTally(attacks, tiles)`, `orderedChecks(checks)`, `verdictOfTile(state)`, `LAB_LIST_W` (459), types `TileState`, `AttackTile`, `LabTally`, `AttackLabHover`, `AttackLabScreenProps`.
+- Tone/chip rules are the app's: contained = blue, breached = bad + hatching (tile, banner, check mark), inconclusive = amber, only a denied command's output is open by default.
+
+**src/ui/ReportScreen.tsx**
+- `<ReportScreen report reveal? headReveal? verify? pressVerify? hoverVerify? scrollY? />`. `report: Report`. Cards come from `Object.entries(report.dimensions)` IN ORDER, never re-sorted; `reveal[i]` 0..1 per card (flip-in; a card at 0 keeps its space).
+- `verify: { state: "idle" | "running" | "done"; progress; result?: Verification }`. running: busy ring (progress = 0..1 through 3 turns). done: the line "Re-verified just now from the stored ledger: intact - <detail> - head <8 hex>" under the seal (progress = its rise). Wording is the app's: "intact" / "TAMPERED".
+- `Headline` is the app's function ported unchanged (network, policy, compute, time, secrets, filesystem, persistence; anything else draws no picture). `DimensionCard { no, name, d, reveal }` is exported.
+- NOT MEASURED: `status: "not_measured"` is drawn in the dotted style (dotted frame, a "not measured" chip, the backend's own italic `note`), never a zero and never a picture. An unknown status such as `not_used` (the browser dimension of a task that never opened a page) is drawn as the app draws it: a mute chip with the status words and no picture.
+- The KPI strip only includes dimensions that are measured. The "n measurements" disclosure is drawn closed.
+
+**src/ui/InfraScreen.tsx**
+- `<InfraScreen infra reveal? pulse? flash? scrollY? />`. `reveal[0]` = the wiring diagram, `reveal[1..6]` = panels §1..§6; `flash[i]` lights an item in its status tone for a moment. `Panel` and `Gauge` are exported.
+- The Vultr public IP is never read (BIBLE 10.5) and the API key row only says "set (never shown)" / "not set".
+
+**src/ui/TimelineScreen.tsx**: built for real (it was cheap), not a stub. `<TimelineScreen taskId nodes holding? rewindPending? running? reveal? scrollY? />`; `nodes` come from `timeline(events)` of src/lib/derive.ts. Not used in the film body.
+
+**src/config/copy.ts**: `lab`, `rep`, `inf`, `tl`: static wording, word for word from AttackLab.tsx, Report.tsx, Infra.tsx, Timeline.tsx. No measured value in them.
+
+**src/dev/DevScreens.tsx** + composition `DevScreens` (600 f): f0-59 Attack Lab empty (0/15, 15 "not run" tiles); f66-90 hover, press and run of rewind_after_rm_rf; f94-236 its steps rise, then the checks light one by one; f236 the verdict stamps, tile turns blue, donut 1/15; f246-290 the pane scrolls to the checks; f300-419 the Report, nine cards flip in; f424-452 "Verify ledger now" pressed, spinning, result line; f480-599 Infra, diagram then six panels, each flashing once.
+Stills: `npx remotion still src/index.ts DevScreens out/qa/screens-N.png --frame=N` for N = 0, 80, 240, 290, 400, 470, 570.
+
+### Decisions and conventions future patches must follow
+1. Screens are dumb: no frame reads; every motion (rise, stamp, reveal, scroll, press, hover, spin, pulse) is a prop computed by the scene. Entrances use `riseProgress` / `riseStyle` from src/lib/rise.ts.
+2. Screens fill the AppWindow body (`flex: 1 1 0%`). Put one inside `<AppWindow header={<Header activeScreen=2|3|5 .../>}>`.
+3. Counts in the Attack Lab are derived from `tiles`; a scene that wants "N of 15" to animate passes tile states (and `donutFill`), it never types a number.
+4. Report cards are drawn in the report's own key order; "not measured" is never turned into a number.
+5. `src/dev/devCatalog.ts` must not be imported by a scene (see Warnings).
+
+### Known issues
+- Verified: `tsc --noEmit` is clean, and stills of DevScreens at f0, 80, 200, 240, 290, 400, 470 and 570 were rendered with Remotion on the system Chrome and read. NOT verified: a side-by-side with the live app (type scale, spacing and chip tones were ported from the class names, not measured), and the motion by eye in the Studio.
+- The `write` tool word of an Attack Lab step (small caps in a `w-9` box, as in the source) is a little wider than its box, so it sits tight against the command text. It follows the source's classes; compare with the live app before changing it.
+- `src/config/focus.ts` was NOT refined: the rectangles `attackSummary`, `attackGrid`, `attackDetail`, `reportGrid`, `verifyButton` and `infraDiagram` are still the patch 03 estimates. The real positions are now in the components (summary bar about 150 px under the header, card list 459 px wide, the Report page scrolls); measure in a browser and update focus.ts before the S4 / S6 / S8 camera work. The Report and Infra pages are scrolled with `scrollY`, so a camera focus on them also depends on the scene's scroll value.
+- The Report's `Seal` shows the full head hash (as the app does); the 8-hex short head appears in the re-verified line.
+
+### Warnings for the next patch
+- EVIDENCE GAP: the attack CATALOG (title, summary, category, profile, expected, tries, check labels of all 15 attacks) is not in evidence.json: patch 02's capture keeps only `AttackResult`s of the 5 core attacks and `attackSummary` counts. The Attack Lab cards need an `AttackInfo` for every attack, so S4 needs `evidence.attackCatalog` (store the `attacks` array of GET /api/attacks in scripts/capture-evidence.mjs, add the type to types.ts and a `selectAttackCatalog()` to select.ts, and add it to the sample builders). Until then `src/dev/devCatalog.ts` holds the product's own `describe()` output for the 15 attacks as a DEV fixture. It is not evidence and must not reach a render.
+- Tiles for the 10 non-core attacks have no `AttackResult` in the evidence: their state can only come from `attackSummary` (15/15 contained), so a scene that shows them as contained should say so from that summary rather than invent per-attack verdicts.
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace` AND `DevScreens`: every patch that adds a Dev composition must keep all six.
