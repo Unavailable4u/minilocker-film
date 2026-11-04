@@ -988,3 +988,48 @@ Fixes the open issue of 13c1 (the Secrets gauge anchor) and the closing caption,
 - On f1486 the tips of the caption's descenders still show a few px over the window's bottom edge: the caption is leaving upwards (f1478-1490) while the whip has started and moves the window. It is 2-3 frames; the caption was not shortened because it is already up for only about 1.7 s.
 - `gaugeNetwork` and `gaugeCompute` in focus.ts are still computed estimates (only DevFxSheet uses them); only the Secrets card was measured.
 - NOT verified: motion feel of the pull, the creeps, the widen and the whip; whether the roll reads as a whip; whether the caption's exit and the whip's start read as one move; whether the beats land on the music.
+
+
+---
+
+## Patch 14a - S3 Decoys + egress, part 1 of 3: the box (f1500-1679)
+
+Patch 14 (S3, f1500-2099) is split like S2: `S3Decoys.tsx` assembles `s3/S3a.tsx`, `s3/S3b.tsx`, `s3/S3c.tsx`, plus ONE persistent object, `s3/S3Box.tsx`, and the app scrim.
+- **14a (this patch):** the camera on the Secrets card + caption "Containment, measured." (f1500), the hand-over to the explainer (app dimmed 55 %, blurred 6 px, f1546-1562), the ContainerBox with its six chips on the beats f1575-1650, the six decoys planted in the DecoyRack, callout "Random per task" (f1620). The shared layout, timing and evidence model for all three parts.
+- **14b (f1680-1929):** the hostile module reaches for the decoys (S3Box turns each tile amber with its real ledger line; the module name in the module band; callout "Reading one rings the alarm" f1700), then the exfil attempt: Packet, EgressWall, the refusal, the Network gauge, caption "It tried to phone home. Refused." f1800, callout "Allowlist only" f1840.
+- **14c (f1930-2099):** the teardown audit (scanning line, stamp "real secrets in sandbox: 0", caption "Bait, not secrets." f1930), the hand-back to the app (scrim out f2004-2018, camera on the gauges at f2010), the pull back, the sealing ring, the swing to the header nav, the landing on "Attack Lab" at f2100.
+
+**New files:** `src/scenes/s3/data.ts`, `src/scenes/s3/shared.tsx`, `src/scenes/s3/S3Box.tsx`, `src/scenes/s3/S3a.tsx` (real), `src/scenes/s3/S3b.tsx`, `src/scenes/s3/S3c.tsx` (stubs).
+**Changed files:** `src/scenes/S3Decoys.tsx` (now the assembly), `docs/PATCH_NOTES.md`. No config, fx, gfx, ui or data file is touched.
+
+### PUBLIC API
+- `S3a` overlay, `S3A_CAMERA` (3 keyframes: f1500 hold on `gaugeSecrets`, the pull to `fullWindow` f1546-1586), `S3A_CURSOR` (empty), `S3A_TIMING`.
+- `S3_CAMERA` / `S3_CURSOR` concatenate S3A + S3B + S3C: each part's first keyframe must come after the previous part's last one. 14a's last keyframe starts f1546 (arrives f1586); **14b's first keyframe must start at f1680 or later**, 14c's at f1930 or later.
+- `s3/data.ts`: `s3Data()` returns, from the evidence only: `source`, `events`, `tag`, `attackTitle`, `decoys` (id + label, ledger order), `planted`, `reads` (the `canary.read` events: event id, ts, decoy index, label, the `describe()` line), `blocked` (the first `egress.blocked`: host, reason, line), `allowedHosts`, `proxy`, `audit` (`realSecretsInSandbox`, `scanned`, `decoysRead`, `decoysUsed`). It throws, naming what is missing, if the evidence cannot support the scene (no `canary.seeded`, more than 6 decoys, no `egress.blocked`, no allowlist) and **if the audit found any real secret** (the film must not hide it: 14c's stamp relies on this).
+- `s3/shared.tsx`: `S3_BOX` (stage x 160, y 190), `s3Rack(n)`, `S3_MODULE_BAND` (box-local y 520-580, reserved for 14b), `S3_EGRESS` (`fromX` 1260, `packetY` 490), `s3TileRect(i, n)` (stage rectangle of decoy tile i), `S3_TIMING` (every frame number of 14a, the scrim's out-frames for 14c), `s3ChipProgress`, `s3BoxDraw`, `s3DecoyReveal`, `s3ScrimAmount`, `S3_SCRIM`, `S3Scrim` (the dim + blur, a backdrop filter, drawn once by S3Decoys).
+- `s3/S3Box.tsx`: `S3Box` overlay: the backing panel, the `ContainerBox` (chips from `copy.s3.chips`), the `DecoyRack`, and the tag. 14b and 14c resend THIS file (marked 14b / 14c in its comments) and leave S3a alone.
+
+### What 14a contains
+- **Camera:** f1500 holds S2c's landing pose on the real Secrets card (zoom 2.6, the card is centred); f1546-1586 a 40 f signature pull to `fullWindow` (padding 60) while the scrim comes in; it then holds, with the 2 px drift, until 14b.
+- **The real Secrets line** is the app's own card (filmState, from the audited ledger): "real in sandbox . N of {planted} decoys read . N used". Nothing is retyped; `data.ts` throws if the audit found a real secret.
+- **Scrim:** `rgba(paper, 0.55)` and `blur(6px)` over the camera layer, in over f1546-1562, out over f2004-2018 (14c's). A backdrop filter, so `MiniLockerFilm.tsx` and `FilmApp` are untouched.
+- **Box:** draws f1560-1596 (outline, interior, the near-opaque backing panel), chips on f1575 / 1590 / 1605 / 1620 / 1635 / 1650 (22 f each, clockwise from the top left), six tiles rise one every 4 f from f1584 (idle, "planted"), labels from `canary.seeded`.
+- **Callout:** "Random per task" f1620-1679 on the last tile's right edge, chip right of the box (x 1293-1503, clear of the "128 processes" chip).
+- **Caption:** "Containment, measured." f1500-1548, drawn 48 px lower than the film's usual position (a wrapper in S3a.tsx, like S2c's): at zoom 2.6 the window's bottom edge is on stage y 928 and the usual position put the ink across it.
+- **Tag:** when `evidence.s3Source` is "attack:malicious_repo_hook" the badge "Attack Lab - malicious_repo_hook" is drawn in the row of the top chips (right of "no capabilities"). Not visible with the SAMPLE (`s3Source` is "task"); checked by flipping the field in a temporary copy.
+- **Import-time checks** throw if a chip is off a beat or out of order, the scrim is not in by the time the box draws, the opening caption overlaps the scrim, the pull overruns 14a, the scrim and the pull do not start together, the box's chips leave the safe margin or reach the caption's strip, or the evidence cannot support S3.
+
+### Decisions and conventions future patches must follow
+1. **No push-in on the Secrets card.** `gaugeSecrets` is already at the 2.6 zoom maximum, so a `scaleBias` cannot grow it, and a tilt (tried: 1.2 / -2.4 deg) rasterizes the text smeared at that zoom. The hold is 46 frames of micro-drift plus the caption's own reveal.
+2. **The box is stage space, not inside the camera.** The scrim dims what the camera shows; the box, wall, packets, captions and callouts sit above it. 14b's Packet and EgressWall go in `S3b.tsx` (or `S3Box.tsx` if they must sit under the tiles) at `S3_EGRESS`: packets leave the box's right edge, x 1260, along y 490, to the wall at x 1500.
+3. **Space plan.** Chips: top y 118-160 (x 250-1034 for the three, plus the tag), right x 1290-1475 at y 289-331, bottom y 820-862 (x 403-577 and 826-1034). Captions' ink starts at y ~905, so a caption never meets a chip. The box interior under the rack (box-local y 506-600, stage y 696-790) is free; the module band is box-local y 520-580.
+4. **The reads are NOT at their S2 frames.** The `canary.read` events of the kept take played in S2 (f~1000), when the Secrets card already says "2 of 6 decoys read". S3 re-plays them on its own frames (14b decides them: the first read about f1690, so the callout "Reading one rings the alarm" lands at f1700); take their text from `s3Data().reads[i].line`. The tile of a read decoy is `reads[i].decoy`.
+5. **The Network gauge** in the scrim-dimmed app already says "1 blocked" from f1500 (S2's ledger). 14b's "the real Network gauge value counts up" cannot be that card: count the value in the stage-space wall plaque / refusal tag instead, from `blocked`.
+6. **S3's data source is `s3Data().events`**, which is the attack's ledger when `s3Source` is "attack:malicious_repo_hook"; the app behind the scrim always shows the kept take, so in that case the Secrets card (f1500) and the box tell two different runs. That is BIBLE 7.3's choice; the tag says so.
+7. `S3Scrim` ends f2018: 14c must not start its "back to the app" camera move before f2004.
+
+### Known issues
+- `tsc --noEmit` clean; `git apply --check` + `tsc` pass on a fresh clone. A sweep of f1490-1700 (every frame, quarter scale) rendered without exceptions and no frame was looked at in that sweep. Full-size stills looked at: f1500, f1520, f1530, f1610, f1640, and f1640 with `s3Source` flipped to the attack. f1556 (the scrim ramp) and f1679 were looked at in an earlier iteration (before the S3Box extraction and the caption drop); f1562 was rendered and not looked at.
+- NOT verified: motion feel of the pull and of the scrim's blur ramp, whether the chips land on the beats in the Studio, the box's draw-on over the dimmed window in motion.
+- f1650-1679 is a calm shot (all chips landed, nothing moves but the camera drift): 29 frames, under the film's 1.5 s limit; 14b's first item can start earlier than f1680 if that reads as slack, but not its first camera keyframe.
+- The evidence is still the SAMPLE (`meta.sample`): the decoy labels, the "2 of 6" and the "1 blocked" in these stills are sample data.
