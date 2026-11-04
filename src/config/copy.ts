@@ -407,6 +407,8 @@ export const s2 = {
   calloutCheck: "A check it never sees",
   calloutAudit: "Audited as it is destroyed",
   captionSteps: "Plan. Dispatch. Execute. Verify.",
+  /** The four nodes of the flow strip (patch 13a), in order. The last one carries the loop back to the first. */
+  flow: ["model writes code", "runs in a container", "real output returns", "model explains, errors fed back"],
 } as const;
 
 export const s3 = {

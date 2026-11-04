@@ -837,3 +837,57 @@ Patch 12 was split because it is too big for one session: **12a** (this) = the f
 - NOT looked at: f6, 40, 112, 292 (rendered only), motion, and whether the beat hits feel right in the Studio.
 - The terminal card sits under the agent line (not over the page), so all four lines stay readable; move `TERM` if you want it overlapping.
 
+
+---
+
+## Patch 12c - S1 Title and the dial match cut (last third of patch 12)
+
+**Changed files:** `src/scenes/S1Title.tsx` (replaces the stub), `src/scenes/stageState.ts` (rewritten), `src/ui/RadiusDial.tsx` (one prop), `src/config/anchors.ts`, `src/config/anchors.measured.json`, `src/dev/DevProbe.tsx` (a measured `workspace.dial` entry).
+
+### PUBLIC API
+- `S1Title` overlay, `S1_CAMERA`, `S1_CURSOR` (empty), `S1_TIMING` (every S1 frame number), `S1_LANDING_FRAME` (590).
+- `stageState.ts`: `appReveal(frame)` now rises the window from f540 (docked f590, lit f588, `APP_RISE_PX` 1000, dimmed to `APP_DIM` 0.28 while rising). `gridOpacity(frame)` fades in on the f300 impact (24 f) and out f540-599. New constants `APP_DOCKED_FRAME`, `APP_LIT_FRAME`, `APP_RISE_PX`, `APP_DIM`.
+- `workspaceAnchors.dial()`: the BlastPanel dial's own box (280.5 px square at (1230.75, 173.81), window px), measured by `tools/measure-anchors.mjs`. Every other measured anchor is unchanged.
+- `RadiusDial` has a new optional prop `centerOpacity` (default 1), so the centre disc can grow out of the core dot. The centre block is wrapped in a group, so the diff re-indents it.
+
+### Decisions and conventions future patches must follow
+1. The title dial follows the panel's REAL dial position every frame (measured anchor + camera + the window's `appReveal` offset). It lands at f590 when the window docks, then rides it while the camera settles; a 7-frame fade (f592-599) hides the double blend. Never retime `appReveal` or the S0/S1 camera keyframes without re-reading `S1Title.tsx`.
+2. `APP_MOUNT_FRAME` changed from 560 to 540 so the window rises across the whole f540-599 push.
+3. `S1_CAMERA` is a wide tilted pose, then a fixed 59-frame ramp (not a spring) to the flat final pose (whole window, 60 px margin, zoom about 1.067), so tilt is exactly 0 on f599.
+4. The dial drains into the dotted "not measured" look the app shows before a task, so the last frame is the panel's own dial. The verdict word is "measuring" with no values.
+5. For S2: the first camera keyframe must be at f600 or later (S1's dial placement reads only the S0 and S1 keyframes), and S2 starts from the zoom-1.067 pose, so a first keyframe with padding 96 would zoom out right after the push.
+
+### Known issues
+- `tsc --noEmit` clean, and `git apply --check` plus `tsc` pass on a fresh clone.
+- Stills at f299-600 and full-res landing crops were looked at; a 33-frame sweep of S1 rendered without exceptions but those images were not looked at.
+- NOT verified: motion feel, whether hits land on the beats in the Studio, and depth of field (still off).
+
+---
+
+## Patch 13a - S2 Real work, part 1 of 3: the setup (f600-780)
+
+Patch 13 (S2, f600-1499) is split like S4: `S2Work.tsx` assembles `s2/S2a.tsx`, `s2/S2b.tsx`, `s2/S2c.tsx`.
+- **13a (this patch):** camera f600-744, the whole cursor path up to the Run press, badge, flow strip + packet, first caption.
+- **13b:** the run, f760-1200: the camera that follows the newest stream line, the Vultr inference chip that pulses on each assistant step, the cursor resting over the terminal.
+- **13c:** the finish, f1200-1499: callouts "A check it never sees" (f1200) and "Audited as it is destroyed" (f1260), the pull to the blast panel, caption "Plan. Dispatch. Execute. Verify." (f1440), the widen and the whip towards S3.
+
+**New files:** `src/scenes/s2/S2a.tsx` (real), `src/scenes/s2/S2b.tsx`, `src/scenes/s2/S2c.tsx` (stubs).
+**Changed files:** `src/scenes/S2Work.tsx` (now the assembly), `src/config/copy.ts` (`s2.flow`: the four strip labels).
+
+### PUBLIC API
+- `S2a` overlay, `S2A_CAMERA`, `S2A_CURSOR`, `S2A_TIMING` (every S2a frame number).
+- `S2_CAMERA` / `S2_CURSOR` concatenate S2A + S2B + S2C: each part's first keyframe / waypoint must come after the previous part's last one (13a's last camera keyframe starts f722, its last waypoint is the Run press f750).
+
+### Decisions and conventions future patches must follow
+1. The cursor waypoints are COMPUTED from `FORM` and `FIX_RUN` in script.ts and the measured anchors (select, strict, hold, Run), so the cursor cannot drift from what filmState draws; the file throws at import time if a retime breaks their order. The "pick" clicks (scenario f700, hold f730) land just under the select because the recreated form does not draw the option list.
+2. Camera: f600 holds S1's final pose (whole window, padding 60). f660-690 a 30 f signature move to `taskForm` at padding 265 (zoom 1.25; the form is at y 265-815 and the left 700 px of the stage are empty). f722-744 a 22 f push to `taskForm` at padding 199 (zoom 1.55; Run button at y 754-830). After f744 the camera holds (micro-drift only) until 13b's first keyframe, which must start at f760 or later.
+3. The flow strip is VERTICAL in the left gutter (x 96-636), not a horizontal strip: in the form shots the window leaves the left 700 px of the stage empty, so a column of four cards fits there without covering the app. Packet runs down the rail f688-740 (each card lights as it is reached), then back up a dashed warn-coloured rail f742-766 (the "errors fed back" loop); the strip leaves f768-780 through a mask.
+4. The badge sits at y 140 (not at the 96 px safe margin) so that in the whole-window shot it does not cover the logo; it leaves f708-720.
+5. The caption (f660-744) is gone before the cursor reaches the Run button; 13b/13c captions and callouts must keep clear of the form, the stream and the terminal in the same way.
+6. The stage left gutter (x < 650) is free for 13b's inference chip.
+
+### Known issues
+- `tsc --noEmit` clean. Stills at f600, 628, 645, 655, 675, 690, 700, 735, 746, 752, 770 were rendered and looked at; f880, 1100, 1499 rendered without exceptions but were not looked at (S2b / S2c are stubs).
+- The scenario title shown is the evidence's (`Fix a failing pricing library`), not the BIBLE's working title.
+- During f655-660 the badge covers part of the "TERMINAL" pane tab in the whole-window shot (it is clear of the header).
+- NOT verified: motion feel of the two camera moves and the cursor's crossing of the window, and whether the press on f750 lands on the beat in the Studio.

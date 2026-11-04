@@ -1,13 +1,22 @@
-// Stage-level choreography that belongs to no single scene (patch 12a). Pure functions of the GLOBAL frame.
-// Patch 12c rewrites this file when S1's match cut is built; MiniLockerFilm.tsx only calls these two functions.
-import { clamp01 } from "../lib/ease";
+// Stage-level choreography that belongs to no single scene. Pure functions of the GLOBAL frame.
+// Patch 12c rewrote this file for S1's match cut: the app window rises under the flying dial (f540-599) and the grid paper
+// fades in with the f300 impact and out with the cut. MiniLockerFilm.tsx only calls these functions (it is not edited).
+import { clamp01, signature } from "../lib/ease";
 
-const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
-
-/** FilmApp is mounted from this frame; it must already be docked when S2 begins (BIBLE 6, S1). */
-export const APP_MOUNT_FRAME = 560;
+/** FilmApp is mounted from this frame: the window starts rising off-frame while the title leaves (BIBLE 6, S1: f540-599). */
+export const APP_MOUNT_FRAME = 540;
 /** The frame S2 starts: the app is fully in place and at full opacity. */
 export const APP_READY_FRAME = 600;
+
+/** The window is fully docked (dy = 0) from this frame; the dial rides it down to the last 10 frames, so the landing is exact. */
+export const APP_DOCKED_FRAME = 590;
+/** The window is at full opacity from this frame (it is dimmed before). */
+export const APP_LIT_FRAME = 588;
+
+/** How far below its place the window starts, in LOGICAL px: far enough to be off-frame (the stage is 1080 px high). */
+export const APP_RISE_PX = 1000;
+/** Lowest opacity while the window is rising: "mounted but dimmed". */
+export const APP_DIM = 0.28;
 
 export interface AppReveal {
   mounted: boolean;
@@ -17,17 +26,30 @@ export interface AppReveal {
   dy: number;
 }
 
-/** 12a placeholder reveal: the window fades in and rises 48 px between f560 and f599. 12c replaces it with the dial match cut. */
+/**
+ * The window's entrance, the second half of the S1 match cut. From f540 it rises from below the frame (signature ease, docked at
+ * f590) while it brightens from 28% to 100% (lit at f588), so the dial of the title scene can drop onto the panel's dial socket
+ * as the window arrives. At and after f600 the window is exactly where S2 expects it: { mounted, opacity 1, dy 0 }.
+ *
+ * S1Title.tsx reads this same function to follow the panel's dial while the window moves; never retime it without re-reading that file.
+ */
 export function appReveal(frame: number): AppReveal {
   if (frame < APP_MOUNT_FRAME) return { mounted: false, opacity: 0, dy: 0 };
-  const t = clamp01((frame - APP_MOUNT_FRAME) / (APP_READY_FRAME - APP_MOUNT_FRAME));
-  const e = easeOutCubic(t);
-  return { mounted: true, opacity: e, dy: (1 - e) * 48 };
+  const rise = signature(clamp01((frame - APP_MOUNT_FRAME) / (APP_DOCKED_FRAME - APP_MOUNT_FRAME)));
+  const lit = signature(clamp01((frame - APP_MOUNT_FRAME) / (APP_LIT_FRAME - APP_MOUNT_FRAME)));
+  return { mounted: true, opacity: APP_DIM + (1 - APP_DIM) * lit, dy: (1 - rise) * APP_RISE_PX };
 }
 
-/** Opacity of the grid paper on the stage: only S1 (fading out f540-599) and S9 (BIBLE 5). */
+/** Frames the grid paper takes to fade in on the f300 impact. */
+const GRID_IN_FRAMES = 24;
+
+/** Opacity of the grid paper on the stage: S1 (in with the f300 impact, out f540-599) and S9 (BIBLE 5). */
 export function gridOpacity(frame: number): number {
-  if (frame >= 300 && frame < 600) return 1 - clamp01((frame - 540) / 59);
+  if (frame >= 300 && frame < 600) {
+    const fadeIn = signature(clamp01((frame - 300) / GRID_IN_FRAMES));
+    const fadeOut = 1 - clamp01((frame - 540) / 59);
+    return Math.min(fadeIn, fadeOut);
+  }
   if (frame >= 4980) return clamp01((frame - 4980) / 20);
   return 0;
 }

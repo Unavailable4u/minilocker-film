@@ -45,6 +45,8 @@ export interface RadiusDialProps {
   scan?: number;
   /** Opacity of the scan wedge, 0..1. Default 1. */
   scanOpacity?: number;
+  /** Opacity of the centre (the verdict disc, its icon and its word), 0..1. Default 1 = the app's dial. Patch 12c: S1 grows the centre out of the Mark's core. */
+  centerOpacity?: number;
 }
 
 // ---------------------------------------------------------------------------------------------- geometry (verbatim from the source)
@@ -117,6 +119,7 @@ export const RadiusDial: React.FC<RadiusDialProps> = ({
   pulsePhase = 0.5,
   scan,
   scanOpacity = 1,
+  centerOpacity = 1,
 }) => {
   // unique ids so several dials on one frame never share a gradient or mask
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
@@ -234,42 +237,44 @@ export const RadiusDial: React.FC<RadiusDialProps> = ({
       })}
 
       {/* centre: verdict */}
-      <circle cx={CX} cy={CY} r={30} fill={theme.sheet} stroke={theme.rule2} strokeWidth={1} />
-      <g
-        stroke={tint}
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={3.2}
-        style={verdictTone !== "mute" && g > 0 ? { filter: `drop-shadow(0 0 ${(3 * Math.min(g, 1)).toFixed(2)}px ${alpha(tint, 0.55)})` } : undefined}
-      >
-        {verdictWord === "clean" && <path d={`M ${CX - 8} ${CY - 6} l 6 6.5 l 11 -12.5`} />}
-        {(verdictWord === "flagged" || verdictWord === "review") && (
-          <>
-            <path d={`M ${CX} ${CY - 15} v 11`} />
-            <circle cx={CX} cy={CY + 1} r={0.6} strokeWidth={4} />
-          </>
-        )}
-        {(verdictWord === "measuring" || verdictWord === "partial") && (
-          <g fill={tint} stroke="none">
-            <circle cx={CX - 9} cy={CY - 7} r={2.4} />
-            <circle cx={CX} cy={CY - 7} r={2.4} />
-            <circle cx={CX + 9} cy={CY - 7} r={2.4} />
-          </g>
-        )}
-        {verdictWord === "no data" && <path d={`M ${CX - 8} ${CY - 7} h 16`} />}
+      <g opacity={clamp01(centerOpacity)}>
+        <circle cx={CX} cy={CY} r={30} fill={theme.sheet} stroke={theme.rule2} strokeWidth={1} />
+        <g
+          stroke={tint}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={3.2}
+          style={verdictTone !== "mute" && g > 0 ? { filter: `drop-shadow(0 0 ${(3 * Math.min(g, 1)).toFixed(2)}px ${alpha(tint, 0.55)})` } : undefined}
+        >
+          {verdictWord === "clean" && <path d={`M ${CX - 8} ${CY - 6} l 6 6.5 l 11 -12.5`} />}
+          {(verdictWord === "flagged" || verdictWord === "review") && (
+            <>
+              <path d={`M ${CX} ${CY - 15} v 11`} />
+              <circle cx={CX} cy={CY + 1} r={0.6} strokeWidth={4} />
+            </>
+          )}
+          {(verdictWord === "measuring" || verdictWord === "partial") && (
+            <g fill={tint} stroke="none">
+              <circle cx={CX - 9} cy={CY - 7} r={2.4} />
+              <circle cx={CX} cy={CY - 7} r={2.4} />
+              <circle cx={CX + 9} cy={CY - 7} r={2.4} />
+            </g>
+          )}
+          {verdictWord === "no data" && <path d={`M ${CX - 8} ${CY - 7} h 16`} />}
+        </g>
+        <text
+          x={CX}
+          y={CY + 17}
+          textAnchor="middle"
+          fontSize={10}
+          fill={tint}
+          fontFamily={fonts.serif}
+          style={{ fontVariantCaps: "all-small-caps", letterSpacing: "0.08em", fontWeight: 500 }}
+        >
+          {verdictWord}
+        </text>
       </g>
-      <text
-        x={CX}
-        y={CY + 17}
-        textAnchor="middle"
-        fontSize={10}
-        fill={tint}
-        fontFamily={fonts.serif}
-        style={{ fontVariantCaps: "all-small-caps", letterSpacing: "0.08em", fontWeight: 500 }}
-      >
-        {verdictWord}
-      </text>
     </svg>
   );
 };

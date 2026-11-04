@@ -19,7 +19,7 @@ import { FORM, LAB, REPORT, REPORT_SCROLL, SCREEN_CHANGES, SCREEN_INDEX, keyfram
 
 /** Measured in the DOM by tools/measure-anchors.mjs, window px. */
 export const MEASURED = measured as unknown as {
-  workspace: { scenarioSelect: Rect; profileStrict: Rect; profileObserve: Rect; holdSelect: Rect; runButton: Rect; paneTabs: Rect[] };
+  workspace: { scenarioSelect: Rect; profileStrict: Rect; profileObserve: Rect; holdSelect: Rect; runButton: Rect; paneTabs: Rect[]; dial: Rect };
   lab: { tiles: Rect[]; cards: { top: number; h: number }[]; list: Rect; runInCard: Rect; cardX: number; cardW: number };
   report: { verifyButton: Rect; firstCard: Rect };
   infra: { firstPanel: Rect };
@@ -72,6 +72,8 @@ export const workspaceAnchors = {
   runButton: (): Rect => MEASURED.workspace.runButton,
   /** A Workspace centre tab pill: 0 terminal, 1 browser, 2 files. */
   paneTab: (index: number): Rect => MEASURED.workspace.paneTabs[index],
+  /** The containment dial of the BlastPanel (the svg's own box, 280.5 px square, window px): where S1's dial lands (patch 12c). */
+  dial: (): Rect => MEASURED.workspace.dial,
 };
 
 // ---------------------------------------------------------------------------------------------- Attack Lab

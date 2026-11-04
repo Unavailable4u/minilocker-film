@@ -68,6 +68,8 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
           holdSelect: rect(framed(first("hold 1 min"), root)),
           runButton: rect(framed(first("Run in sandbox"), root)),
           paneTabs: tabs,
+          // patch 12c: the containment dial of the BlastPanel (the svg itself, so its centre is the dial's centre): where S1's dial lands
+          dial: rect(root.querySelector('svg[role="img"][aria-label^="Containment dial"]') ?? first("Containment dial")),
         };
       } else if (frame < 3000) {
         const tiles = Array.from(root.querySelectorAll('[role="group"]')[0].children).map(rect);
