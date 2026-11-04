@@ -421,6 +421,12 @@ export const s3 = {
   calloutAllowlist: "Allowlist only",
   captionBait: "Bait, not secrets.",
   /**
+   * Patch 14b: the hostile module of the fix_repo_v2 fixture and how it describes itself (BIBLE 6 S3, Appendix B). Shown in the module band of the
+   * box. When S3 is built from the Attack Lab run (evidence.s3Source) the attack's own title is shown instead and the description is not.
+   */
+  module: "shop/_telemetry.py",
+  moduleBlurb: "Optional anonymous usage statistics",
+  /**
    * Container chips (README hardening facts). 128 and 512 are product limits, not run measurements;
    * if /api/infra exposes the live limits, patch 14 should prefer those.
    */

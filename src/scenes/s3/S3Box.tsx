@@ -1,19 +1,79 @@
-// S3Box (patch 14a): the hardened container of scene S3, ONE persistent object drawn from f1559 to the end of S3. It is not part of S3a / S3b / S3c
+// S3Box (patches 14a, 14b): the hardened container of scene S3, ONE persistent object drawn from f1559 to the end of S3. It is not part of S3a / S3b / S3c
 // because all three act on it: 14a draws it and its six chips and plants the decoys; 14b turns the decoy tiles amber (the reads) and writes the
 // module's name in the module band; 14c runs the audit line, the stamp and the sealing ring over it. Those patches resend THIS file (every addition
 // is marked "14b" / "14c" below) and leave S3a untouched.
 //
 // The box has a backing panel (a near-opaque graphite rounded rectangle under the ContainerBox): over the app, dimmed and blurred, the app's own
 // text still shows through ContainerBox's 60 % interior, and a blurred terminal line between two decoy tiles reads as noise.
+//
+// 14b: the module plate (`ModulePlate`, box-local, in the module band) names the hostile module from f1682; each real `canary.read` of the ledger turns
+// its tile amber on the frame `s3ReadFrames` gives it, with the real ledger line under the tile; the plate answers every read with a short amber pulse
+// and, when the packet leaves it (`s3PacketStart`), a short ink one. The wall, the packet and the readout are not here: they are S3b's.
 import React from "react";
 import { Badge, badgePulse, badgeReveal } from "../../fx/Badge";
-import { alpha, theme } from "../../config/theme";
+import { alpha, fonts, theme } from "../../config/theme";
 import { copy, gfxA } from "../../config/copy";
+import { clamp01, signature, stepPulse } from "../../lib/ease";
 import { BOX_H, BOX_RADIUS, BOX_W, ContainerBox } from "../../gfx/ContainerBox";
 import { DecoyRack, type DecoyTile } from "../../gfx/DecoyRack";
 import type { SceneOverlayProps } from "../types";
-import { s3Data } from "./data";
-import { S3_BOX, S3_TIMING, s3BoxDraw, s3ChipProgress, s3DecoyReveal, s3Rack } from "./shared";
+import { s3Data, type S3Data } from "./data";
+import {
+  S3_BOX,
+  S3_PLATE,
+  S3_TIMING,
+  s3BoxDraw,
+  s3ChipProgress,
+  s3DecoyReveal,
+  s3ModulePlate,
+  s3PacketStart,
+  s3Rack,
+  s3ReadFrames,
+  type S3ModulePlate,
+} from "./shared";
+
+/** 14b: how long the plate's pulses last. */
+const PULSE_FRAMES = 14;
+
+/** 14b: the hostile module's plate, box-local px. Drawn on from the left (a mask), then it only reacts: amber for a read, ink for the send. */
+const ModulePlate: React.FC<{ frame: number; plate: S3ModulePlate; data: S3Data; readFrames: readonly number[]; sendFrame: number }> = ({ frame, plate, data, readFrames, sendFrame }) => {
+  const m = S3_TIMING.module;
+  const reveal = signature(clamp01((frame - m.from) / m.frames));
+  if (reveal <= 0) return null;
+  const read = readFrames.reduce((best, f) => Math.max(best, stepPulse(frame, f, PULSE_FRAMES)), 0);
+  const send = stepPulse(frame, sendFrame, PULSE_FRAMES);
+  const border = read > 0.01 ? alpha(theme.warn, 0.35 + 0.65 * read) : send > 0.01 ? alpha(theme.ink, 0.35 + 0.65 * send) : theme.rule2;
+  const glow = read > 0.01 ? `0 0 ${20 * read}px ${alpha(theme.warn, 0.35 * read)}` : send > 0.01 ? `0 0 ${16 * send}px ${alpha(theme.ink, 0.2 * send)}` : "none";
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: plate.x,
+        top: plate.y,
+        width: plate.w,
+        height: plate.h,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        padding: `0 ${S3_PLATE.padX}px`,
+        borderRadius: 10,
+        border: `1.5px solid ${border}`,
+        background: theme.raised,
+        boxShadow: glow,
+        whiteSpace: "nowrap",
+        clipPath: `inset(-24px ${(1 - reveal) * 100}% -24px -24px)`,
+      }}
+    >
+      <span style={{ fontFamily: fonts.mono, fontSize: S3_PLATE.nameSize, lineHeight: 1.2, color: theme.ink }}>{data.module.name}</span>
+      {data.module.blurb ? (
+        <>
+          <span style={{ width: 1, height: 22, margin: `0 ${S3_PLATE.gap}px`, background: theme.rule2 }} />
+          <span style={{ fontFamily: fonts.mono, fontSize: S3_PLATE.blurbSize, lineHeight: 1.25, color: theme.ink3 }}>{data.module.blurb}</span>
+        </>
+      ) : null}
+    </div>
+  );
+};
 
 export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
   if (frame < S3_TIMING.box.drawFrom - 1) return null;
@@ -22,7 +82,24 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
   const draw = s3BoxDraw(frame);
 
   // 14a: every decoy is planted (graphite). 14b: a tile whose canary.read has landed is "read" (amber) with its ledger line.
-  const tiles: DecoyTile[] = data.decoys.map((d, i) => ({ id: d.id, label: d.label, state: "idle", reveal: s3DecoyReveal(frame, i) }));
+  const readFrames = s3ReadFrames(data.reads);
+  const r = S3_TIMING.reads;
+  const tiles: DecoyTile[] = data.decoys.map((d, i) => {
+    const base = { id: d.id, label: d.label, reveal: s3DecoyReveal(frame, i) };
+    const k = data.reads.findIndex((x) => x.decoy === i);
+    if (k < 0 || frame < readFrames[k]) return { ...base, state: "idle" };
+    const at = readFrames[k];
+    return {
+      ...base,
+      state: "read",
+      stateProgress: clamp01((frame - at) / r.stateFrames),
+      line: data.reads[k].line,
+      lineProgress: clamp01((frame - at - r.lineDelay) / r.lineFrames),
+    };
+  });
+
+  const plate = s3ModulePlate(data.decoys.length, data.module.name, data.module.blurb);
+  const sendFrame = s3PacketStart(plate.stageRight);
 
   return (
     <>
@@ -41,6 +118,7 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
       />
       <ContainerBox x={S3_BOX.x} y={S3_BOX.y} chips={copy.s3.chips} chipProgress={s3ChipProgress(frame)} drawProgress={draw}>
         <DecoyRack x={rack.x} y={rack.y} tiles={tiles} stateLabels={{ idle: gfxA.decoyIdle, read: gfxA.decoyRead, used: gfxA.decoyUsed }} />
+        <ModulePlate frame={frame} plate={plate} data={data} readFrames={readFrames} sendFrame={sendFrame} />
       </ContainerBox>
 
       {/* when S3 is built from the Attack Lab run (evidence.s3Source): its tag, in the row of the three top chips, right of "no capabilities" (stage y 118-160, inside the safe margin) */}

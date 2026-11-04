@@ -8,14 +8,18 @@
 //   box            x 160-1260, y 190-790 (BOX_W x BOX_H, ContainerBox). Its six chips stand 30 px off the edge: the top ones reach y 118, the
 //                  bottom ones y 862, the right one x 1290-~1480. The caption's ink starts at y ~905: it never meets a chip.
 //   rack           3 x 2 DecoyRack in the box, box-local (52, 32), 996 x 404 plus a 70 px room for ledger lines (to box-local y 506).
-//   module band    box-local y 520-580: reserved for 14b's hostile module name ("shop/_telemetry.py").
-//   egress         wall at stage x 1500, packets leave the box's right edge (x 1260) at `packetY`.
+//   module band    box-local y 520-580: 14b's hostile module plate (box-local y 534-578, one line: "shop/_telemetry.py" + its description).
+//   egress         wall at stage x 1500. 14b: packets leave the module plate's right end (`s3ModulePlate(...).stageRight`), along `packetY`
+//                  (the plate's middle, stage y 746), through the box's right edge (x 1260) to the wall.
 import React from "react";
 import { alpha, theme } from "../../config/theme";
 import { BEAT } from "../../config/timeline";
 import { clamp01, signature } from "../../lib/ease";
+import { MIN_EVENT_SPACING, makeClock } from "../../lib/clock";
+import { MONO_ADVANCE, estimateWidth } from "../../fx/util";
 import { BOX_H, BOX_W } from "../../gfx/ContainerBox";
 import { COL_GAP, decoyRackSize, ROW_GAP, TILE_H, TILE_W } from "../../gfx/DecoyRack";
+import { packetWallFrame } from "../../gfx/EgressWall";
 
 // ---------------------------------------------------------------------------------------------- layout
 
@@ -30,8 +34,41 @@ export function s3Rack(count: number): { x: number; y: number; w: number; h: num
 /** The box-local band under the rack that 14b uses for the hostile module's name. */
 export const S3_MODULE_BAND = { y: 520, h: 60 } as const;
 
-/** Stage px of the box's right edge (where packets leave) and the y packets fly along (the box's vertical middle). */
-export const S3_EGRESS = { fromX: S3_BOX.x + BOX_W, packetY: S3_BOX.y + BOX_H / 2 } as const;
+/**
+ * 14b: the hostile module's plate, in the module band (box-local y 534-578). One line: the module's name (mono 22) and, from the task ledger, its own
+ * description (mono 20, dim) after a hairline. Its left edge is the rack's.
+ */
+export const S3_PLATE = { y: 534, h: 44, padX: 16, gap: 14, nameSize: 22, blurbSize: 20 } as const;
+
+export interface S3ModulePlate {
+  /** Box-local px (children of the ContainerBox). */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  nameW: number;
+  /** 0 when there is no description. */
+  blurbW: number;
+  /** Stage px: the plate's right edge, where the packet leaves, and its middle height. */
+  stageRight: number;
+  stageMidY: number;
+}
+
+/** Geometry of the module plate for `count` decoys (the rack's left edge) and the module's name / description. Text widths are estimates (mono advance 0.525). */
+export function s3ModulePlate(count: number, name: string, blurb: string | null): S3ModulePlate {
+  const p = S3_PLATE;
+  const nameW = Math.round(estimateWidth(name, p.nameSize, MONO_ADVANCE));
+  const blurbW = blurb ? Math.round(estimateWidth(blurb, p.blurbSize, MONO_ADVANCE)) : 0;
+  const w = p.padX * 2 + nameW + (blurb ? p.gap * 2 + 1 + blurbW : 0) + 3; // + the 1.5 px border either side
+  const x = s3Rack(count).x;
+  return { x, y: p.y, w, h: p.h, nameW, blurbW, stageRight: S3_BOX.x + x + w, stageMidY: S3_BOX.y + p.y + p.h / 2 };
+}
+
+/**
+ * Stage px of the box's right edge, and the y packets fly along: the middle of the module plate (14a had the box's vertical middle, y 490; with the
+ * sample's host the refusal tag then stands on the allowlist plaque, y 356-434 against 212-410, so the packet flies lower, under the ledger lines).
+ */
+export const S3_EGRESS = { fromX: S3_BOX.x + BOX_W, packetY: S3_BOX.y + S3_PLATE.y + S3_PLATE.h / 2 } as const;
 
 /** Stage position of a decoy tile (index in the rack, row-major) and its size. */
 export function s3TileRect(index: number, count: number): { x: number; y: number; w: number; h: number } {
@@ -63,6 +100,15 @@ export const S3_TIMING = {
   calloutRandom: { start: 1620, end: 1679 },
   /** The last frame 14a draws on. 14b's first camera keyframe and first overlay item start at f1680 or later. */
   partEnd: 1679,
+  /** 14b: the module plate is drawn on (a mask from the left) over 16 frames from f1682. */
+  module: { from: 1682, frames: 16 },
+  /**
+   * 14b: the reads. The `canary.read` events of the ledger are mapped onto f1692-1752 by a LedgerClock (their real spacing, at least 6 frames apart,
+   * see `s3ReadFrames`); each tile then lights amber over 30 frames and its ledger line rises 6 frames after the read, over 14 frames.
+   */
+  reads: { from: 1692, to: 1752, stateFrames: 30, lineDelay: 6, lineFrames: 14 },
+  /** 14b: the packet's wall hit is on the beat f1830; it leaves the module plate the frames before that its flight takes (see `s3PacketStart`). */
+  send: { hit: 1830 },
 } as const;
 
 /** 0..1 progress of each of the six chips on `frame`. */
@@ -79,6 +125,34 @@ export function s3BoxDraw(frame: number): number {
 export function s3DecoyReveal(frame: number, i: number): number {
   const d = S3_TIMING.decoys;
   return signature(clamp01((frame - (d.from + i * d.stagger)) / d.riseFrames));
+}
+
+/**
+ * 14b: the frame on which each read lands, one integer per entry of `reads` (ledger order), from the events' own timestamps.
+ * A LedgerClock with ONE segment maps the real time from the first read to the last onto S3_TIMING.reads (f1692-1752): two reads 0.03 s apart in the
+ * ledger are the film's two ends of that window, a burst is spread evenly, and the reads keep their order. A read is never less than MIN_EVENT_SPACING
+ * (6) frames after the one before it, so a dense burst stays readable (at most 6 decoys: the last lands by f1782, before the packet's hit).
+ * One read, or reads with one timestamp, play from the window's start (the segment is given 1 s so the clock accepts it).
+ */
+export function s3ReadFrames(reads: readonly { ts: number }[]): number[] {
+  if (reads.length === 0) return [];
+  const { from, to } = S3_TIMING.reads;
+  const t0 = reads[0].ts;
+  const last = reads[reads.length - 1].ts;
+  const clock = makeClock([], [{ fromTs: t0, toTs: last > t0 ? last : t0 + 1, startFrame: from, endFrame: to }]);
+  const out: number[] = [];
+  let prev = -Infinity;
+  for (const r of reads) {
+    const frame = Math.max(Math.round(clock.frameOfTs(r.ts)), prev + MIN_EVENT_SPACING);
+    out.push(frame);
+    prev = frame;
+  }
+  return out;
+}
+
+/** 14b: the frame the packet leaves the module plate (`fromX`, stage px) so that it touches the wall on S3_TIMING.send.hit (a beat), at 18 px per frame. */
+export function s3PacketStart(fromX: number): number {
+  return Math.round(S3_TIMING.send.hit - packetWallFrame(0, fromX));
 }
 
 /** 0..1: how much the app is stepped back under the explainer. */
@@ -127,4 +201,9 @@ export const S3Scrim: React.FC<{ frame: number }> = ({ frame }) => {
   if (!(t.chips.beats[5] + t.chips.frames <= t.partEnd + 8)) throw new Error("S3: the last chip must have landed by the end of 14a");
   if (!(t.calloutRandom.end <= t.partEnd)) throw new Error("S3: the 'Random per task' callout must be gone by the end of 14a");
   if (!(S3_BOX.y - 72 >= 96 && S3_BOX.y + BOX_H + 72 <= 905)) throw new Error("S3: the chips must stay inside the safe margin and clear of the captions");
+  // 14b
+  if (!(t.module.from > t.partEnd)) throw new Error("S3: the module plate (14b) must start after 14a's last frame");
+  if (!(t.reads.from > t.partEnd && t.reads.from > t.module.from && t.reads.to > t.reads.from)) throw new Error("S3: the reads (14b) must start after the module plate and after 14a");
+  if (t.send.hit % BEAT !== 0) throw new Error(`S3: the packet's hit f${t.send.hit} is not on a beat (BEAT = ${BEAT})`);
+  if (!(S3_PLATE.y >= S3_MODULE_BAND.y && S3_PLATE.y + S3_PLATE.h <= S3_MODULE_BAND.y + S3_MODULE_BAND.h)) throw new Error("S3: the module plate must sit inside the module band");
 })();

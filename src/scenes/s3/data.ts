@@ -12,6 +12,7 @@ import type { LedgerEvent } from "../../data/types";
 import { copy } from "../../config/copy";
 import { SCREEN_INDEX } from "../../config/script";
 import { describe, measure } from "../../lib/derive";
+import { gaugesOf } from "../../lib/gauges";
 
 export interface S3Decoy {
   /** Evidence item id (aws_secret, ssh_key, ...): picks the icon in DecoyRack, never shown. */
@@ -62,6 +63,16 @@ export interface S3Data {
   proxy: string | undefined;
   /** The teardown audit: what the stamp of 14c shows. */
   audit: { realSecretsInSandbox: number; scanned: boolean; decoysRead: number; decoysUsed: number };
+  /**
+   * 14b: the hostile module the module band names. From the task ledger it is the fixture's module and its own description (copy.s3, BIBLE Appendix B);
+   * from the Attack Lab run it is the attack's title and `blurb` is null.
+   */
+  module: { name: string; blurb: string | null };
+  /**
+   * 14b: the app's own Network gauge for this ledger (gaugesOf, the function behind the Blast panel's card): `label` "Network", `blocked` its value,
+   * `sub` its second line ("blocked . N allowed . N host(s)"). The card in the dimmed app already shows the final value, so 14b counts it up in stage space.
+   */
+  network: { label: string; blocked: number; sub: string };
 }
 
 function fail(what: string): never {
@@ -112,11 +123,18 @@ function build(): S3Data {
     return fail(`the sandbox audit found ${audit.realSecretsInSandbox} real secret(s) inside (${m.realSecrets.join(", ")}); the film must not hide it, so S3 will not render`);
   }
 
+  const net = gaugesOf(events, false).find((g) => g.key === "net");
+  if (!net || !net.measured || typeof net.value !== "number") return fail("the Network gauge cannot be read from the ledger");
+  if (net.value < 1) return fail("the Network gauge says 0 blocked although the ledger has an egress.blocked event");
+  const network = { label: net.label, blocked: net.value, sub: net.sub };
+
+  const attackTitle = attackName ? selectAttack(attackName).title : null;
+
   return {
     source,
     events,
     tag: attackName ? `${copy.ui.screens[SCREEN_INDEX.attackLab]} - ${attackName}` : null,
-    attackTitle: attackName ? selectAttack(attackName).title : null,
+    attackTitle,
     decoys,
     planted: decoys.length,
     reads,
@@ -124,6 +142,8 @@ function build(): S3Data {
     allowedHosts: egress.allowed_hosts,
     proxy: egress.proxy,
     audit,
+    module: attackTitle ? { name: attackTitle, blurb: null } : { name: copy.s3.module, blurb: copy.s3.moduleBlurb },
+    network,
   };
 }
 
