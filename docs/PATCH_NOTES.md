@@ -1063,3 +1063,32 @@ Patch 14 (S3, f1500-2099) is split like S2: `S3Decoys.tsx` assembles `s3/S3a.tsx
 - `tsc --noEmit` clean. All import-time checks run and pass on the SAMPLE evidence (audit: 0 real secrets, scanned). `S3Box` server-renders without an exception on every frame f1930-2099, and renders nothing from f2094.
 - **NOT verified visually:** no still was rendered or looked at (the Remotion browser could not be downloaded in the session this patch was written in). Geometry was checked by arithmetic and by `getCameraState` / `worldToStage` at the real poses, not by eye. Run the CHECK stills at f1930, f1950, f1970, f1990, f2010, f2030, f2060, f2085 and look in particular at: the stamp's size against the dimmed rack (40 px mono, ~610 px wide, centred); the thinness of the seal ring at 0.44; the box against the terminal text under it at f2030-2078; the caption (f1930-2016) against the box's bottom chips; the ruler's ticks across the dimmed plate.
 - The sample evidence has 2 of 6 decoys read, so the app's Secrets card at f2010 says "0 real in sandbox . 2 of 6 decoys read . 0 used" (sample data).
+
+## Patch 15a - S4a Rewind: the Attack Lab and the wipe, part 1 of 3: the pick (f2100-2219)
+
+**Changed files:** `src/scenes/s4/S4a.tsx` (now a thin assembly), `src/scenes/s4/S4a1.tsx` (new: camera, cursor), `src/scenes/s4/shared.tsx` (new: timing, import-time checks), `src/scenes/s4/data.ts` (new: the evidence S4a reads), `src/config/focus.ts` (one new focus, `attackLabPick`), `docs/PATCH_NOTES.md`. `S4Rewind.tsx` and `S4b.tsx` are untouched: `S4Rewind.tsx` already concatenates `S4A_*` / `S4B_*` and renders both overlays, and `S4a.tsx` keeps the three names it imports.
+
+### What 15a contains
+- **The screen is the app's own.** filmState already builds the Attack Lab from `LAB`: the underline slide (SCREEN_CHANGES f2100, swap f2112), the 15 tiles and the donut at "0 / 15 contained" (every tile is "not run" until the click), the hover rings (`LAB.tileHovers`), the select (f2200), the list scroll (f2201-2216) and Run's hover (f2212). Nothing is retyped; 15a adds only the camera and the cursor, and **draws nothing in stage space**.
+- **Camera:** S3 leaves it on the nav. f2112 (the swap) a 42 f signature move to `attackLabPick` (padding 48, zoom 2.09), landed f2154; f2154-2216 a 5 % push on the same region, arrived as the card comes to rest. No tilt (text at zoom > 2).
+- **Cursor** (window px, computed FROM `LAB` and the measured anchors): appears f2138 at (800, 320); tile 1 f2166, tile 4 f2174, tile 8 f2182, tile 13 f2190, the hero's tile (11) f2196; **f2200 the select is a hover-dwell, no click ripple** (the spec's only click is Run); f2212 and f2216 it rides the hero card's Run button up the list (`labRunAnchor` for the frame) and rests on it at (402, 366). **No waypoint after f2216, none with `click`:** the click on Run (LAB.pressAt, f2220) is 15b's first waypoint, on the position 15a rests on.
+- **`data.ts` (`s4Data()`)** is written once for all of S4a (and S4b): the hero's catalog index, title, category; the write step (path, text); the wipe step (real command, raw result, and `token`, its output line, "WIPED_0"); the cat step; `rewind` (from the ledger's `rewind.requested`); and `snapshot` (the `snapshot.created` the rewind goes back to: id, sha256, `short` = 8 hex). It throws, naming what is missing, if any of these is absent. **There is no "snapshot 1" fallback**: the evidence has the hash, and a film that silently drops it would hide a capture problem.
+
+### PUBLIC API
+- `S4A1_CAMERA` (2 keyframes: f2112, f2154), `S4A1_CURSOR` (9 waypoints, f2138-2216), `S4a1` (null overlay); `S4A_CAMERA`, `S4A_CURSOR`, `S4a` in `S4a.tsx`.
+- `shared.tsx`: `S4_TIMING` (`landing`, `push`, `cursorEnter`, `partEndA1`), `S4_PICK_PADDING`, `S4_CURSOR_ENTER`.
+- `focus.ts`: `attackLabPick` {x 0, y 75.47, w 820, h 470}: the left of the summary bar (donut, tiles x 171-771) and the top of the card list. No existing focus holds both the 34 px tiles and the hero's card at a readable zoom (`attackSummary` and `attackGrid` are each half of it).
+
+### Decisions and conventions future patches must follow
+1. **15b's first camera keyframe starts at f2220 or later**, from `attackLabPick` (padding 48, bias 1.05); its first cursor waypoint is the Run click at f2220 on (402.3, 366.4). The camera in 15b/15c has to leave the steps pane (`attackDetail`, window x 760+) clear for the lattice's neighbour: the lattice sits over the LEFT half, so the pick region can no longer be the frame.
+2. **Select is not a click.** If a second click is wanted, it is a `click: true` on the f2200 waypoint in `S4a1.tsx` and the "no click" check there goes with it; `script.ts` needs no change (the app's select state is not tied to a press).
+3. **`S4_CUE_ANCHORS`** (the silence over f2370-2399 and the glass-shatter at f2340 that patch 22 reads) does not exist yet: it belongs to 15c, in `shared.tsx`.
+4. **The persistent stage object** (lattice, timeline and wipe state, like `S3Box`) is 15b's to create and 15c's to extend; patch 16 drives reassemble, the ghost container and the "rewound" node on it. 15a leaves no stage-space object behind.
+5. The cursor's frames are never typed in `S4a1.tsx`: change them in `script.ts` `LAB`, and the import-time checks tell you if the gestures no longer fit (cursor off the stage, appearing after the first hover, out of order, a click in 15a, a last waypoint at or after f2220).
+
+### Known issues
+- `tsc --noEmit` clean. Five deliberate breaks (cursor off the stage, cursor late, a tile that does not exist, no snapshot in the ledger, a wipe with no output) each throw with a message naming the cause.
+- Stills looked at (full size): f2130 (mid-landing), f2170 (tile sweep), f2200 (the select), f2214 (Run arriving), f2219 (the last frame: cursor on Run, "NOT RUN"). The cursor rides the hover state by 2-4 frames (its overshoot curve): at f2170 it is on tile 4 while the ring is still on tile 1.
+- **NOT verified:** motion (the landing's feel, the cursor's 12 f flick from the tile row to Run, which is 35 window px per frame and the film's fastest), and f2100-2112 (S3's nav hold with the underline mid-slide: unchanged by this patch).
+- The window's left edge is 58-103 px inside the stage in this shot (`attackLabPick` is narrower than the stage's aspect): that strip is the stage background. It is intended; a wider region would shrink the tiles.
+- The evidence is still the SAMPLE (`meta.sample`): the hash, the file text and "WIPED_0" are sample data.

@@ -72,6 +72,7 @@ export type FocusName =
   | "attackSummary"
   | "attackGrid"
   | "attackDetail"
+  | "attackLabPick"
   | "reportGrid"
   | "verifyButton"
   | "infraDiagram"
@@ -94,6 +95,7 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "attackSummary",
   "attackGrid",
   "attackDetail",
+  "attackLabPick",
   "reportGrid",
   "verifyButton",
   "infraDiagram",
@@ -156,6 +158,12 @@ export const FOCUS: Record<FocusName, Rect> = {
   attackGrid: { x: 24, y: GRID.headerH + 180, w: 720, h: WINDOW.h - GRID.headerH - 196 },
   /** Attack Lab: the detail pane (steps, policy decisions, egress rows, checks) */
   attackDetail: { x: 760, y: GRID.headerH + 180, w: WINDOW.w - 784, h: WINDOW.h - GRID.headerH - 196 },
+  /**
+   * S4a (patch 15a): where the cursor picks the attack. The left of the summary bar (the donut and the 15 verdict tiles, x 171-771) and the top of the
+   * card list under it: after the list's scroll the hero's card rests at y 258-393 with its Run button inside. No other focus holds both the tiles and
+   * the card at a zoom the 34 px tiles can be read at (attackSummary and attackGrid are each one half of this).
+   */
+  attackLabPick: { x: 0, y: GRID.headerH + 8, w: 820, h: 470 },
   /** Report: the nine dimension cards */
   reportGrid: { x: 24, y: GRID.headerH + 90, w: WINDOW.w - 48, h: 640 },
   /** Report: the "Verify ledger now" button in the ledger block */
