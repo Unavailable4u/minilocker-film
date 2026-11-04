@@ -1033,3 +1033,33 @@ Patch 14 (S3, f1500-2099) is split like S2: `S3Decoys.tsx` assembles `s3/S3a.tsx
 - NOT verified: motion feel of the pull and of the scrim's blur ramp, whether the chips land on the beats in the Studio, the box's draw-on over the dimmed window in motion.
 - f1650-1679 is a calm shot (all chips landed, nothing moves but the camera drift): 29 frames, under the film's 1.5 s limit; 14b's first item can start earlier than f1680 if that reads as slack, but not its first camera keyframe.
 - The evidence is still the SAMPLE (`meta.sample`): the decoy labels, the "2 of 6" and the "1 blocked" in these stills are sample data.
+
+## Patch 14c - S3 Decoys + egress, part 3 of 3: the audit and the seal (f1930-2099), closes patch 14
+
+**Changed files:** `src/scenes/s3/S3c.tsx` (the stub is now the real part), `src/scenes/s3/S3Box.tsx` (resent: audit, stamp, seal, pull-back, exit), `src/scenes/s3/shared.tsx` (14c timing, the pull-back pose, import-time checks), `docs/PATCH_NOTES.md`. No config, fx, gfx, ui or data file is touched; `S3a.tsx`, `S3b.tsx`, `data.ts` and `S3Decoys.tsx` are unchanged.
+
+### What 14c contains
+- **Caption** "Bait, not secrets." (highlight "Bait,") f1930-2016, at the film's usual position. The box is still full size while it is up (lowest chip ends y 862, the caption's ink starts y ~905); it is gone as the scrim has finished leaving (f2018).
+- **Audit** f1935-1965: `ContainerBox`'s audit line sweeps the box (30 f, constant speed); its ruler stays on the bottom edge afterwards.
+- **Stamp** on the beat f1965: `StampBox` (tone ok, 40 px) "real secrets in sandbox: {n}", `n = s3Data().audit.realSecretsInSandbox` (the app's own audited count, via `measure()`). The rack and the module plate step back to 28 % over f1958-1976 so the stamp does not lie over tile labels. The camera takes a 5 px impact on f1965 (a no-move keyframe: the dimmed app jolts, the stage-space box does not).
+- **The film must not hide it:** `data.ts` already refuses to build S3 when the audit found a real secret; `S3c.tsx` (on import) and `S3Box.tsx` (on render) re-check the count, and `S3c.tsx` also throws when the ledger's audit never scanned the sandbox (a "0" without a measurement). Tested by injecting a real secret into a temporary copy of the evidence: the build throws and names it.
+- **Hand-back to the app** f2004: the camera leaves the dimmed window for `blastPanel` (padding 96, zoom 1.067, arrives f2032) while the scrim leaves (f2004-2018). The live Secrets card is on screen, its "0 real in sandbox" next to the stamp's 0.
+- **Pull-back** f2004-2032: the whole box group (chips, ring, stamp, tag) shrinks to scale 0.44 and rests at stage x 112, y 408 (`S3_PULLBACK`), in the strip left of the panel (the panel is stage x 715-1205; the box's right chip ends x ~691).
+- **Seal ring** f2040-2066 closes on the pulled-back box (ContainerBox's own `sealProgress`); it holds sealed to f2078, then the box leaves (fade + 48 px drift left, f2078-2094).
+- **Swing to the nav** f2052-2088 (`nav`, padding 96, zoom 2.56, no tilt); 11 frames of drift hold before the cut at f2100, where `script.ts` already starts the underline slide to "Attack Lab" (hover lead from f2080). The box is gone before the camera lands, so it never crosses the header.
+
+### PUBLIC API
+- `S3C_CAMERA` (3 keyframes: f1965 thud, f2004 `blastPanel`, f2052 `nav`), `S3C_CURSOR` (empty), `S3C_TIMING`, `S3c` (the caption).
+- `shared.tsx`: `S3_TIMING.partEndB/audit/stamp/pullback/seal/exit`, `S3_PULLBACK`, `s3BoxPose(frame)`, `s3AuditProgress`, `s3StampProgress`, `s3SealProgress`, `s3ContentOpacity`.
+- `S3Box`: now one wrapper `div` (stage-sized, `transform-origin 0 0`) around the backing panel, the ContainerBox and the tag; it returns null from f2094.
+
+### Decisions and conventions future patches must follow
+1. **S4a (patch 15):** its first camera keyframe starts at f2100 or later, from the pose S3 ends on (`nav`, padding 96, no tilt, no bias). Its first cursor waypoint arrives after f2100.
+2. **The box is pulled back, not hidden, when the app returns.** At f2010+ the app is live and undimmed; anything S3 draws over it must stay out of stage x 715-1205 while the camera is on `blastPanel`.
+3. The ring's stroke is ContainerBox's 3 px in box-local px, so at scale 0.44 it is ~1.3 px plus its glow. If that reads too thin, add a `sealStroke` prop to ContainerBox in a later patch rather than enlarging the box (which would reach the panel).
+4. `S3_PULLBACK.to.x` is tied to two import-time checks (right chip at least 16 px clear of the panel, ring inside the 96 px safe margin): change it and the build tells you what moved.
+
+### Known issues
+- `tsc --noEmit` clean. All import-time checks run and pass on the SAMPLE evidence (audit: 0 real secrets, scanned). `S3Box` server-renders without an exception on every frame f1930-2099, and renders nothing from f2094.
+- **NOT verified visually:** no still was rendered or looked at (the Remotion browser could not be downloaded in the session this patch was written in). Geometry was checked by arithmetic and by `getCameraState` / `worldToStage` at the real poses, not by eye. Run the CHECK stills at f1930, f1950, f1970, f1990, f2010, f2030, f2060, f2085 and look in particular at: the stamp's size against the dimmed rack (40 px mono, ~610 px wide, centred); the thinness of the seal ring at 0.44; the box against the terminal text under it at f2030-2078; the caption (f1930-2016) against the box's bottom chips; the ruler's ticks across the dimmed plate.
+- The sample evidence has 2 of 6 decoys read, so the app's Secrets card at f2010 says "0 real in sandbox . 2 of 6 decoys read . 0 used" (sample data).

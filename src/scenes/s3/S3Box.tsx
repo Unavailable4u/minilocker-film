@@ -9,12 +9,18 @@
 // 14b: the module plate (`ModulePlate`, box-local, in the module band) names the hostile module from f1682; each real `canary.read` of the ledger turns
 // its tile amber on the frame `s3ReadFrames` gives it, with the real ledger line under the tile; the plate answers every read with a short amber pulse
 // and, when the packet leaves it (`s3PacketStart`), a short ink one. The wall, the packet and the readout are not here: they are S3b's.
+//
+// 14c: the teardown audit runs over the box. ContainerBox's audit line sweeps it (f1935-1965), its stamp "real secrets in sandbox: {n}" lands on the
+// beat f1965 (n is `s3Data().audit.realSecretsInSandbox`, which data.ts guarantees is 0 and S3c re-checks), the rack and the plate step back behind
+// it, the whole group is then pulled back to the strip left of the live gauges (`s3BoxPose`), the seal ring closes on it (f2040-2066) and it leaves
+// (f2078-2094). The group is ONE wrapper: chips, ring, stamp and the attack tag all scale together.
 import React from "react";
 import { Badge, badgePulse, badgeReveal } from "../../fx/Badge";
 import { alpha, fonts, theme } from "../../config/theme";
 import { copy, gfxA } from "../../config/copy";
 import { clamp01, signature, stepPulse } from "../../lib/ease";
-import { BOX_H, BOX_RADIUS, BOX_W, ContainerBox } from "../../gfx/ContainerBox";
+import { STAGE } from "../../config/timeline";
+import { BOX_H, BOX_RADIUS, BOX_W, ContainerBox, StampBox } from "../../gfx/ContainerBox";
 import { DecoyRack, type DecoyTile } from "../../gfx/DecoyRack";
 import type { SceneOverlayProps } from "../types";
 import { s3Data, type S3Data } from "./data";
@@ -22,13 +28,18 @@ import {
   S3_BOX,
   S3_PLATE,
   S3_TIMING,
+  s3AuditProgress,
   s3BoxDraw,
+  s3BoxPose,
   s3ChipProgress,
+  s3ContentOpacity,
   s3DecoyReveal,
   s3ModulePlate,
   s3PacketStart,
   s3Rack,
   s3ReadFrames,
+  s3SealProgress,
+  s3StampProgress,
   type S3ModulePlate,
 } from "./shared";
 
@@ -77,6 +88,7 @@ const ModulePlate: React.FC<{ frame: number; plate: S3ModulePlate; data: S3Data;
 
 export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
   if (frame < S3_TIMING.box.drawFrom - 1) return null;
+  if (frame >= S3_TIMING.exit.from + S3_TIMING.exit.frames) return null; // 14c: the sealed box has left
   const data = s3Data();
   const rack = s3Rack(data.decoys.length);
   const draw = s3BoxDraw(frame);
@@ -101,8 +113,27 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
   const plate = s3ModulePlate(data.decoys.length, data.module.name, data.module.blurb);
   const sendFrame = s3PacketStart(plate.stageRight);
 
+  // 14c: the stamp's number is the audit's own count; a real secret inside would have stopped the build in data.ts, and is re-checked here
+  // because this is the line the film must never get wrong.
+  const secrets = data.audit.realSecretsInSandbox;
+  if (secrets !== 0) throw new Error(`S3: the audit stamp would read ${secrets}; the film must not show a stamp for a sandbox that held real secrets`);
+  const pose = s3BoxPose(frame);
+  const moved = pose.scale !== 1 || pose.tx !== 0 || pose.ty !== 0;
+
   return (
-    <>
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        width: STAGE.w,
+        height: STAGE.h,
+        transformOrigin: "0 0",
+        transform: moved ? `translate(${pose.tx.toFixed(3)}px, ${pose.ty.toFixed(3)}px) scale(${pose.scale.toFixed(5)})` : undefined,
+        opacity: pose.opacity,
+        pointerEvents: "none",
+      }}
+    >
       <div
         style={{
           position: "absolute",
@@ -116,9 +147,22 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
           pointerEvents: "none",
         }}
       />
-      <ContainerBox x={S3_BOX.x} y={S3_BOX.y} chips={copy.s3.chips} chipProgress={s3ChipProgress(frame)} drawProgress={draw}>
-        <DecoyRack x={rack.x} y={rack.y} tiles={tiles} stateLabels={{ idle: gfxA.decoyIdle, read: gfxA.decoyRead, used: gfxA.decoyUsed }} />
-        <ModulePlate frame={frame} plate={plate} data={data} readFrames={readFrames} sendFrame={sendFrame} />
+      <ContainerBox
+        x={S3_BOX.x}
+        y={S3_BOX.y}
+        chips={copy.s3.chips}
+        chipProgress={s3ChipProgress(frame)}
+        drawProgress={draw}
+        auditProgress={s3AuditProgress(frame)}
+        sealProgress={s3SealProgress(frame)}
+        stampProgress={s3StampProgress(frame)}
+        stamp={<StampBox tone="ok" size={40}>{`${gfxA.stampSecrets}: ${secrets}`}</StampBox>}
+      >
+        {/* 14c: the rack and the plate step back while the stamp lands (one wrapper, so the tiles' own states are untouched) */}
+        <div style={{ position: "absolute", left: 0, top: 0, width: BOX_W, height: BOX_H, opacity: s3ContentOpacity(frame) }}>
+          <DecoyRack x={rack.x} y={rack.y} tiles={tiles} stateLabels={{ idle: gfxA.decoyIdle, read: gfxA.decoyRead, used: gfxA.decoyUsed }} />
+          <ModulePlate frame={frame} plate={plate} data={data} readFrames={readFrames} sendFrame={sendFrame} />
+        </div>
       </ContainerBox>
 
       {/* when S3 is built from the Attack Lab run (evidence.s3Source): its tag, in the row of the three top chips, right of "no capabilities" (stage y 118-160, inside the safe margin) */}
@@ -127,6 +171,6 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
           <Badge label={data.tag} tone="mute" dot={false} reveal={badgeReveal(frame, S3_TIMING.box.drawFrom + 6)} pulse={badgePulse(frame)} />
         </div>
       )}
-    </>
+    </div>
   );
 };
