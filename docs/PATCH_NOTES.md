@@ -790,3 +790,50 @@ Stills: `npx remotion still src/index.ts DevGfxC out/qa/gfxc-N.png --frame=N` fo
 ### Warnings for the next patch
 - `src/Root.tsx` now contains ten Dev compositions: `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens`, `DevGfxA`, `DevGfxB`, `DevGfxC` AND `DevApp`.
 - `evidence.json` must keep `attackCatalog`; patches that regenerate it must too.
+
+---
+
+## Patch 12a - Master film shell, scene contract, stubs (first third of patch 12)
+
+Patch 12 was split because it is too big for one session: **12a** (this) = the film shell, the scene contract and every scene stub; **12b** = S0 Hook (`S0Hook.tsx`, S0 strings in `copy.ts`, `SceneOverlayProps` already exists); **12c** = S1 Title (`S1Title.tsx`, the measured `workspace.dial` anchor, the match cut in `stageState.ts`).
+
+**New files:** `src/fx/StageGlow.tsx`, `src/scenes/types.ts`, `src/scenes/index.ts`, `src/scenes/stageState.ts`, `src/scenes/S0Hook.tsx` ... `S9Outro.tsx` (all stubs, `S4Rewind.tsx` + `s4/S4a.tsx` + `s4/S4b.tsx` included).
+**Changed files:** `src/MiniLockerFilm.tsx` (rewritten).
+
+### PUBLIC API
+- Each scene file exports `SnName` (overlay `React.FC<{frame}>`), `SN_CAMERA` (global frames) and `SN_CURSOR` (global frames, logical px). S4 exports `S4Rewind`, `S4_CAMERA`, `S4_CURSOR` and concatenates `S4A_*` / `S4B_*`; the halves export `S4a` / `S4b`.
+- `src/scenes/index.ts`: `SCENE_OVERLAYS`, `FILM_CAMERA` (a `fullWindow` keyframe at frame 0 is prepended when the first scene keyframe is later), `FILM_CURSOR`.
+- `src/scenes/stageState.ts`: `appReveal(frame)` (FilmApp mount f560, ready f600), `gridOpacity(frame)` (S1 and S9 only), `CAMERA_DOF`.
+
+### Decisions and conventions future patches must follow
+1. `MiniLockerFilm.tsx` is NOT edited again: replace a scene file and the barrel picks it up.
+2. Scenes mount by a frame test (`SCENES[id].start..end`), not `<Sequence from>`, so `useCurrentFrame()` is always the GLOBAL frame.
+3. Overlays are stage-space and sit above the camera; the app and the cursor sit inside it. The cursor is drawn at 1/zoom so it keeps its on-screen size.
+4. The `Stage` wrapper has `flex: none`; without it the 960x540 Preview drew the stage at half height.
+
+### Known issues
+- `tsc --noEmit` clean. Stills of MiniLockerFilm-Preview at f0, 300, 560, 585, 600 were rendered and looked at: f300 shows the perspective grid on the stage glow, f585/f600 the app fading in over it.
+- Depth of field is OFF (`CAMERA_DOF = false`): in the headless Chromium used for QA the blur layer drew mirrored ghost copies of the window. Check it in a normal Chrome; turn it on if it is clean.
+- f0-559 is an empty stage (S0/S1 are stubs until 12b/12c); `appReveal` is a plain fade-and-rise that 12c replaces with the dial match cut.
+
+---
+
+## Patch 12b - S0 Hook (second third of patch 12)
+
+**Changed files:** `src/scenes/S0Hook.tsx` (replaces the stub), `src/config/copy.ts` (`s0` extended: `pageTitle`, `pageUrl`, `agentLine`, `hiddenText`, `terminal`, `tag`; `caption` unchanged).
+
+### PUBLIC API
+- `S0Hook` overlay, `S0_CAMERA` (3% punches at f60 and f105, slow push from f180), `S0_CURSOR` (empty).
+- `S0_TIMING` (every S0 frame number), `S0_TYPING_END`, `HOOK_DOT` ({x:960, y:540, r:24.75}: the core dot S1 must start from).
+
+### Decisions and conventions future patches must follow
+1. The S0 overlay draws ONE opaque layer (stage gradient + the same `<StageGlow/>`) inside `<GlitchLayer>`, so S1 starts seamlessly on the master's stage. Nothing in S0 is drawn by the film's `<Camera>` (the app is not mounted before f560); S0 applies the camera's relative scale (3% punches) and shake to its own content.
+2. The hidden text is the REAL fixture string from Appendix B; the file throws at import time if the agent line is not typed by f52 or the hidden text by f96.
+3. The caption is two `KineticText`s in fixed-height boxes (f180 and f210, `stagger` 4). A single `KineticText` with both lines exits word by word on the same stagger as its entry, so it cannot be used for a held caption. The highlight is `"bad day."` (the token includes the full stop; `"bad day"` never matches).
+4. The glitch is 12 frames (f165-177), the page and terminal are gone from f179, the caption is drawn into the dot f270-285, the dot holds f285-299.
+
+### Known issues
+- `tsc --noEmit` clean. Stills of the Preview at f6, 40, 75, 96, 112, 150, 170, 195, 225, 280, 292 were rendered; f75, 96, 150, 170, 195, 225, 280 were looked at.
+- NOT looked at: f6, 40, 112, 292 (rendered only), motion, and whether the beat hits feel right in the Studio.
+- The terminal card sits under the agent line (not over the page), so all four lines stay readable; move `TERM` if you want it overlapping.
+
