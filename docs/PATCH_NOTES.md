@@ -648,3 +648,69 @@ Stills: `npx remotion still src/index.ts DevGfxA out/qa/gfxa-N.png --frame=N` fo
 ### Warnings for the next patch
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens` AND `DevGfxA`: every patch that adds a Dev composition must keep all seven.
 - Patch 09 (explainers B) shares `src/gfx`; reuse `Packet` and the shard approach of `EgressWall` (`mixSeed` per index) rather than writing another particle helper.
+
+---
+
+## PATCH 09 - Explainers B: file lattice, hash lock, hash chain, snapshot timeline
+
+**New files:** `src/gfx/FileLattice.tsx`, `src/gfx/HashTile.tsx`, `src/gfx/HashChain.tsx`, `src/gfx/SnapshotTimeline.tsx`, `src/gfx/GhostContainer.tsx`, `src/dev/DevGfxB.tsx` (+ composition `DevGfxB`, 1920x1080, 900 f, default prop `specimenMismatch: false`).
+**Changed files:** `src/config/copy.ts` (new group `gfxB`, added to the `copy` object), `src/Root.tsx` (DevGfxB registered), `docs/PATCH_NOTES.md`.
+
+Same conventions as patch 08: everything in `src/gfx` is pure and props-driven (nothing reads the frame, no CSS transitions, no timers, randomness only through `mixSeed`/`rand`/`randInt`). Scenes pass LINEAR 0..1 progress values; components apply their own easing.
+
+### PUBLIC API
+
+**src/gfx/FileLattice.tsx**
+- `<FileLattice x y count? columns? heroIndex? heroLabel? intact? shatter? reassemble? desaturate? seed? footnote? />`, stage px, `x`/`y` = top-left.
+  - `count` 24 and `columns` 6 by default (6 x 4). `heroIndex` = cell index of the TOP-LEFT cell of the hero's 2 x 2 block (192 px tile, mono file name); it throws if the block does not fit. `heroLabel` is required with `heroIndex` (an evidence file name: pass the basename of the `write_file` step path).
+  - `intact` 0..1 staggered arrival. `shatter` 0..1: every tile breaks into 5-9 seeded triangular shards that drift outward LINEARLY (5-14 px/frame, spin, fade out); the scene gives it `SHATTER_FRAMES = 30` frames. At 1 only dashed empty slots remain (WIPED). `reassemble` 0..1 (use after shatter = 1): shards return along quadratic curves with a 4% overshoot (`overshoot(t, 0.04)`), tiles staggered in reading order; at 1 the tiles are drawn whole again. `desaturate` 0..1 drains colour (the film uses 0.3).
+  - `footnote`: mono line under the lattice (pass `copy.gfxB.schematic`).
+- Exports `latticeSize(count?, columns?)` -> `{ w, h, rows }`, `TILE 96`, `TILE_GAP 14`, `HERO_TILE 192`, `SHATTER_FRAMES 30`, `SHARDS_MIN 5`, `SHARDS_MAX 9`, `SHARD_SPEED_MIN 5`, `SHARD_SPEED_MAX 14`, `REASSEMBLE_OVERSHOOT 0.04`.
+
+**src/gfx/HashTile.tsx**
+- `<HashTile x y finalHex referenceHex lockProgress reveal? tickProgress? clock? seed? snapshotLabel restoredLabel mismatchLabel />`. "snapshot" hash (`referenceHex`) on top, "restored" hash (`finalHex`) below, in the same character columns (mono 22 px, 11.55 px per character), with a hairline per locked column (blue = equal, vermilion = different). The restored hash resolves left to right via `lockHex`; `lockProgress` is linear 0..1 (the film gives 20-24 f per tile); `clock` (the global frame) only drives the scramble flicker.
+  - Both hashes must be the same non-zero length (throws). When fully locked AND equal: tick pops (`tickProgress`) and the edge glows ok-blue. When locked and different: hatched vermilion edge, a cross instead of a tick, and `mismatchLabel`. It never shows a tick for a mismatch.
+- Exports `hashTileSize(hexLength?)` -> `{ w, h, hashW }`, `HASH_FONT 22`, `HASH_CH_W 11.55`.
+
+**src/gfx/HashChain.tsx**
+- `<HashChain x y blocks revealProgress highlightIndex? pulse? verifyProgress? sealLabel? hashLabel prevLabel />`.
+  - `blocks: ChainBlock[]` = `{ label, hash, prevHash, tone?, detail?, gapBefore? }`. `label` = the event type in full; `hash`/`prevHash` show 8 hex; `tone` ("plain" | "info" | "ok" | "warn" | "bad") draws a small pin on the block's top-right corner; `detail` = one mono line (an evidence value). 220 x 136 px blocks.
+  - Honest links: a link is drawn SOLID only when `gapBefore` is 0 and `prevHash` equals the previous block's `hash`; otherwise DASHED with "+N" (N = `gapBefore`), because the pointer reaches an event that is not on screen. Pass `gapBefore = e.id - previous.id - 1` when showing a selection of a longer ledger.
+  - `revealProgress` 0..1 for the whole chain (blocks and links draw in order). `highlightIndex` = the delete block: vermilion + hatching, stays. `pulse` 0..1 breathes its glow (the scene drives it, e.g. from a sine). `verifyProgress` 0..1 sweeps a scan line: links turn ok-blue, each block gets a check, then a seal ring + tick and `sealLabel` (the scene builds it from `verify`). The highlighted block stays vermilion after verifying.
+- Exports `hashChainLayout(count)` -> `{ gap, w, h, max }` (throws when `count` blocks do not fit between the 96 px safe margins: at most 7), `CHAIN_BLOCK_W 220`, `CHAIN_BLOCK_H 136`, `CHAIN_GAP_MAX 64`, `CHAIN_GAP_MIN 28`, `CHAIN_SEAL_DROP 78`, types `ChainBlock`, `ChainTone`.
+
+**src/gfx/SnapshotTimeline.tsx**
+- `<SnapshotTimeline nodes nodeProgress? slots? y? x0? x1? railProgress? playhead? tether? nodeWord rewoundLabel />`: a FULL-STAGE layer (SVG, 1920 x 1080, stage px). Rail at `y` 770 from x 96 to 1824.
+  - `nodes: SnapshotNode[]` = `{ n, hash, state: "taken" | "current" | "greyed" | "rewound" }`. A node's index is its SLOT (`timelineNodeX(i, slots)`), so nodes never move when later ones arrive. `nodeProgress` 0..1 per node (landing). States: taken = ring, current = crimson ring (the one accent), greyed = dashed + struck-through (work a rewind threw away), rewound = blue gradient node with a check; it is reached by a blue arc from the earlier node with the same `n` (the arc draws first, then the node lands) and shows `rewoundLabel` under its label.
+  - Labels sit BELOW the rail on one line: "snapshot 1  f546ce19"; the space above the rail belongs to the arc, the tether and the playhead.
+  - `playhead`: fractional node index (omit to hide). `tether`: `{ fromIndex, toX, toY, progress }` a pulse from a node to a point (the GhostContainer), a faint line stays after it arrives.
+- Exports `timelineNodeX(i, slots?, x0?, x1?)`, `TL_X0 96`, `TL_X1 1824`, `TL_Y 770`, types `SnapshotNode`, `SnapshotState`, `TimelineTether`.
+
+**src/gfx/GhostContainer.tsx**
+- `<GhostContainer x y w h draw label>children</GhostContainer>`: hairline outline + fainter echo outline + corner ticks draw on clockwise from the top-left (`draw` linear 0..1, `GHOST_DRAW_FRAMES = 24`), faint ok-blue wash, label chip on the top edge (`copy.gfxB.freshSandbox`). Children are in BOX-LOCAL px. Exports `GHOST_RADIUS 22`, `GHOST_DRAW_FRAMES 24`.
+
+**src/config/copy.ts**: new group `gfxB` = `snapshot` "snapshot", `restored` "restored", `restoredInto` "restored into a fresh sandbox", `freshSandbox` "fresh sandbox", `mismatch` "mismatch", `fileRehashed` "file re-hashed", `filesRehashed` "files re-hashed", `allMatched` "all matched", `hash` "hash", `prev` "prev", `events` "events", `schematic` "schematic: only the labelled tile is a real file". Words only.
+
+**src/dev/DevGfxB.tsx** + composition `DevGfxB` (900 f, S4 timing of BIBLE 6, scene frame = frame + 2160), evidence = attack `rewind_after_rm_rf`: f60 lattice arrives, f72/f96 snapshots 0 and 1, f130 the real wipe command types, f180 shatter (30 f), f212 `WIPED_0` huge in vermilion, f240 "Rewind.", f244 tether pulse, f258 ghost container draws (24 f), f276 snapshot 2 greys, f282 blue rewound node, f300 reassemble (60 f), f326 restored hash locks (22 f), f348 tick and glow, f368 counter, f420 the real `cat` output, f600 lattice scene leaves, f660 HashChain builds (6 real events of the attack), f720 callout "Undone, not erased.", f780 verify sweep, f852 seal + "intact · 29 events · head 0589fc3d". Exports `DEV_GFX_B_FRAMES`, type `DevGfxBProps`.
+Stills: `npx remotion still src/index.ts DevGfxB out/qa/gfxb-N.png --frame=N` for N = 120 (intact), 195 (mid-shatter), 232 (empty, WIPED_0), 290 (rewind: ghost + arc), 322 (mid-reassemble), 338 (hash half locked), 380 (hashes locked), 770 (chain built), 880 (chain verified). Mismatch look: `--frame=380 --props='{"specimenMismatch":true}'`.
+
+### Decisions and conventions future patches must follow
+1. Honesty of the lattice: only the hero tile stands for a real file (its name is evidence). The other 20 tiles are an unlabelled schematic, and `FileLattice` takes a `footnote` that says so (`copy.gfxB.schematic`). The "N files re-hashed" counter uses `timeline.rewound.verified.files` (1 in the sample), never the tile count. S4 must keep the footnote or an equivalent.
+2. The hash shown is the SHA-256 of the whole workspace snapshot (`snapshot.created.payload.sha256`), not of one file; that is why one HashTile is shown, not one per tile (the BIBLE's "one tick per tile" would claim hashes the ledger does not contain). The restored hash is the sha256 of the first `snapshot.created` event after `timeline.rewound`; `refSnap` is the snapshot named by `to_snapshot`. `DevGfxB` throws if the rewind was not re-hashed (`verified.checked` false).
+3. The counter text says "all matched" only if the evidence says so AND the two hashes on screen are equal; otherwise it says "mismatch" in vermilion. Keep that rule in S4.
+4. `HashChain` shows a SELECTION of the ledger (6 of 29 events), so five of its links are dashed with "+N" (that is correct: the prev-hash pointer reaches an event that is not on screen). Do not "fix" it by passing `gapBefore: 0`. The seal line comes from `verify` (`intact · {events} events · head {8 hex}`), and `DevGfxB` throws if the ledger did not verify.
+5. Layout in stage px used by the S4 sketch: lattice at (136, 146) inside a ghost container with 40 px padding (76 px at the bottom, for the footnote); timeline rail at y = 770 with 5 slots; hash strip and counter in the right column from x = 880; chain centred at y = 380.
+6. `SHATTER_FRAMES = 30` is exported by FileLattice: the scene must give `shatter` 30 frames, because shard distance is speed x 30.
+7. The shard approach (5-9 triangles tiling the square, `mixSeed` per tile and per shard) is local to FileLattice; EgressWall's streak shards are a different thing (line segments) and were not reused.
+
+### Known issues
+- Verified: `tsc --noEmit` is clean. Stills were rendered with the system Chrome (`--browser-executable=/usr/bin/google-chrome`, the Remotion browser download is blocked in the build environment) and looked at: intact, mid-shatter, empty (WIPED_0), rewind (ghost + arc), mid-reassemble, hash half locked, hashes locked, chain built, chain verified, mismatch. The same frame rendered twice is byte-identical.
+- NOT verified: motion by eye (only stills), and the 900 frames as a video. Most likely to need a nudge: shard density during shatter/reassemble (many dark shards on a dark stage; they read mostly through the hero tile's crimson edge and the glyph fragments), the tether curve under the ghost container, the greyed node's contrast (intentionally low), and the fade of the lattice scene at f600 (the chain scene starts from an empty stage).
+- Shards are `clip-path` polygons of a full tile face, so every shard re-renders the tile art (24 tiles x up to 9 shards = about 200 small elements per frame at peak). It rendered fine in stills; if a full render is slow, lower `SHARDS_MAX` or skip shards for non-hero tiles.
+- `HashChain` rejects more than 7 blocks (safe margins). A longer ledger must be reduced to the events that matter.
+- Tile art is generic icons (document, code, table, picture) chosen by seed. It stands for nothing and carries no names or sizes.
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens`, `DevGfxA` AND `DevGfxB`: every patch that adds a Dev composition must keep all eight.
+- `copy` now has the group `gfxB`; patches that resend `src/config/copy.ts` must keep it (and `gfxA`).
+- Patch 10 (explainers C) shares `src/gfx`: `GhostContainer` and `ContainerBox` use the same outline construction; reuse `roundedPath`-style code from there rather than a third version.

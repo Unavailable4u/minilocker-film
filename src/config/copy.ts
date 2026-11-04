@@ -429,6 +429,33 @@ export const gfxA = {
   stampSecrets: "real secrets in sandbox",
 } as const;
 
+/**
+ * Words used by the S4 explainer graphics (patch 09, src/gfx). Words only: every hash, file name, count, command and ledger event
+ * shown with them comes from the evidence through src/data/select.ts.
+ */
+export const gfxB = {
+  /** Timeline node word and hash-strip row label ("snapshot 1", and the top row of a HashTile). */
+  snapshot: "snapshot",
+  /** Bottom row label of a HashTile. */
+  restored: "restored",
+  /** Caption slot under the blue rewound node (BIBLE 6 S4b, 11 B). */
+  restoredInto: "restored into a fresh sandbox",
+  /** Chip on the GhostContainer. */
+  freshSandbox: "fresh sandbox",
+  /** Shown under a HashTile whose two hashes differ. */
+  mismatch: "mismatch",
+  /** Counter after the re-hash: "{N} files re-hashed - all matched". */
+  fileRehashed: "file re-hashed",
+  filesRehashed: "files re-hashed",
+  allMatched: "all matched",
+  /** HashChain row labels and the seal line ("intact - {N} events - head {8 hex}", with rep.intact and rep.head). */
+  hash: "hash",
+  prev: "prev",
+  events: "events",
+  /** Under the FileLattice: only the hero tile is a real file; the rest is a schematic of a workspace. */
+  schematic: "schematic: only the labelled tile is a real file",
+} as const;
+
 export const s4 = {
   captionWorks: "The agent works. Snapshot after every step.",
   captionGone: "Everything gone.",
@@ -478,6 +505,6 @@ export const s9 = {
 } as const;
 
 /** All groups in one object, for code that walks the whole deck (for example captions.srt). */
-export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, gfxA, s4, s5, s6, s7, s8, s9 } as const;
+export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, gfxA, gfxB, s4, s5, s6, s7, s8, s9 } as const;
 
 export type Copy = typeof copy;
