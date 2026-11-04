@@ -57,6 +57,9 @@ export type FocusName =
   | "taskForm"
   | "stepStream"
   | "terminal"
+  | "runView"
+  | "runLeft"
+  | "runRight"
   | "blastPanel"
   | "dial"
   | "gaugeSecrets"
@@ -75,6 +78,9 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "taskForm",
   "stepStream",
   "terminal",
+  "runView",
+  "runLeft",
+  "runRight",
   "blastPanel",
   "dial",
   "gaugeSecrets",
@@ -98,6 +104,16 @@ export const FOCUS: Record<FocusName, Rect> = {
   stepStream: { x: 0, y: GRID.headerH + 440, w: GRID.colLeft, h: WINDOW.h - GRID.headerH - 440 },
   /** Workspace, centre: the terminal panel under the tab pills */
   terminal: { x: GRID.colLeft + 16, y: GRID.headerH + 52, w: GRID.colCenter - 32, h: WINDOW.h - GRID.headerH - 52 - 12 },
+  /**
+   * S2 run shots (patch 13b): the transcript's newest steps and the terminal's newest lines on one frame. Both panes are bottom-anchored
+   * (the app scrolls them to the newest line), so the rectangles drop the top of the panes and run about 100 px past the window's bottom:
+   * the strip of bare stage under the window is where the inference chip sits.
+   * All three have the same size (same zoom), so a move between them is a pan, never a breath: runLeft favours the transcript (a new
+   * assistant step), runRight the terminal (new output), runView sits between them.
+   */
+  runView: { x: 10, y: 310, w: 1100, h: 690 },
+  runLeft: { x: -50, y: 310, w: 1100, h: 690 },
+  runRight: { x: 75, y: 310, w: 1100, h: 690 },
   /** Workspace, right column: the whole BlastPanel */
   blastPanel: { x: RIGHT_X, y: GRID.headerH, w: GRID.colRight, h: WINDOW.h - GRID.headerH },
   /** the Blast Radius dial at the top of the BlastPanel (also where the S1 dial lands) */

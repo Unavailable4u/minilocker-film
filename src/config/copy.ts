@@ -409,6 +409,8 @@ export const s2 = {
   captionSteps: "Plan. Dispatch. Execute. Verify.",
   /** The four nodes of the flow strip (patch 13a), in order. The last one carries the loop back to the first. */
   flow: ["model writes code", "runs in a container", "real output returns", "model explains, errors fed back"],
+  /** The inference chip of S2 (patch 13b): `${inferenceChip} - ${model}`, the model comes from /api/infra in the evidence. */
+  inferenceChip: "Vultr Serverless Inference",
 } as const;
 
 export const s3 = {

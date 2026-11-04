@@ -891,3 +891,35 @@ Patch 13 (S2, f600-1499) is split like S4: `S2Work.tsx` assembles `s2/S2a.tsx`, 
 - The scenario title shown is the evidence's (`Fix a failing pricing library`), not the BIBLE's working title.
 - During f655-660 the badge covers part of the "TERMINAL" pane tab in the whole-window shot (it is clear of the header).
 - NOT verified: motion feel of the two camera moves and the cursor's crossing of the window, and whether the press on f750 lands on the beat in the Studio.
+
+
+---
+
+## Patch 13b - S2 Real work, part 2 of 3: the run (f760-1200)
+
+Replaces the `s2/S2b.tsx` stub. `S2Work.tsx` and `S2a.tsx` are untouched.
+
+**Changed files:** `src/scenes/s2/S2b.tsx` (real), `src/config/focus.ts` (three new focus names), `src/config/filmState.ts` (two exports, `vultrAt` now calls one of them), `src/config/copy.ts` (`s2.inferenceChip`).
+
+### PUBLIC API
+- `S2b` overlay, `S2B_CAMERA`, `S2B_CURSOR`, `S2B_TIMING` (leaveForm 770, chipIn 786, chipOut 1182, restAt 800, hideAt 1188, camEnd 1176).
+- `focus.ts`: `runView`, `runLeft`, `runRight`. All three are 1100 x 690 logical px and differ only in x (10 / -50 / 75), so a move between them is a pan at the same zoom (about 1.45). They start at y 310, so the top of the panes is dropped, and they end about 100 px under the window: the shots show a strip of bare stage under the window.
+- `filmState.ts`: `assistantStepFrames()` (the frame of each `llm.response` of the fix run) and `inferencePulseAt(frame)`. `vultr.inferencePulse` is now `inferencePulseAt`, so the chip and the state cannot disagree.
+
+### What 13b contains
+- **Camera** (8 keyframes, all signature-eased, padding 40, derived from `FIX_RUN.pins` and from the first block of terminal output the session builds): leave the form f770-800 to `runView`; `runRight` at the first output (f822); push in on the failing tests (f874, bias 1.03, then 1.06 f914); `runLeft` for the patch (f962, the agent's words and the write_file call land in the transcript); a 60 f creep through the re-runs (f1020); `runRight` pushed in on the green re-run (f1086); back to `runView` (f1146, arrives f1176 and holds). The longest stretch with no camera move is 48 f, and the transcript and the terminal move through all of it.
+- **Cursor:** leaves the Run button once the press ripple has played (it departs about f762, the trip is 38 f), rests at the far right of the terminal from f800 (logical 1096, 700) and is HIDDEN from f1188 (it fades out by f1196).
+- **Chip:** "Vultr Serverless Inference - {evidence.infra.inference.model}" (a `Badge`, tone info), drawn on f786-800, pulsing (scale, halo, dot) on each of the 10 assistant steps (f808, 838, 927, 974, 1017, 1043, 1064, 1084, 1140, 1165), drawn off f1182-1194. It throws if the evidence says the inference is not Vultr or has no model (like `DevGfxC`).
+
+### Decisions and conventions future patches must follow
+1. The chip sits in the BARE STAGE STRIP under the window (stage x 96, y 940-982), not in the left gutter as 13a's note 6 suggested: in the run shots the window fills the stage's width, and the first try at the top-left covered the idle form's text. Anything else that goes under the window in the run shots can use the same strip. In the shots after f1176 the strip is free, but only while the camera stays on `runView`.
+2. 13c's first camera keyframe must start at f1190 or later; its first cursor waypoint at f1196 or later (the cursor is hidden: a waypoint of its own fades it in again). The S2c camera starts from `runView` at zoom 1.45 with the window's bottom edge at stage y about 895 (runView, bias 1).
+3. The chip is gone at f1194, before the hidden-check callout (f1200). The pulses come from the clock: retime a pin in `script.ts` and the chip and the camera follow. The file throws at import time if a retime puts two camera moves out of order, a move past f1190, the first assistant step before the chip is drawn, or the cursor's departure inside the press ripple.
+4. `scaleBias` on a run shot is at most 1.06 (zoom about 1.54): the chip's strip needs the window's bottom edge above stage y 940.
+
+### Known issues
+- `tsc --noEmit` clean. Stills at f700, 750, 790, 808, 860, 1000, 1100, 1142, 1150, 1190, 1196, 1300 and 1499 were rendered; f808, 860, 1000, 1100, 1150 and 1196 were looked at (f700, 750, 790, 1142, 1190, 1300, 1499 rendered without exceptions but were not looked at; 1300 and 1499 are 13c's stub, so the camera just holds the run shot).
+- NOT verified: motion feel of the sways and pushes, the cursor's crossing from the form to the terminal, how the pulses look in motion, whether the beats land on the music in the Studio.
+- f753-808 has an empty terminal and transcript (the sandbox is being created; the real first command types from f814). The camera move, the cursor's trip and the spinner on the button carry that stretch.
+- The cursor can cover the last characters of a long terminal line (it rests where long lines are cut off with an ellipsis, but that is not a guarantee).
+- The evidence is still the SAMPLE (`meta.sample`): the model name and every output line in these stills are sample data.

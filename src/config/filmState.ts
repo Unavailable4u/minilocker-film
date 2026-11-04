@@ -884,13 +884,29 @@ function headerAt(frame: number, content: ScreenName): HeaderState {
 
 // ---------------------------------------------------------------------------------------------- vultr beats
 
+/**
+ * The frame each assistant step (an `llm.response` of the fix run) lands on, in order. The chip of S2b pulses on these, and so does
+ * `vultr.inferencePulse`: one derivation, from the clock (the pins in script.ts and the evidence), never typed by hand.
+ */
+export function assistantStepFrames(): number[] {
+  const fix = getFixSession();
+  const out: number[] = [];
+  fix.events.forEach((e, i) => {
+    if (e.type === "llm.response") out.push(fix.frames[i]);
+  });
+  return out;
+}
+
+/** 0..1: 1 on the frame an assistant step lands, easing to 0 over VULTR.inferencePulseFrames (the overlap of two steps keeps the larger). */
+export function inferencePulseAt(frame: number): number {
+  let pulse = 0;
+  for (const f of assistantStepFrames()) pulse = Math.max(pulse, stepPulse(frame, f, VULTR.inferencePulseFrames));
+  return pulse;
+}
+
 function vultrAt(frame: number): FilmState["vultr"] {
   // an assistant step of the real task (the fix run is model-driven; the hostile run is a scripted attacker and calls no model)
-  const fix = getFixSession();
-  let pulse = 0;
-  fix.events.forEach((e, i) => {
-    if (e.type === "llm.response") pulse = Math.max(pulse, stepPulse(frame, fix.frames[i], VULTR.inferencePulseFrames));
-  });
+  const pulse = inferencePulseAt(frame);
   return {
     inferencePulse: pulse,
     chips: VULTR.chipFrames.map((f) => riseProgress(frame, f, VULTR.chipLightFrames)),
