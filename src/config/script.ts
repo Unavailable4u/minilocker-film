@@ -194,8 +194,22 @@ export const GAUGES = {
   flashFrames: 18,
 } as const;
 
-/** Scroll of the Blast panel body (px). The film frames the dial and the gauges, so it rests at 0. */
-export const BLAST_SCROLL: readonly Keyframe[] = [{ frame: 600, value: 0 }];
+/**
+ * S2 (patch 13c): the Blast panel body scrolls down to the event log, where the line "Hidden check passed" lands (the hiddenCheck pin,
+ * f1200), and back up to the dial and the gauges before the audit flips Filesystem / Secrets / Compute (the audit pin, f1272).
+ * `px` is how far the body is scrolled while the log is on screen: the hidden check's row then sits in the middle of the panel with the
+ * log's other lines under it (the row's own position is measured, anchors.measured.json `blast`).
+ */
+export const BLAST_LOG_SCROLL = { from: 1190, shownAt: 1224, leaveFrom: 1250, backAt: 1272, px: 700 } as const;
+
+/** Scroll of the Blast panel body (px). It rests at 0 (the dial and the gauges), except while S2 shows the event log. */
+export const BLAST_SCROLL: readonly Keyframe[] = [
+  { frame: 600, value: 0 },
+  { frame: BLAST_LOG_SCROLL.from, value: 0 },
+  { frame: BLAST_LOG_SCROLL.shownAt, value: BLAST_LOG_SCROLL.px },
+  { frame: BLAST_LOG_SCROLL.leaveFrom, value: BLAST_LOG_SCROLL.px },
+  { frame: BLAST_LOG_SCROLL.backAt, value: 0 },
+];
 
 /** The Vultr beats. */
 export const VULTR = {

@@ -61,6 +61,7 @@ export type FocusName =
   | "runLeft"
   | "runRight"
   | "blastPanel"
+  | "closingWide"
   | "dial"
   | "gaugeSecrets"
   | "gaugeNetwork"
@@ -82,6 +83,7 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "runLeft",
   "runRight",
   "blastPanel",
+  "closingWide",
   "dial",
   "gaugeSecrets",
   "gaugeNetwork",
@@ -116,6 +118,11 @@ export const FOCUS: Record<FocusName, Rect> = {
   runRight: { x: 75, y: 310, w: 1100, h: 690 },
   /** Workspace, right column: the whole BlastPanel */
   blastPanel: { x: RIGHT_X, y: GRID.headerH, w: GRID.colRight, h: WINDOW.h - GRID.headerH },
+  /**
+   * S2 closing widen (patch 13c): the whole window with 100 px of extra height under it, so at zoom 1.0 the window sits on the upper part
+   * of the stage (y about 40-940) and the caption has a strip under it. The camera clamps the zoom to 1.0 here (the rectangle is taller than the stage).
+   */
+  closingWide: { x: 0, y: 0, w: WINDOW.w, h: WINDOW.h + 100 },
   /** the Blast Radius dial at the top of the BlastPanel (also where the S1 dial lands) */
   dial: { x: RIGHT_X + (GRID.colRight - GRID.dial) / 2, y: DIAL_Y, w: GRID.dial, h: GRID.dial },
   /** gauge card "Secrets" (row 2, right) */

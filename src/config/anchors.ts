@@ -13,13 +13,15 @@ import measured from "./anchors.measured.json";
 import { navItemRect } from "../ui/Header";
 import { clamp01, mapRange, signature } from "../lib/ease";
 import { rectCenter, type Rect } from "./focus";
-import { FORM, LAB, REPORT, REPORT_SCROLL, SCREEN_CHANGES, SCREEN_INDEX, keyframeValue, type ScreenName } from "./script";
+import { BLAST_SCROLL, FORM, LAB, REPORT, REPORT_SCROLL, SCREEN_CHANGES, SCREEN_INDEX, keyframeValue, type ScreenName } from "./script";
 
 // ---------------------------------------------------------------------------------------------- measured layout
 
 /** Measured in the DOM by tools/measure-anchors.mjs, window px. */
 export const MEASURED = measured as unknown as {
   workspace: { scenarioSelect: Rect; profileStrict: Rect; profileObserve: Rect; holdSelect: Rect; runButton: Rect; paneTabs: Rect[]; dial: Rect };
+  /** BlastPanel event log: the list item of the hidden check's line and its text, in BODY coordinates (the panel body's own scroll added back). */
+  blast: { logRow: Rect; logText: Rect };
   lab: { tiles: Rect[]; cards: { top: number; h: number }[]; list: Rect; runInCard: Rect; cardX: number; cardW: number };
   report: { verifyButton: Rect; firstCard: Rect };
   infra: { firstPanel: Rect };
@@ -75,6 +77,23 @@ export const workspaceAnchors = {
   /** The containment dial of the BlastPanel (the svg's own box, 280.5 px square, window px): where S1's dial lands (patch 12c). */
   dial: (): Rect => MEASURED.workspace.dial,
 };
+
+// ---------------------------------------------------------------------------------------------- Blast panel (event log)
+
+/** The scroll of the Blast panel body on a frame (BLAST_SCROLL: it is 0 except while S2 shows the event log). */
+export function blastScrollOf(frame: number): number {
+  return keyframeValue(BLAST_SCROLL, frame);
+}
+
+/** The line "Hidden check passed" (S2: it lands on the hiddenCheck pin, f1200): its list item, moving with the panel's scroll. */
+export function blastLogRowAnchor(frame: number): Rect {
+  return shift(MEASURED.blast.logRow, 0, -blastScrollOf(frame));
+}
+
+/** The text of that line (the row is as wide as the panel; the text is only as wide as the words), moving with the panel's scroll. */
+export function blastLogTextAnchor(frame: number): Rect {
+  return shift(MEASURED.blast.logText, 0, -blastScrollOf(frame));
+}
 
 // ---------------------------------------------------------------------------------------------- Attack Lab
 

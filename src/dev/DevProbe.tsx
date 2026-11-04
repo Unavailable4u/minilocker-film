@@ -3,11 +3,12 @@
 // Every rectangle is in LOGICAL window px (origin = top-left of the AppWindow), so it is independent of where DevApp places the window.
 // Used by tools/measure-anchors.mjs (which renders DevApp with `probe` on, reads this log and writes src/config/anchors.measured.json).
 // Which parts are measured depends on the frame, because the app shows different things on different frames:
-//   f745   the Workspace form          f2150  the Attack Lab, list not scrolled          f3900  the Report, cards settled (the page's own scroll is added back)
+//   f745   the Workspace form          f1230  the Blast panel's event log, scrolled into view (the scroll is added back)
+//   f2150  the Attack Lab, list not scrolled          f3900  the Report, cards settled (the page's own scroll is added back)
 //   f4700  the Infra screen
 import React from "react";
 import { continueRender, delayRender } from "remotion";
-import { REPORT_SCROLL, keyframeValue } from "../config/script";
+import { BLAST_SCROLL, REPORT_SCROLL, keyframeValue } from "../config/script";
 
 type R = { x: number; y: number; w: number; h: number };
 
@@ -59,7 +60,17 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
     };
     const out: Record<string, unknown> = {};
     try {
-      if (frame < 2000) {
+      if (frame >= 1000 && frame < 2000) {
+        // patch 13c: the Blast panel is scrolled on this frame: add the scroll back to get BODY coordinates (before the scroll).
+        // The row is the one the hidden check's line lands in; `logText` is the line's own text, `logRow` the whole list item.
+        const sc = keyframeValue(BLAST_SCROLL, frame);
+        const body = (el: Element): R => {
+          const r = rect(el);
+          return { ...r, y: round(r.y + sc) };
+        };
+        const text = first("Hidden check passed");
+        out.blast = { logRow: body(text.closest("li") ?? text), logText: body(text) };
+      } else if (frame < 2000) {
         const tabs = Array.from(root.querySelectorAll('[role="tab"]')).map(rect);
         out.workspace = {
           scenarioSelect: rect(framed(first("Fix a failing pricing library"), root)),

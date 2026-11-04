@@ -923,3 +923,36 @@ Replaces the `s2/S2b.tsx` stub. `S2Work.tsx` and `S2a.tsx` are untouched.
 - f753-808 has an empty terminal and transcript (the sandbox is being created; the real first command types from f814). The camera move, the cursor's trip and the spinner on the button carry that stretch.
 - The cursor can cover the last characters of a long terminal line (it rests where long lines are cut off with an ellipsis, but that is not a guarantee).
 - The evidence is still the SAMPLE (`meta.sample`): the model name and every output line in these stills are sample data.
+
+
+---
+
+## Patch 13c1 - S2 Real work, part 3 of 3: the finish (f1190-1499), first cut
+
+Replaces the `s2/S2c.tsx` stub. `S2Work.tsx`, `S2a.tsx` and `S2b.tsx` are untouched. A follow-up patch (13c2) fixes the Secrets gauge anchor (see Known issues).
+
+**Changed files:** `src/scenes/s2/S2c.tsx` (real), `src/config/script.ts` (`BLAST_LOG_SCROLL`, new `BLAST_SCROLL`), `src/config/focus.ts` (`closingWide`), `src/config/anchors.ts` + `src/config/anchors.measured.json` (`blast` key), `src/dev/DevProbe.tsx` and `tools/measure-anchors.mjs` (a fifth probe frame, f1230).
+
+### PUBLIC API
+- `S2c` overlay, `S2C_CAMERA`, `S2C_CURSOR` (empty), `S2C_TIMING` (every S2c frame number).
+- `script.ts`: `BLAST_LOG_SCROLL` { from 1190, shownAt 1224, leaveFrom 1250, backAt 1272, px 700 }. `BLAST_SCROLL` is now built from it: 0 until f1190, 700 by f1224, held to f1250, back to 0 by f1272, 0 after (so S5's hostile run still sees 0).
+- `focus.ts`: `closingWide` (the window plus 100 px of height; the camera clamps it to zoom 1.0, window at stage y 40-940).
+- `anchors.ts`: `blastScrollOf(frame)`, `blastLogRowAnchor(frame)`, `blastLogTextAnchor(frame)` (the line "Hidden check passed" in the Blast panel's event log, moving with the panel's scroll). `anchors.measured.json` gained `blast` (measured by `node tools/measure-anchors.mjs`; the four existing keys re-measured bit-identical).
+
+### What 13c1 contains
+- **Camera** (6 keyframes, all signature-eased): f1190-1224 pull from runView to `blastPanel` (padding 56, zoom 1.163); creeps f1236-1306 (bias 1.04) and f1306-1380 (bias 1.08); widen f1380-1472 to `closingWide`; whip f1482-1500 onto `gaugeSecrets` with a 2.5 deg roll that levels out f1491-1500. It lands on f1500, so patch 14's first keyframe (f1500, gaugeSecrets) starts from the landing pose.
+- **Blast panel scroll:** the hidden check's line is only drawn in the panel's event log, below the fold at scroll 0, so the panel scrolls to it (f1190-1224) and back to the gauges before the audit flips them (f1250-1272).
+- **Callouts** (stage space, chips in the bare stage right of the window, leader length computed per frame from the camera so the chip always clears the window edge): "A check it never sees" f1215-1258 (variant ok; the dot follows the measured row through the scroll); "Audited as it is destroyed" f1266-1334 (variant note; dot on the Secrets card).
+- **Caption** "Plan. Dispatch. Execute. Verify." f1440-1490 (size 64, highlight "Verify.").
+- **Cursor:** none; 13b hid it on f1188 and it stays hidden.
+- **Import-time checks** throw if a retime in script.ts puts a callout before its line lands, leaves the panel not back on the gauges before the audit pin, ends the audit callout before the sandbox is destroyed, or moves the whip off f1500.
+
+### Decisions and conventions future patches must follow
+1. Cues nudged from CUES.s2: the hidden-check callout starts f1215 (a beat; on f1200 its row is not on the stage yet), the audit callout f1266 (the gauges flip f1272, so the dot is on the card before it changes).
+2. The callouts get the film's camera as `[kf(0, fullWindow, padding 60), ...S2A, ...S2B, ...S2C]` (S2c imports S2a and S2b, never the barrel). That equals the film's camera on every S2 frame because S1 ends on that exact pose.
+3. The event log shows the run's real ledger, so the "Decoy read" lines, the blocked telemetry host and "2 of 6 decoys read" are visible in S2's last shots. They are S3's material, previewed.
+
+### Known issues
+- **OPEN (13c2): the Secrets gauge anchor.** `FOCUS.gaugeSecrets` (focus.ts) is a computed estimate and sits about 150 logical px above the rendered card. The audit callout's dot therefore lands below the dial, beside the legend, not on the Secrets card (seen at f1274), and the whip lands on that same rectangle. Fix: measure the real card in DevProbe and use it for the callout and the whip.
+- `tsc --noEmit` clean; `git apply --check` + `tsc` pass on a fresh clone. Stills rendered with a headless Chromium: f1200, 1215, 1224, 1236, 1260, 1274, 1300, 1334, 1440, 1486, 1499. Looked at: f1200, 1236, 1274. The rest rendered without exceptions but were not looked at, so the caption's legibility over the widened window's bottom edge is unchecked.
+- NOT verified: motion feel of the pull, the creeps, the widen and the whip; whether the roll reads as a whip; whether the beats land on the music.
