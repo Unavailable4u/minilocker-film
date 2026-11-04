@@ -175,6 +175,16 @@ if (attacks) {
   }
 }
 
+const catalog = req("attackCatalog", Array.isArray, "an array (the `attacks` of GET /api/attacks, 15 entries in lab order)");
+if (catalog) {
+  if (catalog.length !== 15) fail("attackCatalog", `has ${catalog.length} entries but the lab lists 15`);
+  catalog.forEach((a, i) => {
+    for (const k of ["name", "title", "category", "summary", "expected"]) if (!isStr(a?.[k]) || !a[k]) fail(`attackCatalog[${i}].${k}`, "must be a non-empty string");
+    if (!Array.isArray(a?.checks)) fail(`attackCatalog[${i}].checks`, "must be an array");
+  });
+  for (const name of CORE) if (!catalog.some((a) => a?.name === name)) fail("attackCatalog", `has no entry for the core attack ${name}`);
+}
+
 const sum = req("attackSummary", isObj, "an object");
 if (sum) {
   for (const k of ["total", "contained", "inconclusive", "breached", "error", "unavailable"]) req(`attackSummary.${k}`, (v) => Number.isInteger(v) && v >= 0, "a whole number");

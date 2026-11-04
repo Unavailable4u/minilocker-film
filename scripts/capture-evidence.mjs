@@ -244,7 +244,8 @@ async function main() {
   if (!scenario) die("the server has no fix_repo_v2 scenario");
   if (!scenario.available) console.warn(`warning: fix_repo_v2 reports available=false (missing hosts: ${(scenario.missing_hosts ?? []).join(", ") || "none"})`);
   const list = await getJson("/api/attacks");
-  const listed = (list.attacks ?? []).map((a) => a.name);
+  const attackCatalog = list.attacks ?? [];
+  const listed = attackCatalog.map((a) => a.name);
   log(`the lab lists ${listed.length} attacks`);
 
   // ---- attacks, one at a time -----------------------------------------------------------------------------------
@@ -308,6 +309,7 @@ async function main() {
     takes,
     s3Source,
     attacks,
+    attackCatalog,
     attackSummary,
     measured,
     ci,

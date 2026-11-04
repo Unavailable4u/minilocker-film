@@ -147,6 +147,8 @@ export type Evidence = {
   s3Source: S3Source;
   /** keyed by attack name; the 5 core attacks at least (Appendix D) */
   attacks: Record<string, EvidenceAttack>;
+  /** The `attacks` array of GET /api/attacks: title, summary, category, expected, tries and check labels of all 15 attacks, in lab order. */
+  attackCatalog: AttackInfo[];
   attackSummary: AttackSummary;
   measured: Measured;
   ci: EvidenceCi;

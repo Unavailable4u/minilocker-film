@@ -759,3 +759,34 @@ Stills: `npx remotion still src/index.ts DevGfxC out/qa/gfxc-N.png --frame=N` fo
 ### Warnings for the next patch
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens`, `DevGfxA`, `DevGfxB` AND `DevGfxC`: every patch that adds a Dev composition must keep all nine.
 - `copy` now has the group `gfxC` (and `gfxB`, `gfxA`); patches that resend `src/config/copy.ts` must keep them.
+
+---
+
+## Patch 11 - Film script and the persistent FilmApp
+
+**New files:** `src/config/script.ts`, `src/config/anchors.ts`, `src/config/anchors.measured.json`, `src/config/filmState.ts`, `src/ui/FilmApp.tsx`, `src/dev/DevApp.tsx`, `src/dev/DevAnchors.tsx`, `src/dev/DevProbe.tsx`, `tools/measure-anchors.mjs`, `tools/sample/attack-catalog.json`.
+**Changed files:** `src/Root.tsx` (DevApp registered), `src/data/types.ts` (`Evidence.attackCatalog`), `src/data/select.ts` (`selectAttackCatalog()`), `src/data/evidence.json` (SAMPLE now has `attackCatalog`), `scripts/capture-evidence.mjs` (stores `/api/attacks`), `scripts/validate-evidence.mjs` (checks it), `tools/sample/assemble.py`.
+
+### PUBLIC API
+- `useFilmState(frame): FilmState` (pure, global frame, clamped to 600..4979): `activeScreen` (fractional), `tabHighlight`, `layers` (one screen, or two cross-fading), `paneTab`, `header`, `workspace {form, steps, terminal, blast, events}`, `attackLab`, `report`, `infra`, `vultr {inferencePulse, chips}`, `scroll`. Also exports `getFixSession()`, `getHostileSession()`, `activeScreenAt`, `layersAt`, `labListScrollAt`, `reportScrollAt`.
+- `<FilmApp frame state? style? />`: AppWindow + Header + the mounted screens. The Workspace "browser" tab is the app's plain tab (URL bar + pages from the ledger); the S5 page rebuild is a later patch.
+- `anchors.ts`: `navTabAnchor(i)`, `navCursorAt(frame)`, `workspaceAnchors.{taskSelect, profileSegment, holdSelect, runButton, paneTab}`, `labTileAnchor(i)`, `labCardAnchor(i, hero, frame)`, `labRunAnchor(i, hero, frame)`, `verifyButtonAnchor(frame)`, `reportCardAnchor(frame)`, `infraCardAnchor()`. All rectangles are LOGICAL window px; scrolled ones are functions of the frame.
+- `DevApp` composition (4380 f = global 600..4979; composition frame N = global 600+N). Props: `anchors` (draw every anchor), `probe` (measure the DOM).
+
+### Decisions and conventions future patches must follow
+1. Every frame number is in `script.ts`. Typed lines take their end frame from `typing.ts`; `filmState` THROWS if the wipe command is not typed before `LAB.wipeLandsAt` (f2340) or the hostile command before the next terminal block. Retiming a line therefore fails loudly.
+2. Ledger events are found by RULE (`resolveFix`, `resolveHostile`), not by id. Pins that cannot be met throw a clear error; `approval*` pins are optional.
+3. `HOSTILE_RUN.startFrame` is 3308 (swapAt 3312 minus half the cross-fade) so the cross-fade never shows the finished fix task.
+4. The Report scrolls f3756-3780 (was planned for f3930): the dimension cards sit below the fold at scroll 0, so they would flip in off screen. The Verify button and the first card rows are both visible from f3780.
+5. Anchors are MEASURED from the DOM (`node tools/measure-anchors.mjs --browser <chrome>`), never typed. Re-run it after any change to `src/ui/*` that moves a target and commit `anchors.measured.json`.
+6. The attack catalog is now evidence (`evidence.attackCatalog`). `devCatalog.ts` is still a dev fixture, but `tools/sample/attack-catalog.json` (same content) feeds the SAMPLE. A real capture overwrites it from `GET /api/attacks`.
+
+### Known issues
+- Verified: `tsc --noEmit` clean; `useFilmState` runs for all 4380 frames without throwing; stills of DevApp at f760, 1000, 1260, 1700, 2230, 2350, 2700, 3500, 3900, 4100 were rendered (system-independent Chromium via `--browser-executable`) and f760, f1260, f2350, f3900 were looked at; anchor overlays at f745, 2150, 2350, 3900 match the pixels (Report within about 5 px while the page scrolls).
+- NOT verified by eye: f1000, 1700, 2230, 2700, 3500, 4100 (rendered, not inspected), motion, and the cross-fades. The Report/Verify anchors depend on the page scroll and can be a few px off mid-scroll.
+- The Workspace browser tab is a plain stand-in; the page and the untrusted fence are S5's job.
+- Sample data only: the fix task's profile is `strict` (script `FORM.profile` must match, else it throws).
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains ten Dev compositions: `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens`, `DevGfxA`, `DevGfxB`, `DevGfxC` AND `DevApp`.
+- `evidence.json` must keep `attackCatalog`; patches that regenerate it must too.

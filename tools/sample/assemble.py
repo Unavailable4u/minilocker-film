@@ -123,6 +123,8 @@ def main() -> int:
         "takes": takes,
         "s3Source": "task",
         "attacks": attacks,
+        # the product's own describe() output for the 15 attacks (what GET /api/attacks returns), kept in a fixture file
+        "attackCatalog": json.loads((HERE / "attack-catalog.json").read_text(encoding="utf-8")),
         "attackSummary": summary,
         "measured": {
             "fixRepoV2": {"passes": 9, "runs": 10, "ciLow": 0.596, "ciHigh": 0.982, "mostMissedBug": "tax_rounding"},

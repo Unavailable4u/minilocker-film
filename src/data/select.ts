@@ -9,6 +9,7 @@
 import raw from "./evidence.json";
 import { hashStringToSeed } from "../lib/prng";
 import type {
+  AttackInfo,
   AttackResult,
   AttackSummary,
   Evidence,
@@ -127,6 +128,11 @@ export function selectAttackReport(name: string): Report {
 
 export function selectAttackVerify(name: string): Verification {
   return need(`evidence.attacks.${name}.verify`, attackEntry(name).verify);
+}
+
+/** What the Attack Lab lists: one AttackInfo per attack, in lab order (the capture's GET /api/attacks). */
+export function selectAttackCatalog(): AttackInfo[] {
+  return needArray("evidence.attackCatalog", evidence.attackCatalog);
 }
 
 /** Names of the attacks the file holds full data for, in file order. */
