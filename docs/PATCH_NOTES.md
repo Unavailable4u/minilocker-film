@@ -714,3 +714,48 @@ Stills: `npx remotion still src/index.ts DevGfxB out/qa/gfxb-N.png --frame=N` fo
 - `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens`, `DevGfxA` AND `DevGfxB`: every patch that adds a Dev composition must keep all eight.
 - `copy` now has the group `gfxB`; patches that resend `src/config/copy.ts` must keep it (and `gfxA`).
 - Patch 10 (explainers C) shares `src/gfx`: `GhostContainer` and `ContainerBox` use the same outline construction; reuse `roundedPath`-style code from there rather than a third version.
+
+---
+
+## Patch 10 - Explainers C: architecture on Vultr, competitive table, limits card
+
+**New files:** `src/gfx/ArchitectureDiagram.tsx`, `src/gfx/CompareTable.tsx`, `src/gfx/LimitsCard.tsx`, `src/dev/DevGfxC.tsx`.
+**Changed files:** `src/config/copy.ts` (new group `gfxC`, added to the `copy` object), `src/Root.tsx` (DevGfxC registered), `docs/PATCH_NOTES.md`.
+
+Same conventions as patches 08 and 09: everything in `src/gfx` is pure and props-driven (nothing reads the frame, no CSS transitions, no timers, no randomness). Scenes pass LINEAR 0..1 progress values; components apply their own easing.
+
+### PUBLIC API
+
+**src/gfx/ArchitectureDiagram.tsx**
+- `<ArchitectureDiagram nodeProgress edgeProgress highlight vultrChip chips nodes edgeLabels frameProgress? highlightAmount? clock? showVultrLogo? />`: a FULL-STAGE layer (1920 x 1080, stage px). The Vultr VM frame is `ARCH_FRAME` (210, 232, 1500 x 540); Browser UI and the LLM provider sit above it, Artifact store and Internet below it.
+  - `nodeProgress` (12, `ARCH_NODE_IDS` order) and `edgeProgress` (12, `ARCH_EDGE_IDS` order) throw on a wrong length. `highlight` is `"task" | "model" | "storage" | "none"` (`ARCH_PATHS` lists the nodes and edges each one lights; the task path ends at the egress proxy). `highlightAmount` 0..1: ramp down, switch `highlight`, ramp up to move between paths. `clock` (the global frame) only places the packets (7 px per frame, linear), which run on solid, fully drawn, arrowed edges only.
+  - `vultrChip` (3) and `chips` (3: VM, Serverless Inference, Object Storage). A chip is `{ name, facts }`: names are `copy.s8.lowerThirds`, facts come from the evidence (VM: hostname, region, plan; inference: host, model) or `copy.gfxC.storageFacts`.
+  - `nodes` = `copy.gfxC.nodes`, `edgeLabels` = `copy.gfxC.edges`. A node title or sub line wider than its 220 px node throws (title at most 19 characters in mono 20 px).
+- Exports `archNodeRect(id)`, `ARCH_NODE_W 220`, `ARCH_NODE_H 64`, `ARCH_FRAME`, `ARCH_NODE_IDS`, `ARCH_EDGE_IDS`, `ARCH_PATHS`, types `ArchNodeId`, `ArchEdgeId`, `ArchHighlight`, `ArchNodeText`, `ArchChip`.
+
+**src/gfx/CompareTable.tsx**
+- `<CompareTable rows columns marks rowProgress emphasis headerProgress? legend? x? y? />`: 1500 px wide, rows 92 px; the LAST row is the product's own row. `emphasis` 0..1 grows it 6%, adds the accent outline and edge, turns its checks into crimson discs and dims the other rows by 36%. Throws if `columns` is not 3, `marks` is not rows x 3, or `rowProgress` does not match `rows`.
+- Exports `compareTableSize(count)`, `COMPARE_W`, `COMPARE_ROW_H`, `COMPARE_HEAD_H`, `COMPARE_GROW`, type `CompareMark` (`"full" | "partial" | "none"`).
+
+**src/gfx/LimitsCard.tsx**
+- `<LimitsCard title lines footnote lineProgress titleProgress? footnoteProgress? x? y? />`: 1440 px wide; a vermilion hatched rule grows down the left side, one segment per line (vermilion is the status color for flagged, never the accent). Exports `limitsCardHeight(count)`, `LIMITS_W`, `LIMITS_LINE_H`, `LIMITS_TITLE_H`.
+
+**src/config/copy.ts**: new group `gfxC` = `nodes`, `edges`, `storageFacts`, `compareColumns`, `compareMarks`, `compareLegend`, `limitsTitle`, `limitsFootnote`. Words only. `s7.rows`, `s8.lowerThirds` and `s8.limits` already existed and are reused.
+
+**src/dev/DevGfxC.tsx** + composition `DevGfxC` (720 f = three 240 f segments): A architecture (frame f0, nodes f10.., edges f30.., highlight task f125, model f155, storage f190, chips f130/f160/f195), B comparison table (heads f4, rows f14/f44/f74/f104, emphasis f110..134 of the segment), C limits card (heading f6, lines f24/f54/f84, footnote f114 of the segment). Exports `DEV_GFX_C_FRAMES`.
+Stills: `npx remotion still src/index.ts DevGfxC out/qa/gfxc-N.png --frame=N` for N = 120 (architecture built, no highlight), 148 (task), 180 (model), 232 (storage), 470 (table with emphasis), 640 (limits card).
+
+### Decisions and conventions future patches must follow
+1. Every Vultr claim on a chip is made only if `/api/infra` says so: `DevGfxC` throws if `infra.vultr` lacks hostname/region/plan, if inference is not Vultr with a host and a model, or if storage is not an attached Vultr bucket. S8 must keep these checks.
+2. The comparison marks in `copy.gfxC.compareMarks` are an editorial judgement about generic categories (no product names), not a measurement. They live in copy.ts only. Review them before the final render.
+3. The architecture shows the design (README flowchart). The edge words and node subs are wording, not evidence.
+4. The Vultr logo is off by default (`showVultrLogo`): the installed file is the on-white variant.
+
+### Known issues
+- Verified: `tsc --noEmit` is clean.
+- NOT verified: no stills were rendered (the build environment has no Chrome and the Remotion browser download is blocked), so the layout has not been looked at. Most likely to need a nudge: the edge words against the lines (`caddyApi`, `apiSocket`, `dockerCode` label placement), the VM chip overlapping the docker node's neighbourhood at the top-right of the frame, the third column head wrapping to two lines, and the LLM / Artifact chips extending past the right/left of their pills.
+- The mask ids and edge labels were not collision-checked against the packets by eye.
+
+### Warnings for the next patch
+- `src/Root.tsx` now contains `DevBrandSheet`, `DevFxSheet`, `DevText`, `DevShell`, `DevWorkspace`, `DevScreens`, `DevGfxA`, `DevGfxB` AND `DevGfxC`: every patch that adds a Dev composition must keep all nine.
+- `copy` now has the group `gfxC` (and `gfxB`, `gfxA`); patches that resend `src/config/copy.ts` must keep them.

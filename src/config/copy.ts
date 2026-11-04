@@ -489,6 +489,60 @@ export const s7 = {
   ],
 } as const;
 
+/**
+ * Words used by the S7 / S8 explainer graphics (patch 10, src/gfx). Words only: the Vultr hostname, region, plan, inference host and model
+ * shown on the architecture chips come from the evidence through src/data/select.ts. Node and edge words describe the product's design
+ * (README flowchart), not a measurement. The comparison marks are an editorial judgement about GENERIC categories, never product names.
+ */
+export const gfxC = {
+  /** ArchitectureDiagram nodes. Title at most 19 characters, sub at most 19 (mono 20 px in a 220 px node). */
+  nodes: {
+    ui: { title: "Browser UI" },
+    caddy: { title: "Caddy", sub: "TLS + static UI" },
+    api: { title: "Control plane", sub: "FastAPI" },
+    socket: { title: "docker-socket-proxy" },
+    docker: { title: "Host Docker" },
+    code: { title: "Code sandbox", sub: "no route out" },
+    browser: { title: "Browser sandbox", sub: "no route out" },
+    proxy: { title: "Egress proxy", sub: "allowlist + log" },
+    ledger: { title: "Ledger", sub: "hash-chained" },
+    llm: { title: "LLM provider" },
+    artifact: { title: "Artifact store" },
+    internet: { title: "Internet", sub: "allowlisted only" },
+  },
+  /** ArchitectureDiagram edge words (mono 20 px, short). Edges without a word are left out on purpose. */
+  edges: {
+    uiCaddy: "HTTPS",
+    caddyApi: "HTTP",
+    apiSocket: "Docker API",
+    dockerCode: "creates",
+    codeProxy: "only via proxy",
+    proxyInternet: "allowlist only",
+    apiLlm: "inference calls",
+    apiArtifact: "artifacts",
+  },
+  /** Facts line of the Object Storage chip. Words only; the bucket and endpoint are not shown. */
+  storageFacts: "S3-compatible bucket",
+
+  /** CompareTable column heads (BIBLE 11 C). */
+  compareColumns: ["Boundary you control", "Measured, not asserted", "Recovery and a suite anyone can run"],
+  /**
+   * CompareTable marks, one row per `s7.rows` entry, one mark per column. An editorial judgement about generic categories,
+   * not a measurement of any product.
+   */
+  compareMarks: [
+    ["partial", "none", "none"],
+    ["none", "none", "partial"],
+    ["none", "partial", "none"],
+    ["full", "full", "full"],
+  ],
+  compareLegend: { full: "yes", partial: "partly", none: "no" },
+
+  /** LimitsCard heading and footnote (the file in the repository that states the limits). */
+  limitsTitle: "Said plainly",
+  limitsFootnote: "SECURITY.md",
+} as const;
+
 export const s8 = {
   /** Product names only. Details (host, model, region, plan) come from evidence. */
   lowerThirds: ["Vultr VM", "Vultr Serverless Inference", "Vultr Object Storage"],
@@ -505,6 +559,6 @@ export const s9 = {
 } as const;
 
 /** All groups in one object, for code that walks the whole deck (for example captions.srt). */
-export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, gfxA, gfxB, s4, s5, s6, s7, s8, s9 } as const;
+export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, gfxA, gfxB, gfxC, s4, s5, s6, s7, s8, s9 } as const;
 
 export type Copy = typeof copy;
