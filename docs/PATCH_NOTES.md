@@ -953,6 +953,38 @@ Replaces the `s2/S2c.tsx` stub. `S2Work.tsx`, `S2a.tsx` and `S2b.tsx` are untouc
 3. The event log shows the run's real ledger, so the "Decoy read" lines, the blocked telemetry host and "2 of 6 decoys read" are visible in S2's last shots. They are S3's material, previewed.
 
 ### Known issues
-- **OPEN (13c2): the Secrets gauge anchor.** `FOCUS.gaugeSecrets` (focus.ts) is a computed estimate and sits about 150 logical px above the rendered card. The audit callout's dot therefore lands below the dial, beside the legend, not on the Secrets card (seen at f1274), and the whip lands on that same rectangle. Fix: measure the real card in DevProbe and use it for the callout and the whip.
+- **FIXED in 13c2: the Secrets gauge anchor.** `FOCUS.gaugeSecrets` (focus.ts) is a computed estimate and sits about 150 logical px above the rendered card. The audit callout's dot therefore lands below the dial, beside the legend, not on the Secrets card (seen at f1274), and the whip lands on that same rectangle. Fix: measure the real card in DevProbe and use it for the callout and the whip.
 - `tsc --noEmit` clean; `git apply --check` + `tsc` pass on a fresh clone. Stills rendered with a headless Chromium: f1200, 1215, 1224, 1236, 1260, 1274, 1300, 1334, 1440, 1486, 1499. Looked at: f1200, 1236, 1274. The rest rendered without exceptions but were not looked at, so the caption's legibility over the widened window's bottom edge is unchecked.
 - NOT verified: motion feel of the pull, the creeps, the widen and the whip; whether the roll reads as a whip; whether the beats land on the music.
+
+
+---
+
+## Patch 13c2 - S2 Real work, part 3 of 3: the finish, fixes (closes patch 13)
+
+Fixes the open issue of 13c1 (the Secrets gauge anchor) and the closing caption, which the 13c1 stills had not shown. `S2Work.tsx`, `S2a.tsx` and `S2b.tsx` are untouched.
+
+**Changed files:** `src/scenes/s2/S2c.tsx`, `src/config/focus.ts` (`gaugeSecrets` measured, `closingWide` taller), `src/config/anchors.ts` + `src/config/anchors.measured.json` (`blastGauges` key), `src/dev/DevProbe.tsx` and `tools/measure-anchors.mjs` (a sixth probe frame, f1340), `docs/PATCH_NOTES.md`.
+
+### PUBLIC API
+- `anchors.ts`: `blastGaugeSecretsAnchor(frame)` (the measured Secrets card, moving with the Blast panel's scroll); `MEASURED.blastGauges.secrets`.
+- `focus.ts`: `FOCUS.gaugeSecrets` is now the measured card (x 1376.31, y 668.69, w 206.69, h 162.94), not the computed estimate (x 1376.5, y 432, w 207.5, h 96: about 237 px too high and 67 px too short). `closingWide` is the window plus 140 px of height (was 100).
+- `anchors.measured.json` gained `blastGauges` (measured by `node tools/measure-anchors.mjs`; the five existing keys, `blast` included, re-measured bit-identical).
+
+### What 13c2 contains
+- **Audit callout:** "Audited as it is destroyed" (f1266-1334) now puts its dot on the Secrets card (`blastGaugeSecretsAnchor`: inside the card's right edge, halfway down), where it landed beside the dial legend in 13c1.
+- **Whip:** f1482-1500 names `gaugeSecrets`, which is now the real card, so it lands with the card in the middle of the stage (its centre is within a few px of the stage centre on f1500). Nothing in the keyframes changed.
+- **Closing caption:** "Plan. Dispatch. Execute. Verify." now sits in a strip under the widened window. At the film's usual caption position its ink (y 905-968) crossed the window's bottom edge (y 940 with 13c1's `closingWide`) and covered the terminal's last line and the Compute / Time cards. Now the window ends at y 920 (`closingWide` +140) and the caption is drawn 40 px lower (`CAPTION_DROP`, a wrapper in S2c.tsx; `fx/Caption.tsx` is untouched): ink on y 945-1008, 25 px under the window and 72 px above the stage's bottom edge. The camera cannot zoom out below 1.0, so the window could not simply be made smaller.
+
+### Decisions and conventions future patches must follow
+1. `FOCUS.gaugeSecrets` itself changed (no new focus name), so patch 14's first keyframe (f1500, gaugeSecrets) still starts from exactly the pose the whip lands on, and its holds and push-ins on `gaugeSecrets` frame the real card.
+2. The card is measured on f1340, AFTER the audit, not on f1230 with the event log. The audit gives the Filesystem card a third line of text, and the two cards of a grid row are as tall as the taller one, so the Secrets card grows from 143.81 to 162.94 px at the audit (its top does not move). The state from f1500 on is the audited one. The audit callout starts 6 frames before the flip; its dot is inside the card both before and after.
+3. `focus.ts` reads the measured card lazily (a getter on `FOCUS`), not when the file loads, so `tools/measure-anchors.mjs` can still bundle the project when `anchors.measured.json` has no `blastGauges` key yet. If the key is missing, the camera throws a message that says to run the tool.
+4. The probe has two Blast frames: f1230 (before the audit, panel scrolled to the event log: the hidden-check callout) and f1340 (after the audit, panel not scrolled: the Secrets card). They are told apart by `BLAST_LOG_SCROLL.backAt`. Anything below the gauge grid in the Blast panel (seal, hash chain, event log) sits 19 px lower from the audit on than on f1230; the hidden-check callout is over before that (f1258).
+5. 13c1's note about `closingWide` (window at stage y 40-940) is superseded: it is y 20-920 now. Anything that goes under the widened window uses the strip y 920-1080.
+
+### Known issues
+- `tsc --noEmit` clean; `git apply --check` + `tsc` pass on a fresh clone. Stills rendered with a headless Chromium: f1200, 1215, 1236, 1260, 1268, 1280, 1300, 1334, 1440, 1450, 1462, 1474, 1486, 1499, 1500. Looked at: f1215, 1236, 1260, 1268, 1280, 1334, 1450, 1474, 1486, 1499, 1500. Rendered without exceptions but not looked at in their final state: f1200, 1300, 1440, 1462.
+- On f1486 the tips of the caption's descenders still show a few px over the window's bottom edge: the caption is leaving upwards (f1478-1490) while the whip has started and moves the window. It is 2-3 frames; the caption was not shortened because it is already up for only about 1.7 s.
+- `gaugeNetwork` and `gaugeCompute` in focus.ts are still computed estimates (only DevFxSheet uses them); only the Secrets card was measured.
+- NOT verified: motion feel of the pull, the creeps, the widen and the whip; whether the roll reads as a whip; whether the caption's exit and the whip's start read as one move; whether the beats land on the music.

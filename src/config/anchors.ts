@@ -22,6 +22,11 @@ export const MEASURED = measured as unknown as {
   workspace: { scenarioSelect: Rect; profileStrict: Rect; profileObserve: Rect; holdSelect: Rect; runButton: Rect; paneTabs: Rect[]; dial: Rect };
   /** BlastPanel event log: the list item of the hidden check's line and its text, in BODY coordinates (the panel body's own scroll added back). */
   blast: { logRow: Rect; logText: Rect };
+  /**
+   * BlastPanel gauge grid AFTER the audit, settled, not scrolled (window px; patch 13c2): the "Secrets" card. The audit lengthens the Filesystem
+   * card's text, which makes the whole grid row taller, so this card is about 19 px taller than it is on f1230.
+   */
+  blastGauges: { secrets: Rect };
   lab: { tiles: Rect[]; cards: { top: number; h: number }[]; list: Rect; runInCard: Rect; cardX: number; cardW: number };
   report: { verifyButton: Rect; firstCard: Rect };
   infra: { firstPanel: Rect };
@@ -93,6 +98,15 @@ export function blastLogRowAnchor(frame: number): Rect {
 /** The text of that line (the row is as wide as the panel; the text is only as wide as the words), moving with the panel's scroll. */
 export function blastLogTextAnchor(frame: number): Rect {
   return shift(MEASURED.blast.logText, 0, -blastScrollOf(frame));
+}
+
+/**
+ * The "Secrets" gauge card (S2: the audit callout, f1266-1334; the whip that lands on it, f1500), moving with the panel's scroll. It is measured
+ * after the audit (the card's final size); the audit callout starts 6 frames before the flip, when the card is 19 px shorter, and the dot is
+ * inside the card either way. The same measured rectangle is `FOCUS.gaugeSecrets` (focus.ts), the camera's name for it (the panel at scroll 0).
+ */
+export function blastGaugeSecretsAnchor(frame: number): Rect {
+  return shift(MEASURED.blastGauges.secrets, 0, -blastScrollOf(frame));
 }
 
 // ---------------------------------------------------------------------------------------------- Attack Lab

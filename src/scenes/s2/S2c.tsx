@@ -21,11 +21,10 @@ import { Callout } from "../../fx/Callout";
 import { Caption } from "../../fx/Caption";
 import { getCameraState, worldToStage } from "../../fx/Camera";
 import { kf, type CameraKeyframe, type CursorWaypoint } from "../../config/camera";
-import { blastLogTextAnchor, blastScrollOf } from "../../config/anchors";
-import { focusRect } from "../../config/focus";
+import { blastGaugeSecretsAnchor, blastLogTextAnchor } from "../../config/anchors";
 import { copy } from "../../config/copy";
 import { BLAST_LOG_SCROLL, FIX_RUN, type FixKey } from "../../config/script";
-import { CUES, FPS } from "../../config/timeline";
+import { CUES, FPS, STAGE } from "../../config/timeline";
 import { S2A_CAMERA } from "./S2a";
 import { S2B_CAMERA } from "./S2b";
 import type { SceneOverlayProps } from "../types";
@@ -66,7 +65,7 @@ const PANEL_PADDING = 56;
 /**
  * Blast panel shot: padding 56 gives zoom 1.163 (height-limited: the panel is 832.5 px tall): the panel is 534 px wide on the stage, in the
  * middle (x 693-1227), and the window's right edge, which is the panel's, is at stage x 1227: the callouts live in the bare stage beyond it.
- * Closing widen: `closingWide` puts the window on the upper part of the stage at zoom 1.0 (y 40-940), so the caption has its strip.
+ * Closing widen: `closingWide` puts the window on the upper part of the stage at zoom 1.0 (y 20-920), so the caption has its strip.
  * Whip: gaugeSecrets is clamped to the maximum zoom (2.6) whatever the padding.
  */
 export const S2C_CAMERA: readonly CameraKeyframe[] = [
@@ -77,6 +76,13 @@ export const S2C_CAMERA: readonly CameraKeyframe[] = [
   kf(S2C_TIMING.whip.start, "gaugeSecrets", { padding: 96, rotateZ: 2.5, ease: "signature", frames: S2C_TIMING.whip.frames }),
   kf(S2C_TIMING.whip.rollBack, "gaugeSecrets", { padding: 96, rotateZ: 0, ease: "signature", frames: S2C_TIMING.whip.start + S2C_TIMING.whip.frames - S2C_TIMING.whip.rollBack }),
 ];
+
+/**
+ * The closing caption is drawn CAPTION_DROP px lower than the film's usual caption position (theme `layout.captionBottom`). The widened window ends
+ * on stage y 920 (`closingWide`); the 64 px caption at the usual position has its ink on y 905-968, across the window's bottom edge. Dropped by 40 it is
+ * on y 945-1008: 25 px under the window, 72 px above the stage's bottom edge. (The camera cannot zoom out below 1.0, so the window cannot go higher.)
+ */
+const CAPTION_DROP = 40;
 
 /** No cursor in this part: 13b hid it on f1188 and it stays hidden (a waypoint here would fade it back in). */
 export const S2C_CURSOR: readonly CursorWaypoint[] = [];
@@ -148,15 +154,18 @@ export const S2c: React.FC<SceneOverlayProps> = ({ frame }) => {
   const text = blastLogTextAnchor(frame);
   const checkAt = { x: text.x + text.w + 12, y: text.y + text.h / 2 };
 
-  // the Secrets gauge: the dot sits inside its right edge, halfway down; the card moves with the panel's scroll
-  const g = focusRect("gaugeSecrets");
-  const auditAt = { x: g.x + g.w - 14, y: g.y + g.h / 2 - blastScrollOf(frame) };
+  // the Secrets gauge (measured card, moving with the panel's scroll): the dot sits inside its right edge, halfway down
+  const g = blastGaugeSecretsAnchor(frame);
+  const auditAt = { x: g.x + g.w - 14, y: g.y + g.h / 2 };
 
   return (
     <>
       <PanelCallout frame={frame} text={s2.calloutCheck} variant="ok" world={checkAt} startFrame={t.check.start} endFrame={t.check.end} />
       <PanelCallout frame={frame} text={s2.calloutAudit} variant="note" world={auditAt} startFrame={t.audit.start} endFrame={t.audit.end} />
-      <Caption text={s2.captionSteps} highlight="Verify." size={64} startFrame={CUES.s2.captionSteps} endFrame={t.captionEnd} />
+      {/* the caption sits CAPTION_DROP px lower than the film's usual position, in the strip under the widened window (see CAPTION_DROP) */}
+      <div style={{ position: "absolute", left: 0, top: 0, width: STAGE.w, height: STAGE.h, transform: `translateY(${CAPTION_DROP}px)`, pointerEvents: "none" }}>
+        <Caption text={s2.captionSteps} highlight="Verify." size={64} startFrame={CUES.s2.captionSteps} endFrame={t.captionEnd} />
+      </div>
     </>
   );
 };

@@ -4,11 +4,12 @@
 // Used by tools/measure-anchors.mjs (which renders DevApp with `probe` on, reads this log and writes src/config/anchors.measured.json).
 // Which parts are measured depends on the frame, because the app shows different things on different frames:
 //   f745   the Workspace form          f1230  the Blast panel's event log, scrolled into view (the scroll is added back)
+//   f1340  the Blast panel after the audit, settled and not scrolled: its Secrets gauge card (patch 13c2)
 //   f2150  the Attack Lab, list not scrolled          f3900  the Report, cards settled (the page's own scroll is added back)
 //   f4700  the Infra screen
 import React from "react";
 import { continueRender, delayRender } from "remotion";
-import { BLAST_SCROLL, REPORT_SCROLL, keyframeValue } from "../config/script";
+import { BLAST_LOG_SCROLL, BLAST_SCROLL, REPORT_SCROLL, keyframeValue } from "../config/script";
 
 type R = { x: number; y: number; w: number; h: number };
 
@@ -37,6 +38,18 @@ function framed(el: HTMLElement, root: Element): HTMLElement {
   return el;
 }
 
+/**
+ * The gauge card titled `label` in the Blast panel's gauge grid (patch 13c2). The label text also appears in the dial's legend, so the
+ * card is the framed ancestor whose parent is the two-column grid, not just the first element with that text.
+ */
+function gaugeCard(root: Element, label: string): HTMLElement | null {
+  for (const el of leaves(root, label)) {
+    const card = framed(el, root);
+    if (card.parentElement && getComputedStyle(card.parentElement).display === "grid") return card;
+  }
+  return null;
+}
+
 const round = (n: number): number => Math.round(n * 100) / 100;
 
 export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDivElement | null> }> = ({ frame, rootRef }) => {
@@ -60,9 +73,10 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
     };
     const out: Record<string, unknown> = {};
     try {
-      if (frame >= 1000 && frame < 2000) {
+      if (frame >= 1000 && frame < BLAST_LOG_SCROLL.backAt) {
         // patch 13c: the Blast panel is scrolled on this frame: add the scroll back to get BODY coordinates (before the scroll).
         // The row is the one the hidden check's line lands in; `logText` is the line's own text, `logRow` the whole list item.
+        // This is the panel BEFORE the audit (the gauge row is still short), which is what the hidden-check callout points at.
         const sc = keyframeValue(BLAST_SCROLL, frame);
         const body = (el: Element): R => {
           const r = rect(el);
@@ -70,6 +84,15 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
         };
         const text = first("Hidden check passed");
         out.blast = { logRow: body(text.closest("li") ?? text), logText: body(text) };
+      } else if (frame >= BLAST_LOG_SCROLL.backAt && frame < 2000) {
+        // patch 13c2: the Blast panel AFTER the audit and the sandbox's destruction, settled, not scrolled (BLAST_SCROLL is 0 here, so these are window
+        // px). The audit gives the Filesystem card a third line of text, and the two cards of a grid row are as tall as the taller one, so the Secrets
+        // card is taller than on f1230 (the audit callout's dot and the whip, which lands on f1500 and stays for S3, aim at this one).
+        const sc = keyframeValue(BLAST_SCROLL, frame);
+        if (sc !== 0) throw new Error(`probe: the Blast panel is scrolled (${sc}) on frame ${frame}, expected 0`);
+        const secrets = gaugeCard(root, "Secrets");
+        if (!secrets) throw new Error(`probe: no "Secrets" gauge card in the gauge grid on frame ${frame}`);
+        out.blastGauges = { secrets: rect(secrets) };
       } else if (frame < 2000) {
         const tabs = Array.from(root.querySelectorAll('[role="tab"]')).map(rect);
         out.workspace = {

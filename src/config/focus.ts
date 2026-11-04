@@ -13,6 +13,9 @@
 // These rectangles are CLOSE, not pixel-exact: no UI component exists yet. THE UI PATCHES MAY REFINE THEM and MUST UPDATE THIS
 // FILE when they do (then every camera keyframe that names the focus follows automatically). Keep the names stable.
 
+// The measured rectangles (anchors.ts reads the same file). Imported here, not through anchors.ts, which imports this file.
+import measured from "./anchors.measured.json";
+
 export interface Rect {
   x: number;
   y: number;
@@ -97,6 +100,16 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "fullWindow",
 ];
 
+/**
+ * The measured Secrets card (anchors.measured.json, key blastGauges). Read when the camera asks for the focus, not when this file loads: the
+ * measuring tool bundles the project while that key may not exist yet (first run, or after a UI change), and must still be able to run.
+ */
+function measuredGaugeSecrets(): Rect {
+  const r = (measured as unknown as { blastGauges?: { secrets?: Rect } }).blastGauges?.secrets;
+  if (!r) throw new Error("focus: src/config/anchors.measured.json has no blastGauges.secrets; run `node tools/measure-anchors.mjs` and commit the JSON");
+  return { x: r.x, y: r.y, w: r.w, h: r.h };
+}
+
 export const FOCUS: Record<FocusName, Rect> = {
   /** the six nav items in the header (measured in patch 05; w is the widest case, Workspace active: 648.89 + 5 gaps + 14.05 bold) */
   nav: { x: GRID.navX, y: 0, w: 674, h: GRID.headerInnerH },
@@ -119,14 +132,20 @@ export const FOCUS: Record<FocusName, Rect> = {
   /** Workspace, right column: the whole BlastPanel */
   blastPanel: { x: RIGHT_X, y: GRID.headerH, w: GRID.colRight, h: WINDOW.h - GRID.headerH },
   /**
-   * S2 closing widen (patch 13c): the whole window with 100 px of extra height under it, so at zoom 1.0 the window sits on the upper part
-   * of the stage (y about 40-940) and the caption has a strip under it. The camera clamps the zoom to 1.0 here (the rectangle is taller than the stage).
+   * S2 closing widen (patch 13c, strip enlarged in 13c2): the whole window with 140 px of extra height under it, so at zoom 1.0 the window sits on
+   * the upper part of the stage (y 20-920) and the caption has a strip under it. The camera clamps the zoom to 1.0 here (the rectangle is taller
+   * than the stage). With 13c1's 100 px (window y 40-940) the 64 px caption, at the film's usual caption position, straddled the window's bottom edge.
    */
-  closingWide: { x: 0, y: 0, w: WINDOW.w, h: WINDOW.h + 100 },
+  closingWide: { x: 0, y: 0, w: WINDOW.w, h: WINDOW.h + 140 },
   /** the Blast Radius dial at the top of the BlastPanel (also where the S1 dial lands) */
   dial: { x: RIGHT_X + (GRID.colRight - GRID.dial) / 2, y: DIAL_Y, w: GRID.dial, h: GRID.dial },
-  /** gauge card "Secrets" (row 2, right) */
-  gaugeSecrets: { x: GAUGE_X2, y: GAUGE_Y1 + GAUGE_ROW, w: GAUGE_W, h: GRID.gaugeH },
+  /**
+   * gauge card "Secrets" (row 2, right), MEASURED in the DOM after the audit, panel not scrolled (patch 13c2, tools/measure-anchors.mjs ->
+   * anchors.measured.json). The computed estimate it replaces was about 237 px too high and 67 px too short.
+   */
+  get gaugeSecrets(): Rect {
+    return measuredGaugeSecrets();
+  },
   /** gauge card "Network" (row 1, left) */
   gaugeNetwork: { x: GAUGE_X1, y: GAUGE_Y1, w: GAUGE_W, h: GRID.gaugeH },
   /** gauge card "Compute" (row 3, left) */
