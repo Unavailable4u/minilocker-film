@@ -24,6 +24,19 @@ export const APP_DIM = 0.28;
  */
 export const APP_CLEAR = { start: 4980, end: 5004 } as const;
 
+/**
+ * S8 (patch 20): the app steps back while the architecture diagram takes the stage. `appRecedeAmount` goes 0 -> 1 over these frames (signature ease)
+ * and STAYS at 1 to the end of the film, so the app does not come back to full brightness at the S9 clear (appReveal applies it to both branches).
+ * `dim` is how much of the app's opacity is lost at amount 1 (0.85 = it is left at 15 %); `blurPx` is read by appLook (an ordinary filter on the app
+ * layer, never a backdrop-filter).
+ */
+export const APP_RECEDE = { start: 4620, end: 4650, dim: 0.85, blurPx: 12 } as const;
+
+/** 0 before APP_RECEDE.start, 1 from APP_RECEDE.end on. */
+export function appRecedeAmount(frame: number): number {
+  return signature(clamp01((frame - APP_RECEDE.start) / (APP_RECEDE.end - APP_RECEDE.start)));
+}
+
 export interface AppReveal {
   mounted: boolean;
   /** 0..1 */
@@ -41,13 +54,14 @@ export interface AppReveal {
  */
 export function appReveal(frame: number): AppReveal {
   if (frame < APP_MOUNT_FRAME) return { mounted: false, opacity: 0, dy: 0 };
+  const stepBack = 1 - APP_RECEDE.dim * appRecedeAmount(frame);
   if (frame >= APP_CLEAR.start) {
     const out = signature(clamp01((frame - APP_CLEAR.start) / (APP_CLEAR.end - APP_CLEAR.start)));
-    return out >= 1 ? { mounted: false, opacity: 0, dy: 0 } : { mounted: true, opacity: 1 - out, dy: 0 };
+    return out >= 1 ? { mounted: false, opacity: 0, dy: 0 } : { mounted: true, opacity: (1 - out) * stepBack, dy: 0 };
   }
   const rise = signature(clamp01((frame - APP_MOUNT_FRAME) / (APP_DOCKED_FRAME - APP_MOUNT_FRAME)));
   const lit = signature(clamp01((frame - APP_MOUNT_FRAME) / (APP_LIT_FRAME - APP_MOUNT_FRAME)));
-  return { mounted: true, opacity: APP_DIM + (1 - APP_DIM) * lit, dy: (1 - rise) * APP_RISE_PX };
+  return { mounted: true, opacity: (APP_DIM + (1 - APP_DIM) * lit) * stepBack, dy: (1 - rise) * APP_RISE_PX };
 }
 
 /** Frames the grid paper takes to fade in on the f300 impact. */
