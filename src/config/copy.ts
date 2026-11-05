@@ -508,6 +508,8 @@ export const s7 = {
     { label: "Policy layer or LLM judge", text: "A warning that can be talked around." },
     { label: "MiniLocker", text: "A boundary you control, a measurement you can check, an attack suite anyone can run." },
   ],
+  /** The two code-built cards of the opening beat (patch 19): the report is attached to a change ticket. Words only, nothing measured. */
+  ticket: { title: "Change ticket", attach: "attach the report" },
 } as const;
 
 /**

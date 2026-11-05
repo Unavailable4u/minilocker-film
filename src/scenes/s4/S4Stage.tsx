@@ -1,8 +1,9 @@
 // S4Stage (patch 15b): the persistent stage object of scene S4a, ONE object drawn from f2240 on. It is not part of S4a2 / S4a3 because all of them act on it
 // (the way S3Box is shared by S3a, S3b and S3c): 15b builds it (the backing panel, the FileLattice intact, the SnapshotTimeline rail with node 1);
 // 15c extends it with the wipe (the command typed above the lattice, the shatter and the drain, the huge output, the shake the stage shares with the camera);
-// patch 16 extends it again with the rewind (the lattice reassembles, the
-// ghost container, the greyed nodes and the blue "rewound" node). Those patches resend THIS file and `shared.tsx`; every addition is marked with its patch.
+// patch 16 extends it again with the rewind: 16a (f2400-2459) retires the slab and the command, adds the greyed snapshot(s), the pulse, the GhostContainer
+// and the blue "rewound" node; 16b makes the lattice reassemble inside the container. Those patches resend THIS file and `shared.tsx`; every addition is marked
+// with its patch.
 //
 // It draws in STAGE space, above the camera layer and below the captions. Everything it shows is a pure function of the global frame (shared.tsx
 // `s4PanelProgress`, `s4LatticeState`, `s4RailProgress`, `s4NodeProgress`), and every word and number is the evidence's, through `s4Data()`:
@@ -13,24 +14,32 @@ import React from "react";
 import { alpha, fonts, hatch, theme } from "../../config/theme";
 import { copy } from "../../config/copy";
 import { FileLattice } from "../../gfx/FileLattice";
+import { GhostContainer } from "../../gfx/GhostContainer"; // 16a
 import { SnapshotTimeline, type SnapshotNode } from "../../gfx/SnapshotTimeline";
 import type { SceneOverlayProps } from "../types";
 import { s4Data } from "./data";
 import {
   S4_COMMAND,
+  S4_GHOST, // 16a
   S4_LATTICE,
   S4_LATTICE_AT,
   S4_PANEL,
   S4_RAIL,
+  S4_TETHER_TO, // 16a
   S4_TIMING,
   s4CommandChars,
   s4CommandCursor,
   s4CommandLayout,
   s4CommandOpacity,
+  s4DiscardedProgress, // 16a
+  s4FootnoteOn, // 16a
+  s4GhostDraw, // 16a
   s4LatticeState,
   s4NodeProgress,
   s4PanelProgress,
+  s4PulseProgress, // 16a
   s4RailProgress,
+  s4RewoundProgress, // 16a
   s4Shake,
   s4TokenLayout,
   s4TokenState,
@@ -54,9 +63,15 @@ export const S4Stage: React.FC<SceneOverlayProps> = ({ frame }) => {
   const tok = s4TokenState(frame);
   const tokLayout = s4TokenLayout(data.wipe.token);
 
-  // 15b: one node, the snapshot the rewind goes back to, the newest: crimson ring. Patch 16 adds the later nodes (greyed) and the rewound one.
-  const nodes: SnapshotNode[] = [{ n: data.snapshot.n, hash: data.snapshot.hash, state: "current" }];
-  const nodeProgress = [s4NodeProgress(frame)];
+  // 15b: node 1, the snapshot the rewind goes back to, the newest of the kept ones: crimson ring.
+  // 16a: then the snapshots the rewind threw away (greyed, with their real hashes), then the blue node the rewind adds (the same snapshot number and hash as
+  // node 1, joined to it by its arc). Their progress is 0 before f2400, and SnapshotTimeline draws nothing for a node at 0.
+  const nodes: SnapshotNode[] = [
+    { n: data.snapshot.n, hash: data.snapshot.hash, state: "current" },
+    ...data.rewound.discarded.map((d): SnapshotNode => ({ n: d.n, hash: d.hash, state: "greyed" })),
+    { n: data.rewound.toSnapshot, hash: data.rewound.restoredHash, state: "rewound" },
+  ];
+  const nodeProgress = [s4NodeProgress(frame), ...data.rewound.discarded.map((_, i) => s4DiscardedProgress(frame, i)), s4RewoundProgress(frame)];
 
   return (
     <div
@@ -88,6 +103,19 @@ export const S4Stage: React.FC<SceneOverlayProps> = ({ frame }) => {
           transform: `translateY(${((1 - panel) * -48).toFixed(2)}px)`,
         }}
       />
+      {/* 16b: the timeline is drawn BEFORE the lattice (it used to follow the container): the pulse's faint line, which stays after it has arrived, then runs
+          behind the tiles when they return instead of across them. Its nodes and rail are outside the panel, so nothing else overlaps. */}
+      <SnapshotTimeline
+        nodes={nodes}
+        nodeProgress={nodeProgress}
+        tether={{ fromIndex: 0, toX: S4_TETHER_TO.x, toY: S4_TETHER_TO.y, progress: s4PulseProgress(frame) }}
+        y={S4_RAIL.y}
+        x0={S4_RAIL.x0}
+        x1={S4_RAIL.x1}
+        railProgress={s4RailProgress(frame)}
+        nodeWord={gfxB.snapshot}
+        rewoundLabel={gfxB.restoredInto}
+      />
       <FileLattice
         x={S4_LATTICE_AT.x}
         y={S4_LATTICE_AT.y}
@@ -100,7 +128,7 @@ export const S4Stage: React.FC<SceneOverlayProps> = ({ frame }) => {
         shatter={lat.shatter}
         reassemble={lat.reassemble}
         desaturate={lat.desaturate}
-        footnote={gfxB.schematic}
+        footnote={s4FootnoteOn(frame) ? gfxB.schematic : undefined}
       />
       {/* 15c: the output of the wipe, huge, in the place of the lattice (a hatched slab: red never carries the meaning alone) */}
       {tok.opacity > 0 ? (
@@ -165,16 +193,8 @@ export const S4Stage: React.FC<SceneOverlayProps> = ({ frame }) => {
           </div>
         </div>
       ) : null}
-      <SnapshotTimeline
-        nodes={nodes}
-        nodeProgress={nodeProgress}
-        y={S4_RAIL.y}
-        x0={S4_RAIL.x0}
-        x1={S4_RAIL.x1}
-        railProgress={s4RailProgress(frame)}
-        nodeWord={gfxB.snapshot}
-        rewoundLabel={gfxB.restoredInto}
-      />
+      {/* 16a: the fresh sandbox, drawn round the empty lattice while the pulse arrives */}
+      <GhostContainer x={S4_GHOST.x} y={S4_GHOST.y} w={S4_GHOST.w} h={S4_GHOST.h} draw={s4GhostDraw(frame)} label={gfxB.freshSandbox} />
     </div>
   );
 };

@@ -1158,3 +1158,83 @@ Patch 14 (S3, f1500-2099) is split like S2: `S3Decoys.tsx` assembles `s3/S3a.tsx
 - The shards fly over the steps column and the app's own wipe row for about 30 frames (intended: "tiles shatter outward"); they fade out.
 - The drain (30 %) applies to the lattice only, which is mostly shards by the time it has reached its full value.
 - The evidence is still the SAMPLE: the command, `WIPED_0` and the hash are sample data.
+
+## PATCH 19 - S7 Value + competitive (f4260-4559)
+
+**Needs:** patches 10 (`CompareTable`) and 12 (the scene contract). It does not depend on patches 16-18; it applies on top of 15c as the repo stands.
+**Changed files:** `src/scenes/S7Value.tsx` (replaced completely, the 12a stub is gone), `src/config/copy.ts` (one new group, `copy.s7.ticket`), `docs/PATCH_NOTES.md`. Nothing else is touched: `MiniLockerFilm.tsx`, `src/scenes/index.ts`, `timeline.ts` and `CompareTable.tsx` are as they were.
+
+### What S7 contains
+- **f4260-4289 the app steps back.** `S7Scrim`, a stage-sized backdrop layer (the way `S3Scrim` is built): `backdrop-filter: blur(10px) brightness(.35)`, ramped over 30 frames with the signature ease (`s7ScrimAmount`). It stays at full strength to f4559, so the window and the cursor are a soft dark field under the text. MiniLockerFilm and FilmApp are untouched.
+- **f4275-4379 the question.** `copy.s7.line`, split after its colon into two lines (never retyped), italic CMU Serif 500 at 68 px through `KineticText` (a masked word reveal, 3 frames between words; the last word has landed on f4335). "know?" is drawn in accent-ink and underlined. The first word is on the beat f4275, not on f4260: the first 15 frames belong to the app stepping back.
+- **f4305 the ticket, f4320 the report, f4335-4364 the glide, f4365 the landing.** Two code-built cards (hairlines, skeleton bars, no screenshots). The ticket (right) is titled `copy.s7.ticket.title` and has a dashed slot labelled `copy.s7.ticket.attach` ("attach the report"). The report sheet (left) is titled `copy.rep.eyebrow` and shows the report's real layout as a schematic: the Mark, a 3 x 3 grid of dimension cards, a ledger bar. It has NO words, numbers or status colors in its body, so nothing measured appears. On f4335 it glides (30 f, a 36 px lift, a 3 degree roll to 0) into the slot and shrinks to a thumbnail; on the beat f4365 the dashed slot turns solid, the label brightens, the ticket bumps 4 px and a check pops (`settle` spring).
+- **f4368-4379 the exit.** The question and both cards rise 36 px and fade together; the table starts on the next frame.
+- **f4380-4559 the table.** `CompareTable` with `copy.s7.rows`, `copy.gfxC.compareColumns / compareMarks / compareLegend`. Heads draw f4380-4399. Category rows build on the beats f4380, f4410, f4440 (30 frames each: rise, then the three marks). The MiniLocker row rises on the beat f4455; on the beat f4470 `emphasis` goes 0 to 1 over 30 frames (the row grows 6 %, takes the accent edge and the crimson discs) and is complete on f4500. The whole table pushes in 1.8 % (and 6 px up) over f4380-4559, so nothing stands still for 1.5 s.
+- **f4500 the caption.** `copy.s7.caption` as TWO lines (split after the first sentence; on one line it is 68 characters and cannot fit the 1728 px safe width at 56 px), "a measurement" in accent-ink. It leaves over f4548-4559 and is gone at the cut f4560.
+- **Camera:** f4260 a 30 f signature move to `fullWindow`, padding 60; f4380 a 180 f linear drift to bias 1.025 with 0.6 / -1.2 degrees of tilt. No big moves. **Cursor:** none (`S7_CURSOR` is empty).
+
+### PUBLIC API
+- `src/scenes/S7Value.tsx` exports: `S7Value` (overlay), `S7_CAMERA` (2 keyframes: f4260, f4380), `S7_CURSOR` (empty), `S7_TIMING` (every frame of the scene), `S7_SCRIM` (`{ blurPx: 10, brightness: 0.35 }`), `s7ScrimAmount(frame): number` (0..1), `S7Scrim` (`React.FC<{ frame: number }>`).
+- `copy.s7.ticket = { title: "Change ticket", attach: "attach the report" }`.
+
+### Decisions and conventions future patches must follow
+1. **S8 starts on a cut (f4560) with the app still under S7's full scrim state.** The scrim is drawn by S7's overlay, which is unmounted from f4560: if S8 shows the app, it appears at full brightness on that frame. That is a hard cut on a beat, which BIBLE 5 allows, but if patch 20 wants a ramp it can import `s7ScrimAmount` / `S7_SCRIM` and draw its own out-ramp (a layer whose amount is `1 - ramp`).
+2. **S6's last cursor waypoint should carry `hide: true`**: S7 has no waypoints, so a visible cursor would stay on screen (blurred) through the whole scene.
+3. S7's first camera keyframe is f4260 and its last is f4380, so the next scene's first keyframe must be f4560 or later (the f4380 drift is 180 f and ends on f4559).
+4. The scene reads nothing from the evidence on purpose (it shows no measured value). Keep it that way: any number added here must come from `src/data/select.ts`.
+5. The table's marks are an editorial judgement about generic categories (copy.gfxC). No competitor names anywhere, in code or copy.
+
+### Interpretations of the spec (change them in `S7_TIMING` only)
+- "typed by KineticText": `KineticText` is a staggered masked word reveal, not a character typewriter; it is used as the spec says.
+- "rows on f4380, 4410, 4440, then the MiniLocker row grows at f4470": the three category rows are on those beats; the MiniLocker row rises on f4455 (a beat) and grows on f4470. If you want it to appear and grow together on f4470, set `table.product` to 4470.
+- The question's first word is on f4275 rather than f4260 (`CUES.s7.line` in timeline.ts is still the nominal 4260; nothing reads it for placement).
+
+### Known issues
+- `npx tsc --noEmit` is clean and every import-time check in `S7Value.tsx` passes (beats, order of events, safe margins, legend clear of the caption). The scene was server-rendered (react-dom/server with a mocked frame) at 20 frames from f4260 to f4559 to confirm that nothing throws and that each element appears on its frame.
+- **NOT looked at:** any rendered still or motion. No browser was available in the build environment. Please look at stills at f4290, f4350, f4400, f4440, f4480, f4540: expect, in order, the app dark and blurred under the two-line question with both cards up; the report mid-glide towards the ticket's slot; the table with two category rows (heads and rows 1-2 in); all three categories up and the MiniLocker row not yet raised; the MiniLocker row grown with its crimson edge and discs; the full table with the two-line caption.
+- `backdrop-filter` is what `S3Scrim` already relies on. If a still shows ghost edges on the stage border (as the camera's DOF layer once did, see `CAMERA_DOF`), replace the scrim with a solid `theme.paper` layer at 65 % opacity: the blur is then lost but the dimming is identical.
+- The report sheet is a schematic of the real Report screen (nine dimension cards, a ledger block); its tiles carry no names. That is deliberate (nothing measured), but it means the sheet reads as "a report" through its title and layout only.
+- The evidence is still the SAMPLE (`meta.sample`); this scene does not use it.
+
+## Patch 16a - S4b Rewind: restore, checks, ledger, proof clip, part 1 of 6: "Rewind." (f2400-2459)
+
+**Applies on top of 15c** (repo head `d72aa1c`). Patch 16 is built in six parts (16a-16f), each applied on top of the previous, the way patches 12, 14 and 15 were. **Changed files:** `src/scenes/s4/S4b.tsx` (the stub is replaced by the S4b assembly, which concatenates the parts as they arrive), `src/scenes/s4/S4b1.tsx` (new: camera, caption, geometry checks), `src/scenes/s4/S4Stage.tsx` (the greyed and rewound nodes, the pulse, the GhostContainer), `src/scenes/s4/shared.tsx` (a marked "16a" section), `src/scenes/s4/data.ts` (extended ONCE for all of S4b, see below), `docs/PATCH_NOTES.md`. `S4Rewind.tsx`, `S4a*.tsx`, `copy.ts`, `focus.ts`, `script.ts` and `timeline.ts` are untouched (every word 16a shows is already in `copy.gfxB` / `copy.s4`).
+
+### What 16a contains
+- **f2400 "Rewind."** (`CUES.s4.captionRewind`), gone by f2456 (it leaves over its last 12 frames).
+- **f2400-2413 the slab and the command retire.** The hatched slab with `WIPED_0` and the dimmed wipe command fade out (`s4RetireProgress`, multiplied into `s4TokenState` and `s4CommandOpacity`, as 15c's notes asked): what stays is the lattice's empty, dashed slots.
+- **f2406 the greyed snapshot(s).** Every snapshot in `timeline.rewound.payload.discarded` lands greyed on the rail, 6 frames apart, with its real hash (snapshot 2, `819c3525`, in the sample).
+- **f2415 the pulse** (a beat) leaves snapshot 1 (SnapshotTimeline's `tether`) and reaches the middle of the empty lattice at f2437; a faint line stays.
+- **f2421-2444 the GhostContainer** draws on round the lattice (`S4_GHOST`: the lattice's place plus 14 px) in `GHOST_DRAW_FRAMES` = 24 frames, **complete on the beat f2445**, chip "fresh sandbox".
+- **f2437-2458 the blue "rewound" node**: its arc leaves snapshot 1 as the pulse arrives, the node lands from f2447 with "restored into a fresh sandbox" under it. It carries snapshot 1's number and hash (`timeline.rewound.snapshot_sha256`, checked equal to the snapshot's).
+- **Camera:** one keyframe, f2400, a slow push on `attackSteps` from bias 1.03 to 1.04, arriving f2459. **Cursor:** none.
+- **The footnote** ("schematic: only the labelled tile is a real file") is off for f2400-2459 (`s4FootnoteOn`): the pulse's line crosses its place, and no tile is on show.
+
+### data.ts (extended once for all of S4b)
+New fields, all derived from the attack's ledger and result, each throwing (naming what is missing) if the evidence cannot support the scene:
+- `rewound` {`toSnapshot`, `atStep`, `discarded[]` (n, hash, short), `restoredHash`, `files`}. The ledger has no separate "restored tree" hash: `restoredHash` is `timeline.rewound.snapshot_sha256`, and the scene **throws unless `verified.matches` is true** (and `missing` and `unexpected` are 0, and the hash equals the snapshot's). 16b's HashTile reads this.
+- `cat.line` (16c): the restored file's first line, without the harness's `exit_code=` line.
+- `chain` (16e): seven `{role, event}` entries picked by what the event IS, in ledger order (checked): `write` (tool.call write_file), `snapshot` (the snapshot the rewind goes back to), `delete` (tool.call with `rm -rf`), `rewind` (rewind.requested), `recreated` (sandbox.recreated), `rewound` (timeline.rewound), `cat` (tool.call cat). Sample: events 5, 6, 9, 13, 17, 18, 20.
+- `seal` (16e): from the attack's `verify` payload: `verified`, `events`, `head`, `short` (sample: 29 events, head `0589fc3d`). Throws if the ledger did not verify.
+- `outcome` (16f): `files`, `checksPassed`, `checksTotal`, `seconds` (`duration_s`), `verdict` (sample: 1, 8 of 8, 11.84 s, contained).
+
+### PUBLIC API
+- `S4B1_CAMERA` (1 keyframe: f2400), `S4B1_CURSOR` (empty), `S4b1`; `S4B_CAMERA`, `S4B_CURSOR` and `S4b` now concatenate the parts (only S4b1 so far).
+- `shared.tsx`: `S4_TIMING` gains `captionRewind`, `retire`, `discarded`, `pulse`, `ghost`, `rewound`, `rewindPush`, `partEndB1`; new `S4_GHOST`, `S4_TETHER_TO`, `s4RetireProgress`, `s4GhostDraw`, `s4PulseProgress`, `s4DiscardedProgress(frame, i)`, `s4RewoundProgress`, `s4FootnoteOn`.
+- `data.ts`: `S4Data` gains `rewound`, `chain`, `seal`, `outcome` and `cat.line`; new type `ChainRole`.
+
+### Decisions and conventions future patches must follow
+1. **16b's first camera keyframe, cursor waypoint and overlay item start at f2460 or later**, from `attackSteps`, padding 96, bias 1.04 (arrived f2459).
+2. **16b EXTENDS `S4Stage.tsx` and `shared.tsx`; it does not draw a second lattice.** From f2460 the stage still draws the empty slots inside `S4_GHOST`, the greyed node(s) and the rewound node. 16b fills `reassemble` in `s4LatticeState` (the shards return INTO the container: the lattice sits at `S4_LATTICE_AT`, the container is the same place plus 14 px), brings the footnote back on f2460 (`s4FootnoteOn` is false until f2459), and lays its HashTiles out against `S4_LATTICE_AT` / `S4_GHOST`.
+3. **The playhead of the timeline is unused so far** (`playhead` is omitted): 16b may use it for the hash-lock sweep.
+4. `S4_CUE_ANCHORS` (patch 22) is unchanged; the sound returns on f2400. The beats of 16a (pulse f2415, container complete f2445) are in `S4_TIMING` for patch 22 to read.
+5. The part's camera ends 1 % under 15c's punch peak (1.02 x 1.03 = 1.0506); `S4b1.tsx` checks the steps column against the panel (4 px), the stage's right edge (24 px) and the rail (24 px) at f2459.
+6. The 16a part of `data.ts` is final for 16b-16f: if one of those patches needs another evidence value, it adds it there and says so.
+
+### Known issues
+- `tsc --noEmit` clean. The new `data.ts` fields were printed from the SAMPLE evidence and match the ledger (`rewound.restoredHash` = snapshot 1's hash, `seal` 29 events / `0589fc3d`, `chain` events 5, 6, 9, 13, 17, 18, 20).
+- Stills looked at (half size, Remotion with the system Chrome, `--gl=swangle`): f2399 (the baseline: 15c's last frame), f2406 (slab retiring, caption rising), f2418 (the greyed node landing, the pulse leaving), f2430 (the container drawing on, the pulse crossing the slots), f2442 (container nearly complete, chip in, arc starting) and f2459 (the last frame: the container, the arc and the rewound node with its label).
+- **NOT verified:** motion (the pulse's speed, the container's draw-on, the push), the full-size render, and f2400-2405 and f2410-2415 in particular. The frame f2406 still shows the slab almost opaque: `signature` starts slowly, so the retire only reads from about f2408.
+- The greyed node's label (`snapshot 2  819c3525`, struck through, dimmed to 60 %) is faint on the dark stage by SnapshotTimeline's design ("work the rewind threw away"); it is legible at full size but not emphasised.
+- The panel's left edge and the container's corner ticks are 11 px apart, inside the panel; the container's label chip sits 17 px above its top edge, 97 px below the top of the stage.
+- The evidence is still the SAMPLE (`meta.sample`); the hashes, file name and counts are sample data.

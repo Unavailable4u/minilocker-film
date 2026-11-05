@@ -55,8 +55,10 @@ export const HOOK_DOT = { x: STAGE.w / 2, y: STAGE.h / 2, r: (2.2 / 32) * 360 } 
 // Window focus with an 80 px margin gives a base zoom of 1.022; scaleBias 1.03 is then a 3% punch on that base.
 export const S0_CAMERA: readonly CameraKeyframe[] = [
   kf(0, "fullWindow", { padding: 80 }),
-  kf(60, "fullWindow", { padding: 80, scaleBias: 1.03, shake: 5 }),
-  kf(105, "fullWindow", { padding: 80, scaleBias: 1.045, shake: 7 }),
+  // Keep each impact move bounded before the next one starts; overlapping camera springs
+  // compound their deltas and make the later slow push visibly lurch at the handoff.
+  kf(60, "fullWindow", { padding: 80, scaleBias: 1.03, ease: "signature", frames: 45, shake: 5 }),
+  kf(105, "fullWindow", { padding: 80, scaleBias: 1.045, ease: "signature", frames: 45, shake: 7 }),
   // a slow push through the caption
   kf(180, "fullWindow", { padding: 80, scaleBias: 1.06, ease: "linear", frames: 110 }),
 ];

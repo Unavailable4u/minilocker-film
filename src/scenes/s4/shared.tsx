@@ -30,11 +30,26 @@
 // and on f2370 the real output of the wipe slams in huge, vermilion, in the empty lattice's place, in TOTAL SILENCE until f2399 (`S4_CUE_ANCHORS`).
 //   Hand-off to patch 16 (S4b, f2400): this part ends on `attackSteps`, padding 96, bias 1.03 (arrived f2398); the stage keeps drawing the empty slots with
 //   the huge token until patch 16 takes them over (the rewind: the pulse, the ghost container, the shards' return).
+//
+// 16a (f2400-2459) opens S4b ("Rewind.") and extends the SAME stage again (every addition below is marked "16a"): the slab of the wipe's output and the dimmed command
+// retire (f2400-2413), snapshot 2, the work the rewind will throw away, lands greyed (f2406), a pulse leaves snapshot 1 on the beat f2415 for the fresh sandbox, the
+// GhostContainer draws on round the empty lattice (f2421-2444, complete on the beat f2445), and the blue "rewound" node lands (f2437-2458).
+//   Hand-off to 16b (f2460): this part ends on `attackSteps`, padding 96, bias 1.04 (arrived f2459); the stage keeps drawing the empty slots inside the ghost
+//   container (the footnote is off for f2400-2459 and 16b brings it back), the greyed node and the rewound node. 16b fills `reassemble` in `s4LatticeState`.
+//
+// 16b (f2460-2579) is the return (every addition below is marked "16b"): the shards come back INTO the fresh sandbox with FileLattice's 4 % overshoot
+// (f2460-2505, the colour comes back with them), then the HashTile of the restored snapshot appears in the free stage space under the steps column, its
+// restored hash locks left to right against the snapshot's (f2528-2549), ONE tick pops on the beat f2550, and the counter "N file(s) re-hashed - all matched"
+// rises beside it (f2552). The tile, the counter and the full hash are S4b2's own objects (S4b2.tsx); the lattice's return is the stage's (`s4LatticeState`).
+//   Hand-off to 16c (f2580): this part ends on `attackSteps`, padding 96, bias 1.05 (arrived f2579); the lattice is whole and in colour inside the container,
+//   the tile, the counter and the hash stay up until 16c retires them with the stage (`s4HashOpacity`, 16c's to add).
 import { WINDOW } from "../../config/focus"; // 15b
 import { layout } from "../../config/theme"; // 15b
 import { SCREEN_CHANGES, LAB } from "../../config/script";
 import { BEAT, CUES, SCENES } from "../../config/timeline"; // 15b: BEAT, CUES
 import { SHATTER_FRAMES, latticeSize } from "../../gfx/FileLattice"; // 15b, 15c: SHATTER_FRAMES
+import { GHOST_DRAW_FRAMES } from "../../gfx/GhostContainer"; // 16a
+import { hashTileSize } from "../../gfx/HashTile"; // 16b
 import { MONO_ADVANCE } from "../../fx/util"; // 15c
 import { getCameraState } from "../../fx/Camera"; // 15c
 import { kf } from "../../config/camera"; // 15c
@@ -112,6 +127,40 @@ export const S4_TIMING = {
   captionGone: { start: CUES.s4.captionGone, end: CUES.s4.captionRewind },
   /** 15c: the last frame 15c draws on. Patch 16's first camera keyframe, cursor waypoint and overlay item start at f2400 or later. */
   partEndA3: 2399,
+
+  // ---------------------------------------------------------------- 16a (f2400-2459)
+  /** 16a: "Rewind." (CUES.s4.captionRewind) until f2456: it leaves over its last 12 frames, so it is gone before 16b's first frame (f2460). */
+  captionRewind: { start: CUES.s4.captionRewind, end: 2456 },
+  /** 16a: the slab with the wipe's output and the command (both already dimmed) leave: the empty slots under them are what the fresh sandbox is drawn round. */
+  retire: { from: 2400, frames: 14 },
+  /** 16a: the snapshots the rewind throws away land greyed on the rail, one after the other (`stagger` frames apart), each in `frames` (the first from f2406). */
+  discarded: { from: 2406, frames: 14, stagger: 6 },
+  /** 16a: the pulse leaves snapshot 1 on a beat and reaches the container in `frames` (f2437). */
+  pulse: { from: 2415, frames: 22 },
+  /** 16a: the GhostContainer draws on (BIBLE 11 B: GHOST_DRAW_FRAMES = 24 frames), complete on the beat f2445. */
+  ghost: { from: 2421, frames: GHOST_DRAW_FRAMES },
+  /** 16a: the blue "rewound" node: its arc leaves as the pulse arrives (f2437), the node itself lands from f2447 (SnapshotTimeline: after 45 % of `frames`), complete f2459. */
+  rewound: { at: 2437, frames: 22 },
+  /** 16a: a slow push, 3 % more than 15c's bias (1.03 -> 1.04), arriving on the last frame of the part. */
+  rewindPush: { from: 2400, frames: 59, bias: 1.04 },
+  /** 16a: the last frame 16a draws on. 16b's first camera keyframe, cursor waypoint and overlay item start at f2460 or later. */
+  partEndB1: 2459,
+
+  // ---------------------------------------------------------------- 16b (f2460-2579)
+  /** 16b: the shards return into the container (FileLattice `reassemble`, linear 0..1; its own stagger and 4 % overshoot): the lattice is whole on the beat f2505. */
+  reassemble: { from: 2460, frames: 45 },
+  /** 16b: the HashTile appears (the snapshot's hash on top, the restored row still empty) once the lattice is whole. */
+  hashReveal: { from: 2510, frames: 10 },
+  /** 16b: the restored hash locks left to right (BIBLE: 20-24 frames a tile; one real tile here) and is locked on the beat f2550. */
+  hashLock: { from: 2528, frames: 22 },
+  /** 16b: the tick pops on the beat f2550 (patch 22's tick). */
+  hashTick: { from: 2550, frames: 12 },
+  /** 16b: the counter ("N file(s) re-hashed - all matched") and the full hash rise beside the tile. */
+  counter: { from: 2552, frames: 12 },
+  /** 16b: a slow push, 1 % more than 16a's (1.04 -> 1.05, the peak of 15c's punch), arriving on the last frame of the part. */
+  returnPush: { from: 2460, frames: 119, bias: 1.05 },
+  /** 16b: the last frame 16b draws on. 16c's first camera keyframe, cursor waypoint and overlay item start at f2580 or later. */
+  partEndB2: 2579,
 } as const;
 
 /**
@@ -121,6 +170,14 @@ export const S4_TIMING = {
 export const S4_CUE_ANCHORS = {
   glassShatter: { frame: S4_TIMING.wipe.at },
   silence: { from: S4_TIMING.silence.from, to: S4_TIMING.silence.to },
+  // 16a: the sound returns on f2400; the pulse leaves snapshot 1 on a beat; the container is complete on a beat
+  soundReturns: { frame: S4_TIMING.captionRewind.start },
+  rewindPulse: { from: S4_TIMING.pulse.from, to: S4_TIMING.pulse.from + S4_TIMING.pulse.frames },
+  ghostComplete: { frame: S4_TIMING.ghost.from + S4_TIMING.ghost.frames },
+  // 16b: the shards' return, the hash lock (a rising scramble-to-lock) and THE tick (ONE tick: one real hash is compared, files = N is a count, not N tiles)
+  reassemble: { from: S4_TIMING.reassemble.from, to: S4_TIMING.reassemble.from + S4_TIMING.reassemble.frames },
+  hashLock: { from: S4_TIMING.hashLock.from, to: S4_TIMING.hashLock.from + S4_TIMING.hashLock.frames },
+  hashTick: { frame: S4_TIMING.hashTick.from },
 } as const;
 
 /** Where the cursor appears (window px): over the detail pane, right of the tiles' row (tiles end at x 771), at the height of the first card. */
@@ -209,7 +266,7 @@ export function s4PanelProgress(frame: number): number {
   return signature(clamp01((frame - S4_TIMING.panel.from) / S4_TIMING.panel.frames));
 }
 
-/** The four LINEAR 0..1 values FileLattice takes (it applies its own easing). 15b: `intact` moves; 15c adds `shatter` and `desaturate`; `reassemble` is 0 until patch 16. */
+/** The four LINEAR 0..1 values FileLattice takes (it applies its own easing). 15b: `intact` moves; 15c adds `shatter` and `desaturate`; 16b fills `reassemble` (and drains `desaturate` back to 0 with it). */
 export interface S4LatticeState {
   intact: number;
   shatter: number;
@@ -221,12 +278,14 @@ export function s4LatticeState(frame: number): S4LatticeState {
   const t = S4_TIMING.lattice;
   const sh = S4_TIMING.shatter;
   const ds = S4_TIMING.desat;
-  // 15c: the shatter and the drain (linear: FileLattice applies its own easing); `reassemble` stays 0 until patch 16
+  // 15c: the shatter and the drain (linear: FileLattice applies its own easing)
+  // 16b: `reassemble` is the shards' return (f2460-2505), and the colour comes back with it (the drain's 30 % falls to 0 over the same frames)
+  const re = clamp01((frame - S4_TIMING.reassemble.from) / S4_TIMING.reassemble.frames);
   return {
     intact: clamp01((frame - t.from) / t.frames),
     shatter: clamp01((frame - sh.from) / sh.frames),
-    reassemble: 0,
-    desaturate: ds.amount * clamp01((frame - ds.from) / ds.frames),
+    reassemble: re,
+    desaturate: ds.amount * clamp01((frame - ds.from) / ds.frames) * (1 - re),
   };
 }
 
@@ -303,7 +362,8 @@ export function s4CommandOpacity(frame: number): number {
   if (frame < t.cmdIn.from) return 0;
   const appear = clamp01((frame - t.cmdIn.from) / t.cmdIn.frames);
   const dim = clamp01((frame - t.dim.from) / t.dim.frames);
-  return appear * (1 - (1 - t.dim.to) * signature(dim));
+  // 16a: the command leaves with the slab (f2400-2413)
+  return appear * (1 - (1 - t.dim.to) * signature(dim)) * (1 - s4RetireProgress(frame));
 }
 
 /** How many characters of the command are typed (0..total), linear. */
@@ -328,7 +388,8 @@ export function s4TokenLayout(token: string): { fontSize: number } {
 export function s4TokenState(frame: number): { opacity: number; scale: number } {
   const t = S4_TIMING.token;
   if (frame < t.at) return { opacity: 0, scale: 1.1 };
-  return { opacity: clamp01((frame - t.at) / 4), scale: 1.1 - 0.1 * signature(clamp01((frame - t.at) / t.frames)) };
+  // 16a: the slab leaves from f2400 (it is a function of the frame: the stage draws nothing once the opacity is 0)
+  return { opacity: clamp01((frame - t.at) / 4) * (1 - s4RetireProgress(frame)), scale: 1.1 - 0.1 * signature(clamp01((frame - t.at) / t.frames)) };
 }
 
 /**
@@ -339,6 +400,157 @@ export function s4Shake(frame: number): { x: number; y: number } {
   const cam = getCameraState(frame, [kf(0, "attackSteps"), kf(S4_TIMING.punch.at, "attackSteps", { ease: "linear", frames: 1, shake: S4_TIMING.punch.shake })], undefined, { wideTilt: false });
   return { x: cam.shakeX, y: cam.shakeY };
 }
+
+// ---------------------------------------------------------------------------------------------- 16a: the rewind opens
+
+/** 16a: 0..1, eased: the slab with the wipe's output and the command leave (both multiply their opacity by 1 minus this). */
+export function s4RetireProgress(frame: number): number {
+  return signature(clamp01((frame - S4_TIMING.retire.from) / S4_TIMING.retire.frames));
+}
+
+/** Round the lattice the GhostContainer sits this far outside it (stage px): its corner ticks (14 px out) and echo outline (9 px out) stay inside the panel. */
+const GHOST_PAD = 14;
+const GHOST_CORNER_OFFSET = 14; // GhostContainer.tsx CORNER_OFFSET
+const GHOST_CHIP_H = 34; // GhostContainer.tsx CHIP_H: the label chip straddles the top edge
+
+/** 16a: the fresh sandbox: the empty lattice's place with `GHOST_PAD` round it (stage px). 16b's shards return INTO it and its HashTiles sit with it. */
+export const S4_GHOST = {
+  x: S4_LATTICE_AT.x - GHOST_PAD,
+  y: S4_LATTICE_AT.y - GHOST_PAD,
+  w: S4_LATTICE_AT.w + 2 * GHOST_PAD,
+  h: S4_LATTICE_AT.h + 2 * GHOST_PAD,
+  pad: GHOST_PAD,
+  cornerOffset: GHOST_CORNER_OFFSET,
+  chipH: GHOST_CHIP_H,
+} as const;
+
+/** 16a: where the pulse goes: the middle of the fresh sandbox (the empty slots the files come back to). */
+export const S4_TETHER_TO = { x: S4_GHOST.x + S4_GHOST.w / 2, y: S4_GHOST.y + S4_GHOST.h / 2 } as const;
+
+/** 16a: 0..1 linear: the GhostContainer draws on (it applies its own easing). */
+export function s4GhostDraw(frame: number): number {
+  return clamp01((frame - S4_TIMING.ghost.from) / S4_TIMING.ghost.frames);
+}
+
+/** 16a: 0..1 linear: the pulse from snapshot 1 to the container (SnapshotTimeline's `tether.progress`; once it is 1 a faint line stays). */
+export function s4PulseProgress(frame: number): number {
+  return clamp01((frame - S4_TIMING.pulse.from) / S4_TIMING.pulse.frames);
+}
+
+/** 16a: 0..1 linear: discarded snapshot number `i` (0 = the first) lands greyed on the rail. */
+export function s4DiscardedProgress(frame: number, i: number): number {
+  const t = S4_TIMING.discarded;
+  return clamp01((frame - (t.from + i * t.stagger)) / t.frames);
+}
+
+/** 16a: 0..1 linear: the blue "rewound" node (SnapshotTimeline: its arc is the first 55 %, then the node lands). */
+export function s4RewoundProgress(frame: number): number {
+  return clamp01((frame - S4_TIMING.rewound.at) / S4_TIMING.rewound.frames);
+}
+
+/**
+ * 16a: the lattice's footnote ("schematic: only the labelled tile is a real file") is off while the lattice is empty and the pulse crosses its place
+ * (f2400-2459). 16b brings it back on f2460, when the tiles return.
+ */
+export function s4FootnoteOn(frame: number): boolean {
+  return frame < S4_TIMING.captionRewind.start || frame > S4_TIMING.partEndB1;
+}
+
+// ---------------------------------------------------------------------------------------------- 16a: import-time checks
+
+(() => {
+  const t = S4_TIMING;
+  const bad = (m: string): never => {
+    throw new Error(`S4 (16a): ${m}`);
+  };
+  if (!(t.retire.from > t.partEndA3)) bad("16a's first item must start after 15c's last frame (f2399)");
+  if (!(t.captionRewind.start === CUES.s4.captionRewind && t.captionRewind.start > t.partEndA3)) bad('"Rewind." starts on its cue (CUES.s4.captionRewind), after 15c\'s last frame');
+  if (!(t.captionRewind.end <= t.partEndB1)) bad("the caption must be gone by the end of the part");
+  if (!(t.retire.from + t.retire.frames <= t.discarded.from + t.discarded.frames)) bad("the slab must be gone before the greyed snapshot has landed");
+  if (!(t.pulse.from % BEAT === 0 && t.pulse.from >= t.discarded.from)) bad("the pulse leaves snapshot 1 on a beat, after the greyed snapshot has started to land");
+  if (!(t.ghost.frames === GHOST_DRAW_FRAMES)) bad("the GhostContainer draws on in GHOST_DRAW_FRAMES (BIBLE 11 B)");
+  if (!(t.ghost.from > t.pulse.from && t.ghost.from < t.pulse.from + t.pulse.frames)) bad("the container starts to draw while the pulse is on its way");
+  if (!((t.ghost.from + t.ghost.frames) % BEAT === 0)) bad(`the container must be complete on a beat (complete f${t.ghost.from + t.ghost.frames})`);
+  if (!(t.rewound.at >= t.pulse.from + t.pulse.frames)) bad("the rewound node's arc starts when the pulse has arrived");
+  if (!(t.rewound.at + t.rewound.frames <= t.partEndB1)) bad("the rewound node must have landed by the end of the part");
+  if (!(t.rewindPush.from >= t.retire.from && t.rewindPush.from + t.rewindPush.frames === t.partEndB1)) bad("the push must arrive on the last frame of the part");
+  const g = S4_GHOST;
+  const pr = S4_PANEL.x + S4_PANEL.w;
+  if (!(g.x - g.cornerOffset >= S4_PANEL.x + 4 && g.x + g.w + g.cornerOffset <= pr - 4)) bad("the container's corner ticks must be inside the panel");
+  if (!(g.y - g.chipH / 2 >= layout.safeMargin)) bad(`the container's label chip (stage y ${g.y - g.chipH / 2}) must be inside the safe margin (${layout.safeMargin})`);
+  if (!(g.y + g.h + g.cornerOffset <= S4_LATTICE_AT.y + S4_LATTICE_AT.h + FOOTNOTE_GAP + FOOTNOTE_H)) bad("the container must end above the footnote's end");
+})();
+
+// ---------------------------------------------------------------------------------------------- 16b: the HashTile and its counter
+
+/**
+ * 16b: where the HashTile of the restored snapshot sits (stage px): in the free stage space UNDER the steps column, right of the panel. At 16a/16b's poses the
+ * window's bottom edge is at stage y ~593 and the rail at y 770, so a strip of 126 px fits between them with air on both sides (S4b2.tsx checks it against the
+ * camera). The tile shows the first `hexShown` (16) hex of both hashes: the full 64-hex string would be 947 px wide. The two hashes are compared in full in
+ * `data.ts` (the scene throws unless they are equal); the tile compares the 16 it shows.
+ */
+export const S4_HASH = { hexShown: 16, x: S4_PANEL.x + S4_PANEL.w + 48, y: 612 } as const;
+const HASH_TILE_SIZE = hashTileSize(S4_HASH.hexShown);
+export const S4_HASH_BOX = { x: S4_HASH.x, y: S4_HASH.y, w: HASH_TILE_SIZE.w, h: HASH_TILE_SIZE.h } as const;
+
+/**
+ * 16b: the counter and the full hash, right of the tile: the counter (mono, 30 px) in the tile's top half, the restored hash in full under it, in two lines of
+ * 32 hex at 20 px (BIBLE: no mono under 20 px), `theme.ink3`.
+ */
+export const S4_COUNTER = {
+  x: S4_HASH_BOX.x + S4_HASH_BOX.w + 32,
+  y: S4_HASH.y + 8,
+  font: 30,
+  lineH: 40,
+  hashFont: 20,
+  hashLineH: 28,
+  hexPerLine: 32,
+} as const;
+
+/** 16b: 0..1 linear: the shards' return (the lattice's own value, shared with `s4LatticeState`). */
+export function s4ReassembleProgress(frame: number): number {
+  return clamp01((frame - S4_TIMING.reassemble.from) / S4_TIMING.reassemble.frames);
+}
+
+/** 16b: 0..1 linear: the tile and its top row appear (HashTile applies its own easing). */
+export function s4HashReveal(frame: number): number {
+  return clamp01((frame - S4_TIMING.hashReveal.from) / S4_TIMING.hashReveal.frames);
+}
+
+/** 16b: 0..1 linear: how much of the restored hash is locked. */
+export function s4HashLock(frame: number): number {
+  return clamp01((frame - S4_TIMING.hashLock.from) / S4_TIMING.hashLock.frames);
+}
+
+/** 16b: 0..1 linear: the tick's pop and the tile's glow (0 until the hash is locked). */
+export function s4HashTick(frame: number): number {
+  return clamp01((frame - S4_TIMING.hashTick.from) / S4_TIMING.hashTick.frames);
+}
+
+/** 16b: 0..1, eased: the counter and the full hash rise (a masked rise of 12 px, with a fade). */
+export function s4CounterProgress(frame: number): number {
+  return signature(clamp01((frame - S4_TIMING.counter.from) / S4_TIMING.counter.frames));
+}
+
+// ---------------------------------------------------------------------------------------------- 16b: import-time checks
+
+(() => {
+  const t = S4_TIMING;
+  const bad = (m: string): never => {
+    throw new Error(`S4 (16b): ${m}`);
+  };
+  if (!(t.reassemble.from > t.partEndB1)) bad("16b's first item must start after 16a's last frame (f2459)");
+  if (!((t.reassemble.from + t.reassemble.frames) % BEAT === 0)) bad(`the lattice must be whole on a beat (whole f${t.reassemble.from + t.reassemble.frames})`);
+  if (!(t.hashReveal.from >= t.reassemble.from + t.reassemble.frames)) bad("the HashTile appears once the lattice is whole");
+  if (!(t.hashLock.frames >= 20 && t.hashLock.frames <= 24)) bad("the hash locks in 20-24 frames (BIBLE 11 B)");
+  if (!(t.hashLock.from >= t.hashReveal.from + t.hashReveal.frames)) bad("the hash starts to lock once the tile has appeared");
+  if (!(t.hashTick.from === t.hashLock.from + t.hashLock.frames && t.hashTick.from % BEAT === 0)) bad("the tick pops on a beat, on the frame the hash is locked");
+  if (!(t.counter.from > t.hashTick.from && t.counter.from + t.counter.frames <= t.partEndB2)) bad("the counter rises after the tick and is up by the end of the part");
+  if (!(t.hashTick.from + t.hashTick.frames <= t.partEndB2)) bad("the tick's pop must be over by the end of the part");
+  if (!(t.returnPush.from > t.partEndB1 && t.returnPush.from + t.returnPush.frames === t.partEndB2)) bad("the push must start after 16a's last frame and arrive on the last frame of the part");
+  if (!(S4_HASH_BOX.x >= S4_PANEL.x + S4_PANEL.w + 24)) bad("the HashTile must be clear of the panel (24 px)");
+  if (!(S4_HASH_BOX.y + S4_HASH_BOX.h <= S4_RAIL.y - 24)) bad(`the HashTile ends at stage y ${S4_HASH_BOX.y + S4_HASH_BOX.h}, within 24 px of the rail (y ${S4_RAIL.y})`);
+})();
 
 // ---------------------------------------------------------------------------------------------- 15c: import-time checks
 
