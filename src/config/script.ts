@@ -261,12 +261,25 @@ export const LAB = {
   donutFrames: 20,
   /** The card list scrolls so the hero card sits this many px under the top of the list. */
   listMargin: 40,
-  /** Scroll of the detail pane (px): the steps first, then down to the checks before they light. */
+  /**
+   * Scroll of the detail pane (px): the steps first, then down to the checks before they light (520 at f2698, where 16c's camera arrives on the pane). Patch 16d:
+   * further down (740) as the sixth to eighth checks add rows, so all eight are on the screen (at 520 the sixth is cut by the window's edge), then back to the top
+   * by the stamp (f2780), where the verdict banner (it keeps its space from the first result frame) lands at the top of the pane. It stays at 0 after. MEASURED on
+   * stills: at 700 the checks' heading is at window y ~310 and the last row ends at y ~878, so at 740 they are at ~270 and ~838 (`attackChecks`), which keeps the
+   * eighth row (it lights on f2770) on the screen for the first frames of the scroll back; at 0 the banner is at y 430-567 (`attackVerdict`).
+   * A result with more than 8 checks needs a larger scroll and a taller `attackChecks`: S4b4 throws if the evidence has more.
+   */
   detailScroll: [
     { frame: 2220, value: 0 },
     { frame: 2660, value: 0 },
     { frame: 2698, value: 520 },
+    { frame: 2736, value: 520 },
+    { frame: 2756, value: 740 },
+    { frame: 2768, value: 740 },
+    { frame: 2780, value: 0 },
   ] as readonly Keyframe[],
+  /** Patch 16d: the most checks the framing (`attackChecks`, scroll 740) holds. */
+  checksFit: 8,
 } as const;
 
 /** Typed lines (BIBLE: the wipe types large f2300-2339, the compromised agent's command types f3480+). The end frame is derived. */
@@ -305,10 +318,27 @@ export const REPORT = {
   claimsFrom: 4080,
 } as const;
 
+/**
+ * The Report page's scroll (px). 0 until the screens swap, 560 by f3780 (the ledger block and the first row of cards in view), then (patch 18) it
+ * FOLLOWS THE CARDS: the nine cards sit in five rows (page y 1163, 1341, 1520, 1647, 1839, the last 198 px tall; MEASURED.report.cards), and only the first row and a half are
+ * on screen at 560. Each step below lands before its row finishes flipping in (cards flip on REPORT.cardsFrom + i * cardEvery, two per row), so every
+ * card is seen arriving; then the page sweeps back up to the ledger block (the button is at page y 1068, so it is on screen again at 560) before
+ * the cursor reaches it (REPORT.verifyHoverFrom). Signature-eased between keyframes, so it moves on the beats and rests on every row.
+ */
 export const REPORT_SCROLL: readonly Keyframe[] = [
   { frame: 3720, value: 0 },
   { frame: REPORT.scrollFrom, value: 0 },
   { frame: REPORT.scrollTo, value: REPORT.verifyScroll },
+  { frame: 3800, value: REPORT.verifyScroll },
+  { frame: 3826, value: 700 },
+  { frame: 3834, value: 700 },
+  { frame: 3858, value: 830 },
+  { frame: 3864, value: 830 },
+  { frame: 3888, value: 1000 },
+  { frame: 3894, value: 1000 },
+  { frame: 3912, value: 1180 },
+  { frame: 3920, value: 1180 },
+  { frame: 3946, value: REPORT.verifyScroll },
 ];
 
 // ---------------------------------------------------------------------------------------------- Infra

@@ -47,6 +47,14 @@ ARCHITECTURE RULES (so separate sessions fit together)
 - UI components are "dumb": props in, pixels out. No component reads the frame to decide story.
 - Every scene file exports: the overlay component named in the tree, plus SN_CAMERA: CameraKeyframe[] and SN_CURSOR: CursorWaypoint[] (N = scene number). MiniLockerFilm.tsx concatenates them and never needs editing when a scene is replaced.
 
+MOTION RULES (patch 25; full text in docs/guide/motion-rules.md)
+- No shot is still: a hold over 60 frames gets a camera move (holdShot() in src/config/camera.ts, a 3-5 % push). The float in Camera.tsx is only the floor.
+- Camera moves take 24+ frames (a whip, once per scene at most, 26+); hold 10 frames between moves; pan speed under 160 px/frame.
+- Zoom above 2.0 only on a single gauge card for at most 60 frames. Text the viewer must read stays at 2.0 or lower.
+- Every scene supplies camera keyframes for its WHOLE range, starts from the previous scene's last pose, and never leaves the camera on a cropped corner.
+- NEVER use backdrop-filter (it draws a mirrored copy of the window in Chrome). Blur/dim the app with appLook() in src/scenes/appLook.ts plus a plain dim overlay.
+- Captions never sit on live UI text. Everything lands on a beat. Run `npm run motion` and `npm run sheets -- --from A --to B --every 4` before handing over; paste the motion summary in the reply.
+
 OUTPUT RULES FOR EVERY PATCH
 1. Start with at most 8 lines: decisions you made and anything you changed from the spec and why.
 2. Output EVERY created or changed file IN FULL (never diffs, never "same as above", never elisions), each preceded by a header line with its path, in a fenced code block. A file that already exists and is changed must be resent whole.

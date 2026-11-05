@@ -2,8 +2,8 @@
 // (the way S3Box is shared by S3a, S3b and S3c): 15b builds it (the backing panel, the FileLattice intact, the SnapshotTimeline rail with node 1);
 // 15c extends it with the wipe (the command typed above the lattice, the shatter and the drain, the huge output, the shake the stage shares with the camera);
 // patch 16 extends it again with the rewind: 16a (f2400-2459) retires the slab and the command, adds the greyed snapshot(s), the pulse, the GhostContainer
-// and the blue "rewound" node; 16b makes the lattice reassemble inside the container. Those patches resend THIS file and `shared.tsx`; every addition is marked
-// with its patch.
+// and the blue "rewound" node; 16b makes the lattice reassemble inside the container; 16c retires the whole stage (f2655-2668, `s4StageOpacity`) once the cat
+// has printed. Those patches resend THIS file and `shared.tsx`; every addition is marked with its patch.
 //
 // It draws in STAGE space, above the camera layer and below the captions. Everything it shows is a pure function of the global frame (shared.tsx
 // `s4PanelProgress`, `s4LatticeState`, `s4RailProgress`, `s4NodeProgress`), and every word and number is the evidence's, through `s4Data()`:
@@ -41,6 +41,7 @@ import {
   s4RailProgress,
   s4RewoundProgress, // 16a
   s4Shake,
+  s4StageOpacity, // 16c
   s4TokenLayout,
   s4TokenState,
 } from "./shared";
@@ -55,6 +56,9 @@ function fileName(path: string): string {
 
 export const S4Stage: React.FC<SceneOverlayProps> = ({ frame }) => {
   if (frame < S4_TIMING.panel.from) return null;
+  // 16c: the stage retires (f2655-2668); once it is gone nothing in it is drawn, so the app is the only thing on the screen
+  const out = s4StageOpacity(frame);
+  if (out <= 0) return null;
   const data = s4Data();
   const panel = s4PanelProgress(frame);
   const lat = s4LatticeState(frame);
@@ -84,6 +88,8 @@ export const S4Stage: React.FC<SceneOverlayProps> = ({ frame }) => {
         pointerEvents: "none",
         // 15c: the camera's impact shake of the wipe, shared with the stage (zero outside f2340-2347)
         transform: `translate(${shake.x.toFixed(2)}px, ${shake.y.toFixed(2)}px)`,
+        // 16c: the whole stage leaves together (one opacity for the panel, the lattice, the container, the rail and the nodes)
+        opacity: out,
       }}
     >
       <div

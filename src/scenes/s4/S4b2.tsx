@@ -29,7 +29,7 @@ import type { SceneOverlayProps } from "../types";
 import { s4Data } from "./data";
 import { S4A3_CAMERA } from "./S4a3";
 import { S4B1_CAMERA } from "./S4b1";
-import { S4_COLUMN, S4_COUNTER, S4_HASH, S4_HASH_BOX, S4_PANEL, S4_RAIL, S4_TIMING, s4CounterProgress, s4HashLock, s4HashReveal, s4HashTick } from "./shared";
+import { S4_COLUMN, S4_COUNTER, S4_HASH, S4_HASH_BOX, S4_PANEL, S4_RAIL, S4_TIMING, s4CounterProgress, s4HashLock, s4HashOpacity, s4HashReveal, s4HashTick } from "./shared";
 
 const gfxB = copy.gfxB;
 
@@ -72,7 +72,7 @@ const COLUMN_PANEL_GAP = 4;
 /** ... and between its right edge and the stage's. */
 const COLUMN_EDGE = 24;
 /** The window's bottom edge is at least this far above the HashTile's top at any pose of this part. */
-const WINDOW_TILE_GAP = 12;
+const WINDOW_TILE_GAP = 8; // patch 25: 12 -> 8 and the tile 6 px lower (y 618), because the camera now floats up to ~7 px
 
 (() => {
   const t = S4_TIMING;
@@ -116,15 +116,17 @@ const WINDOW_TILE_GAP = 12;
 
 /**
  * The HashTile, the counter and the full hash (the lattice's return is the stage's). They draw from f2510 and hold: every progress is clamped, so after f2579
- * they stay up until 16c retires them.
+ * they stay up until 16c steps them aside (f2584-2593, `s4HashOpacity`) to leave their strip to the cat; from f2594 nothing is drawn.
  */
 export const S4b2: React.FC<SceneOverlayProps> = ({ frame }) => {
   if (frame < S4_TIMING.hashReveal.from) return null;
+  const away = s4HashOpacity(frame); // 16c
+  if (away <= 0) return null;
   const data = s4Data();
   const counter = s4CounterProgress(frame);
   const lines = hashLines(data.rewound.restoredHash);
   return (
-    <>
+    <div style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: away, transform: `translateY(${((1 - away) * 10).toFixed(2)}px)` }}>
       <HashTile
         x={S4_HASH_BOX.x}
         y={S4_HASH_BOX.y}
@@ -151,6 +153,6 @@ export const S4b2: React.FC<SceneOverlayProps> = ({ frame }) => {
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 };

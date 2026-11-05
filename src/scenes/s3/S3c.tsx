@@ -32,7 +32,7 @@ import { CUES } from "../../config/timeline";
 import { BOX_W } from "../../gfx/ContainerBox";
 import type { SceneOverlayProps } from "../types";
 import { s3Data } from "./data";
-import { S3_PULLBACK, S3_TIMING } from "./shared";
+import { NAV_PADDING, S3_PULLBACK, S3_TIMING } from "./shared";
 
 const s3 = copy.s3;
 
@@ -58,12 +58,12 @@ export const S3C_TIMING = {
  *   1. f1965: the same pose as 14b's push (`fullWindow`, padding 60, bias 1.05), with an impact shake: a no-move keyframe whose only job is the thud.
  *   2. f2004: the live Blast panel (the dial and the six gauge cards), padding 96: the zoom is set by the panel's height (zoom 1.067), the panel
  *      stands at stage x 715-1205 and the strips either side of it are free (the box is pulled back into the left one).
- *   3. f2052: the header nav, padding 96 (zoom 2.56, no tilt: S4a's first keyframe starts from this pose).
+ *   3. f2052: the header nav, padding NAV_PADDING = 300 (patch 25; zoom ~1.96, no tilt: S4a's first keyframe starts from this pose).
  */
 export const S3C_CAMERA: readonly CameraKeyframe[] = [
   kf(S3C_TIMING.thud.at, "fullWindow", { padding: 60, scaleBias: 1.05, ease: "linear", frames: 1, shake: S3C_TIMING.thud.shake }),
   kf(S3C_TIMING.gauges.from, "blastPanel", { padding: 96, ease: "signature", frames: S3C_TIMING.gauges.frames }),
-  kf(S3C_TIMING.swing.from, "nav", { padding: 96, ease: "signature", frames: S3C_TIMING.swing.frames }),
+  kf(S3C_TIMING.swing.from, "nav", { padding: NAV_PADDING, ease: "signature", frames: S3C_TIMING.swing.frames }),
 ];
 
 /** No cursor in S3: S4a brings it back (the nav tab is hovered by filmState's hoverLead, not by a waypoint). */

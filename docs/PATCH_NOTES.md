@@ -1238,3 +1238,51 @@ New fields, all derived from the attack's ledger and result, each throwing (nami
 - The greyed node's label (`snapshot 2  819c3525`, struck through, dimmed to 60 %) is faint on the dark stage by SnapshotTimeline's design ("work the rewind threw away"); it is legible at full size but not emphasised.
 - The panel's left edge and the container's corner ticks are 11 px apart, inside the panel; the container's label chip sits 17 px above its top edge, 97 px below the top of the stage.
 - The evidence is still the SAMPLE (`meta.sample`); the hashes, file name and counts are sample data.
+
+## PATCH 25 - Motion polish: mirror bug, camera life, softer moves, rules for every later patch
+
+**Why:** the first full review (all 5100 frames as contact sheets + a numeric audit of the camera) found mirrored upside-down frames at f1550 and f4270, a violent S2->S3 whip, a near-black 40 frames at the S3->S4 hand-over, long still shots, and 60 s of frozen camera on a cropped corner in the S4 tail / S5 / S6 stubs.
+
+**Files created:** `src/scenes/appLook.ts`, `docs/guide/motion-rules.md`, `tools/audit-motion.mjs`, `scripts/make-sheets.mjs`.
+**Files changed:** `src/MiniLockerFilm.tsx`, `src/ui/theme.css`, `src/config/camera.ts`, `src/fx/Camera.tsx`, `src/scenes/S1Title.tsx`, `src/scenes/S5Page.tsx`, `S6Evidence.tsx`, `S8Vultr.tsx`, `S9Outro.tsx` (interim cameras), `src/scenes/S7Value.tsx`, `src/scenes/s3/shared.tsx`, `s3/S3c.tsx`, `src/scenes/s2/S2c.tsx`, `src/scenes/s4/S4a1.tsx`, `s4/S4b2.tsx`, `s4/shared.tsx`, `package.json` (scripts `motion`, `sheets`), `docs/guide/context-header.md` (MOTION RULES block), `docs/patches/patch-16..18,20..24.md` and their `prompts/*.prompt.txt` (motion amendment each).
+
+**PUBLIC API**
+- `appLook(frame): { blurPx }` (`src/scenes/appLook.ts`): blur, in SCREEN px, of the app layer. MiniLockerFilm divides it by the camera zoom and applies it as a plain CSS `filter` on `.film-app-layer`. The S3 and S7 scrims are now dim-only overlays.
+- `holdShot(frame, end, target, { padding, arrive, push, scaleBias, rotateX, rotateY }): CameraKeyframe[]` (`src/config/camera.ts`): ease to a shot, then a linear push to `end`. Spread into a scene's camera array.
+- `CAMERA_LIMITS.driftPx` 2 -> 5 (periods 190 / 257 f) and new `CAMERA_LIMITS.floatZoom` 0.004 (period 310 f).
+- `NAV_PADDING = 300` (`s3/shared.tsx`): the `nav` shot S3 ends on and S4a starts from (zoom ~1.96, was 2.56).
+- `npm run motion` (`tools/audit-motion.mjs`, `--strict` exits 1 on warnings) and `npm run sheets` (`scripts/make-sheets.mjs`: `--from --to --every --zip`).
+
+**Decisions / conventions:** see `docs/guide/motion-rules.md` (also in the context header). NEVER `backdrop-filter` (it mirrors the window in Chrome). The S2c whip is f1474-1500 (26 f, was 18) and the widen before it ends f1464. `S4_HASH.y` 612 -> 618 and `WINDOW_TILE_GAP` 12 -> 8 because the camera now floats up to ~7 px. The S1 lockup creeps in 4.5 % over its hold (the dial does not, so it parallaxes and still lands exactly on f590). `appLook` limits the S7 blur to S7's own frames (as the old scrim did).
+
+**Known issues / not verified:** NOT rendered (this sandbox cannot fetch Chrome): the mirror fix is by cause (backdrop-filter + 3D camera), not yet confirmed on frames; check f1550, f4270 on new sheets. S2 run shots (f800-1190) still show a sliver of the Blast panel at the right edge (design choice, kept). The S4 tail f2580-3299 and S5-S9 are still stubs with interim cameras. `npm run motion` reports STILL for stage-space scenes (S0, S1, S3, S7) where the action is not the camera: expected.
+
+**Warnings for the next patch:** replace the interim `holdShot` in S5/S6/S8/S9 completely; keyframes must cover the whole scene range; apply the MOTION AMENDMENT at the end of your patch file.
+## Patch 16c - S4b Rewind: restore, checks, ledger, proof clip, part 3 of 6: "The cat" (f2580-2699)
+
+**Applies on top of 16b** (repo head `fdbb285`). **Changed files:** `src/scenes/s4/S4b3.tsx` (new: camera, the cat overlay, geometry checks), `src/scenes/s4/S4b.tsx` (assembly: S4b3 added), `src/scenes/s4/S4Stage.tsx` (the stage retires), `src/scenes/s4/S4b2.tsx` (the HashTile and the counter step aside), `src/scenes/s4/shared.tsx` (a marked "16c" section), `docs/PATCH_NOTES.md`. `data.ts` is NOT touched (16a extended it once for all of S4b: `cat.line` is already there). `copy.ts`, `focus.ts` (`attackDetail` already exists), `script.ts` and `timeline.ts` are untouched: the part adds no word of its own, it prints the evidence's.
+
+### What 16c contains
+- **f2584-2593 the HashTile and the counter step aside** (`s4HashOpacity`: a fade with a 10 px drop, in S4b2's overlay). The counter has been up for 20 frames. From f2594 S4b2 draws nothing.
+- **f2596-2607 the real cat command** (`data.cat.command`) types in the strip the tile has left (`S4_CAT`: the tile's own strip, x 868 to the right safe margin, y 612), 24 px mono in `theme.ink3`, behind a 4 px rule in `theme.ok` (clean is blue in the app).
+- **f2610-2639 the real restored line prints** under it (`data.cat.line`, `three weeks of work that exists nowhere else` in the sample), linear (about 1.5 characters a frame), **complete on the beat f2640**. It is as large as fits the strip on ONE row with a character kept for the cursor (39 px in the sample); it wraps only if it cannot be set on one row at 26 px or more (`s4CatLayout`). The cursor types, then blinks at the end of the line until the stage leaves. The app's own cat row (it appears on f2582, `LAB.stepAt.cat`) is clipped below the window at `attackSteps`, which is why the line is drawn here.
+- **The scene throws unless the restored line is the first line of the file the attack wrote** (`data.write.content`): the film says the work came back, so the evidence must say it did (S4b3 import-time check).
+- **f2655-2668 the stage retires** (`s4StageOpacity`, ONE opacity on S4Stage's root: the panel, the lattice, the container, the rail, the nodes) and the cat leaves with it (`s4CatOpacity`). Nothing is drawn in stage space from f2669.
+- **f2655-2684 the camera moves** from `attackSteps` to `attackDetail` (padding 96, bias 1, `signature`, 30 frames) and **arrives on the beat f2685**. No tilt. The stage retires on the SAME frame the camera starts (`S4_TIMING.stageOut.from === detailMove.from`, checked), which keeps the cross-dissolve short.
+- **Cursor:** none (hidden since the click on Run, f2220). No caption.
+
+### PUBLIC API
+- `S4B3_CAMERA` (1 keyframe: f2655), `S4B3_CURSOR` (empty), `S4b3`; `S4B_CAMERA`, `S4B_CURSOR` and `S4b` concatenate S4b1, S4b2 and S4b3.
+- `shared.tsx`: `S4_TIMING` gains `hashOut`, `catCmd`, `catLine`, `detailMove`, `stageOut`, `partEndB3`; `S4_CUE_ANCHORS` gains `catCommand`, `catLine`, `stageOut` (patch 22: typing ticks, the stage leaving); new `S4_CAT`, `S4CatLayout`, `s4CatLayout(command, line)`, `s4HashOpacity`, `s4StageOpacity`, `s4CatOpacity`, `s4CatCmdChars`, `s4CatLineChars`, `s4CatCursor`.
+
+### Decisions and conventions future patches must follow
+1. **16d's first camera keyframe, cursor waypoint and overlay item start at f2700 or later**, from `attackDetail`, padding 96, bias 1 (arrived f2684). The stage is gone: **16d draws nothing of it** (do not extend `S4Stage.tsx` again).
+2. **The camera is on `attackDetail` at f2699, with the app's detail pane mid-scroll** (`LAB.detailScroll`: 0 until f2660, 520 by f2698). The pane under the cat row is EMPTY until the checks light on f2700 (`filmState` draws a check only once it is lit), so the last 15 frames of 16c show the steps and a blank below them. That is the room the checks light into.
+3. **The next patch that touches the camera at f2700+ must look at the pane first** (see Known issues): `attackDetail` is the pane at scroll 0.
+4. The strip (`S4_CAT`) is the HashTile's: 16e and 16f must not draw there before the stage has gone (f2669).
+
+### Known issues
+- `tsc --noEmit` clean; every import-time check of `shared.tsx` and `S4b3.tsx` passes (one of them caught a real layout bug while building: the first cat layout wrapped the restored line to two rows once a character was kept for the cursor; the layout now prefers one smaller row to a wrap).
+- Stills looked at (half size, Remotion with an npm-packaged Chromium, `--gl=swangle`): f2590 (the tile fading), f2625 (the command typed, the line printing), f2645 (the line complete, cursor inside the right safe margin), f2662 (mid-retire), f2685 and f2699 (the camera arrived on the detail pane), and, for 16d's benefit, f2740 and f2790 with this part's camera held.
+- **NOT verified:** motion (the typing speed, the 14-frame cross-dissolve of the stage into the app's card list, which is visible through the fading panel for about 6 frames), the full-size render, f2596-2609 and f2650-2660 in particular.
+- **For 16d:** with this part's camera held, f2740 shows the first four checks lit under "Containment checks", and f2790 shows the list running past the window's bottom edge (stage y ~1002): the sixth check is cut, and the verdict banner is not on screen at the pane's scroll of 520. 16d needs its own focus rects for the checks and the verdict, and probably a retimed `LAB.detailScroll` (further down for the checks, back up for the stamp on f2780). None of that is in this patch.

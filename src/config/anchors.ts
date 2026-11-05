@@ -28,7 +28,10 @@ export const MEASURED = measured as unknown as {
    */
   blastGauges: { secrets: Rect };
   lab: { tiles: Rect[]; cards: { top: number; h: number }[]; list: Rect; runInCard: Rect; cardX: number; cardW: number };
-  report: { verifyButton: Rect; firstCard: Rect };
+  /** Report, PAGE coordinates (scroll 0): the button, and the nine dimension cards in the report's own order (patch 18). */
+  report: { verifyButton: Rect; firstCard: Rect; cards: Rect[] };
+  /** Report after \"Verify ledger now\" has run: the seal holds one more line, so the button sits a little lower (patch 18). */
+  reportAfter: { verifyButton: Rect };
   infra: { firstPanel: Rect };
 };
 
@@ -151,15 +154,25 @@ export function reportScrollOf(frame: number): number {
   return keyframeValue(REPORT_SCROLL, frame);
 }
 
-/** "Verify ledger now" at a frame (S6: f3950-3960): the page's own position minus the scroll. */
+/**
+ * "Verify ledger now" at a frame (S6: f3950-3960): the page's own position minus the scroll. From REPORT.doneAt (the re-verified line is in the seal) it is
+ * the measured position AFTER that line (a few px lower), so a cursor that rests on it keeps resting on it.
+ */
 export function verifyButtonAnchor(frame: number): Rect {
-  const r = MEASURED.report.verifyButton;
+  const r = frame >= REPORT.doneAt ? MEASURED.reportAfter.verifyButton : MEASURED.report.verifyButton;
   return shift(r, 0, -reportScrollOf(frame));
 }
 
 /** The first dimension card of the Report at a frame. */
 export function reportCardAnchor(frame: number): Rect {
   return shift(MEASURED.report.firstCard, 0, -reportScrollOf(frame));
+}
+
+/** Dimension card `index` (0-8, the report's own order) at a frame: its measured page position minus the page's scroll (patch 18). */
+export function reportCardAt(index: number, frame: number): Rect {
+  const r = MEASURED.report.cards[index];
+  if (!r) throw new Error(`anchors: the Report has no measured card ${index} (anchors.measured.json report.cards has ${MEASURED.report.cards.length}); run node tools/measure-anchors.mjs`);
+  return shift(r, 0, -reportScrollOf(frame));
 }
 
 // ---------------------------------------------------------------------------------------------- Infra

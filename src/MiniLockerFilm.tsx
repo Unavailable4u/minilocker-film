@@ -13,6 +13,7 @@ import { Vignette } from "./fx/Vignette";
 import { FilmApp } from "./ui/FilmApp";
 import { FILM_CAMERA, FILM_CURSOR, SCENE_OVERLAYS } from "./scenes";
 import { appReveal, CAMERA_DOF, gridOpacity } from "./scenes/stageState";
+import { appLook } from "./scenes/appLook";
 
 /**
  * The film (patch 12a). Layers, bottom to top:
@@ -55,6 +56,8 @@ export const MiniLockerFilm: React.FC = () => {
   const cam = getCameraState(frame, FILM_CAMERA, fps);
   const reveal = appReveal(frame);
   const grid = gridOpacity(frame);
+  // The blur is a plain CSS filter on the app layer, in app px (screen px / zoom). Never a backdrop-filter: see appLook.ts.
+  const blurLocal = appLook(frame).blurPx / cam.scale;
 
   return (
     <FontsReady>
@@ -69,6 +72,7 @@ export const MiniLockerFilm: React.FC = () => {
         <Camera keyframes={FILM_CAMERA} dof={CAMERA_DOF}>
           {reveal.mounted && (
             <div
+              className="film-app-layer"
               style={{
                 position: "absolute",
                 left: 0,
@@ -77,6 +81,7 @@ export const MiniLockerFilm: React.FC = () => {
                 height: LOGICAL.h,
                 opacity: reveal.opacity,
                 transform: `translateY(${reveal.dy.toFixed(2)}px)`,
+                filter: blurLocal > 0.05 ? `blur(${blurLocal.toFixed(2)}px)` : undefined,
               }}
             >
               <FilmApp frame={frame} />

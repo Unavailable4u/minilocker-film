@@ -7,3 +7,5 @@ Provide: S5_CAMERA (whip to the browser tab f3300-3330, hold on the page, push t
 - f3600-3719 the approval beat (ONLY if the evidence has approval.requested events; otherwise skip this block and extend the previous one): the approval modal with a countdown ring racing, resolving to "Approval denied or timed out"; caption "Risky actions wait for a human. Default: no." Use the word "screenshot" only if the evidence shows screenshot artifacts; never claim vision verification.
 
 CHECK: npx tsc --noEmit ; stills at f3320, f3400, f3460, f3520, f3580, f3650, f3710.
+
+MOTION AMENDMENT (patch 25): CAMERA (patch 25). Replace the interim `holdShot(3300, 3719, "fullWindow", ...)` in the S5 stub completely. The whip to the browser tab takes 26+ frames and is the scene's only whip; every hold on the page, fence and ledger lines uses holdShot() (no 2 s still); zoom stays at or under 2.0 on text. The camera covers f3300-3719 without a gap. Do not use backdrop-filter; blur the app only through appLook() if the fence needs the page stepped back.

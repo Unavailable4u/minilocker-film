@@ -18,3 +18,5 @@ CREATE / REPLACE:
 
 CHECK: npm run check ; npm run render -- --allow-sample (works) ; npm run render (REFUSES on sample data: correct) ; out/ has mp4, poster, gif, cover, srt, slides-pack.
 ```
+
+**Patch 25 amendment (motion):** RENDER CHECKS (patch 25). make scripts/render.mjs run `node tools/audit-motion.mjs` before a final render and print its summary (add `--strict` only once S4b-S9 are built, because the stubs' interim cameras still produce STILL warnings). tools/audit-motion.mjs and scripts/make-sheets.mjs (npm run motion / npm run sheets) already exist (patch 25); reuse them, do not rewrite them.

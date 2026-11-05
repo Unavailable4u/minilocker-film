@@ -16,3 +16,5 @@ Provide: S5_CAMERA (whip to the browser tab f3300-3330, hold on the page, push t
 
 CHECK: npx tsc --noEmit ; stills at f3320, f3400, f3460, f3520, f3580, f3650, f3710.
 ```
+
+**Patch 25 amendment (motion):** CAMERA (patch 25). Replace the interim `holdShot(3300, 3719, "fullWindow", ...)` in the S5 stub completely. The whip to the browser tab takes 26+ frames and is the scene's only whip; every hold on the page, fence and ledger lines uses holdShot() (no 2 s still); zoom stays at or under 2.0 on text. The camera covers f3300-3719 without a gap. Do not use backdrop-filter; blur the app only through appLook() if the fence needs the page stepped back.

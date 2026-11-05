@@ -116,13 +116,18 @@ function shakeAt(frame: number, keyframes: readonly CameraKeyframe[]): { x: numb
   return { x, y, rot };
 }
 
-/** Micro-drift: 2 px sinusoids with two slow periods, so a held shot always moves a little. */
+/** Float (patch 25): sinusoids with two slow periods (190 / 257 frames), so a held shot always visibly lives. */
 function driftAt(frame: number): { x: number; y: number } {
   const a = CAMERA_LIMITS.driftPx;
   return {
-    x: a * Math.sin((Math.PI * 2 * frame) / 113 + 0.7),
-    y: a * Math.sin((Math.PI * 2 * frame) / 149 + 2.1),
+    x: a * Math.sin((Math.PI * 2 * frame) / 190 + 0.7),
+    y: a * Math.sin((Math.PI * 2 * frame) / 257 + 2.1),
   };
+}
+
+/** Slow zoom breathing (patch 25), multiplies the zoom; the focus centre stays put because tx/ty are solved from the final zoom. */
+function breathAt(frame: number): number {
+  return 1 + CAMERA_LIMITS.floatZoom * Math.sin((Math.PI * 2 * frame) / 310 + 1.3);
 }
 
 /** The camera at a frame. Pure; use it from scenes and overlays that must follow the camera (see worldToStage). */
@@ -151,7 +156,7 @@ export function getCameraState(frame: number, keyframes: readonly CameraKeyframe
   const limX = wide ? CAMERA_LIMITS.tiltXWide : CAMERA_LIMITS.tiltX;
   const limY = wide ? CAMERA_LIMITS.tiltYWide : CAMERA_LIMITS.tiltY;
 
-  const scale = Math.exp(acc.logScale);
+  const scale = Math.exp(acc.logScale) * breathAt(frame);
   const sh = shakeAt(frame, keyframes);
   const dr = driftAt(frame);
   // T = O - s * centre;  translate = T + (s - 1) * O

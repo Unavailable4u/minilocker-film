@@ -313,13 +313,18 @@ const Title: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
+/** patch 25: how far the lockup creeps in during its hold (fraction of its size). */
+const LOCKUP_PUSH = 0.045;
+
 const Lockup: React.FC<{ frame: number }> = ({ frame }) => {
   const T = S1_TIMING;
   if (frame < T.lockup) return null;
   const exit = ramp(frame, T.exit.start, T.exit.end);
   if (exit >= 1) return null;
+  // patch 25: the lockup creeps in 4.5 % from its landing to its exit, so the 4 s title hold is never still (the dial does not move: it is a parallax layer)
+  const hold = clamp01((frame - T.lockup) / (T.exit.start - T.lockup));
   return (
-    <div style={{ position: "absolute", inset: 0, opacity: 1 - exit, transform: `translateY(${(-40 * exit).toFixed(2)}px) scale(${(1 - 0.04 * exit).toFixed(4)})`, transformOrigin: "50% 50%" }}>
+    <div style={{ position: "absolute", inset: 0, opacity: 1 - exit, transform: `translateY(${(-40 * exit).toFixed(2)}px) scale(${((1 + LOCKUP_PUSH * hold) * (1 - 0.04 * exit)).toFixed(4)})`, transformOrigin: "50% 50%" }}>
       <div style={{ position: "absolute", left: 0, right: 0, top: CHIP_TOP, display: "flex", justifyContent: "center" }}>
         <Badge label={s1.eyebrow} tone="accent" size={24} pulse={badgePulse(frame)} reveal={badgeReveal(frame, T.lockup, 14)} />
       </div>

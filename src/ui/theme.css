@@ -57,6 +57,12 @@
 .film-root *::after {
   box-sizing: border-box;
 }
+/* patch 25: no backdrop-filter inside the app layer. Under the camera's 3D transform Chrome draws mirrored copies of the window with it. */
+.film-app-layer,
+.film-app-layer * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
 .film-root code,
 .film-root pre,
 .film-root kbd,

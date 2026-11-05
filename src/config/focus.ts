@@ -60,6 +60,10 @@ export type FocusName =
   | "taskForm"
   | "stepStream"
   | "terminal"
+  | "browserPane"
+  | "s5Fence"
+  | "s5Ledger"
+  | "s5Approval"
   | "runView"
   | "runLeft"
   | "runRight"
@@ -74,6 +78,8 @@ export type FocusName =
   | "attackDetail"
   | "attackLabPick"
   | "attackSteps"
+  | "attackChecks"
+  | "attackVerdict"
   | "reportGrid"
   | "verifyButton"
   | "infraDiagram"
@@ -84,6 +90,10 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "taskForm",
   "stepStream",
   "terminal",
+  "browserPane",
+  "s5Fence",
+  "s5Ledger",
+  "s5Approval",
   "runView",
   "runLeft",
   "runRight",
@@ -98,6 +108,8 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "attackDetail",
   "attackLabPick",
   "attackSteps",
+  "attackChecks",
+  "attackVerdict",
   "reportGrid",
   "verifyButton",
   "infraDiagram",
@@ -133,6 +145,21 @@ export const FOCUS: Record<FocusName, Rect> = {
   runView: { x: 10, y: 310, w: 1100, h: 690 },
   runLeft: { x: -50, y: 310, w: 1100, h: 690 },
   runRight: { x: 75, y: 310, w: 1100, h: 690 },
+  /**
+   * S5 (patch 17). The Workspace's centre column (tab pills and the browser panel, x 374-1141) with 140 px of extra height under it, so the camera clamps
+   * to zoom 1.0 and the panel ends on stage y ~874: the captions' strip (y 905+) stays clear of the page card. At zoom 1.0 the left and right columns
+   * of the app still show beside the card (x 202-576 and 1343-1802).
+   */
+  browserPane: { x: GRID.colLeft, y: GRID.headerH, w: GRID.colCenter, h: WINDOW.h - GRID.headerH + 140 },
+  /**
+   * S5: the page card (the browser panel) and the right-hand column the fence and the scanner's ledger line use. Zoom 1.08 (height-limited: 1728/1590 =
+   * 1.087, 888/822 = 1.080); the card ends on stage y ~924, the right column on x ~1797.
+   */
+  s5Fence: { x: 20, y: 120, w: 1590, h: 822 },
+  /** S5: the same shot as s5Fence panned 185 px to the right (zoom 1.08), so the right-hand column (command, policy deny, egress) moves to the middle and the dimmed page card keeps clear of the captions. */
+  s5Ledger: { x: 205, y: 120, w: 1590, h: 822 },
+  /** S5: the approval modal, centred on the page card. Zoom 1.43 (height-limited: 888/620). */
+  s5Approval: { x: 337, y: 160, w: 840, h: 620 },
   /** Workspace, right column: the whole BlastPanel */
   blastPanel: { x: RIGHT_X, y: GRID.headerH, w: GRID.colRight, h: WINDOW.h - GRID.headerH },
   /**
@@ -175,10 +202,18 @@ export const FOCUS: Record<FocusName, Rect> = {
    * the top edge reads as a mistake, so the focus is centred low enough (y 856) that they are fully out.
    */
   attackSteps: { x: 0, y: 640, w: 1450, h: 432 },
-  /** Report: the nine dimension cards */
-  reportGrid: { x: 24, y: GRID.headerH + 90, w: WINDOW.w - 48, h: 640 },
-  /** Report: the "Verify ledger now" button in the ledger block */
-  verifyButton: { x: WINDOW.w - 24 - 380, y: WINDOW.h - 94, w: 380, h: 56 },
+  /**
+   * Attack Lab, patch 16d: the "Containment checks" card of the detail pane at the scroll the checks are read at (`LAB.detailScroll`: 700 px). MEASURED on
+   * stills of the 8-check result: the card's heading is at window y ~310, its eight rows end at y ~878, the column is x 669-1437. The frame is the heading and
+   * the card, with the tail of the steps above it out of the way.
+   */
+  attackChecks: { x: 640, y: 250, w: 820, h: 610 },
+  /**
+   * Attack Lab, patch 16d: the verdict, at scroll 0. The donut (window x 23-143, y 83-200), the 15 tiles (x 172-767, y ~105-145), the "Run all attacks" button (x ~1383-1550) and the
+   * pane's verdict banner (x 620-1437, y 430-567) in one frame, with no control cut by the frame's edge, so the stamp, the blue tile and the donut that fills are all on the screen when they land on f2780. MEASURED.
+   */
+  attackVerdict: { x: 0, y: 70, w: 1570, h: 520 },
+  /**`r`n   * Report (patch 18, measured): the page's own column (the report article is 1088 px wide, x 256-1344, centred in the window) with 40 px either side, from`r`n   * the bottom of the header (y 67) to the window's bottom edge. The page scrolls under the camera (REPORT_SCROLL), so this is the part of the body that`r`n   * stays on screen; the nine cards (two columns, 535.5 px each, MEASURED.report.cards) pass through it. At padding 96 it frames at zoom 1.07.`r`n   */`r`n  reportGrid: { x: 216, y: GRID.headerH, w: 1168, h: WINDOW.h - GRID.headerH },`r`n  /**`r`n   * Report (patch 18, measured): the ledger block at scroll 560: the seal (with the re-verified line that lands inside it) and the "Verify ledger now" button`r`n   * (page y 1068, so y 508 at scroll 560), over the full width of the article. Zoom 1.59 at padding 96, width-limited.`r`n   */`r`n  verifyButton: { x: 256, y: 346, w: 1088, h: 230 },
   /** Infra: the wiring diagram of nodes joined by arrows */
   infraDiagram: { x: 24, y: GRID.headerH + 140, w: WINDOW.w - 48, h: 420 },
   /** the whole window */

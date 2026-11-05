@@ -21,3 +21,5 @@ Finally, fill the rubric self-check from docs/SUBMISSION.md for the FILM only (A
 
 PROBLEMS I FOUND (paste here):
 ```
+
+**Patch 25 amendment (motion):** QA (patch 25). Add to the QA list: `npm run motion` (explain every remaining STILL / FAST / DEEP warning in the report, or fix it), and sheets every 5 frames around each scene cut and each whip (`npm run sheets -- --from A --to B --every 5`): look for mirrored or ghosted frames, captions on live UI text, text cropped at the frame edge and any hold over 2 s without motion.

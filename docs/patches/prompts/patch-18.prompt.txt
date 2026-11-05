@@ -7,3 +7,5 @@ Provide: S6_CAMERA (nav tab 4 "Report" f3720-3750; wide on reportGrid f3780; pus
 - f4080-4259 the claims strip: four big StatNumerals counting on beats from evidence.measured and attackSummary, each with a small mono label: "fix_repo_v2: N/10 finished (95% CI lo-hi)", "N/15 attacks contained", "N/10 hook escapes", "N real secrets in N runs" (use the exact figures; if a figure is not flattering, show it anyway), plus a "CI green" chip only when evidence.ci.conclusion is "success"; footer line in mono: "numbers read from run <evidenceId> - commit <short sha>". Caption "Measured, not asserted."
 
 CHECK: npx tsc --noEmit ; stills at f3740, f3800, f3880, f3950, f4010, f4100, f4200.
+
+MOTION AMENDMENT (patch 25): CAMERA (patch 25). Replace the interim `holdShot(3720, 4259, ...)` in the S6 stub completely. 540 frames is long: no hold over 60 frames without a move (holdShot between the report's dimension-card beats), at most one whip, zoom at or under 2.0 on the cards and the ledger block. The scene's callout and captions stay clear of live UI text. Cover f3720-4259 with keyframes; the scene ends on a pose S7 can start from (S7 starts with `fullWindow`, padding 60).

@@ -7,7 +7,7 @@
 // a target (src/ui/*), then commit the JSON. `anchors.ts` reads that file; nothing in it is typed by hand.
 //
 // Frames (GLOBAL): 745 Workspace form, 1230 Blast panel event log (scrolled; the scroll is added back), 1340 Blast panel after the audit (the Secrets
-// card, not scrolled), 2150 Attack Lab (list not scrolled), 3900 Report (cards settled; the page scroll is added back), 4700 Infra.
+// card, not scrolled), 2150 Attack Lab (list not scrolled), 3930 Report (cards settled; the page scroll is added back), 4040 Report after the re-verify line, 4700 Infra.
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import { writeFileSync } from "node:fs";
@@ -19,7 +19,7 @@ const args = process.argv.slice(2);
 const bi = args.indexOf("--browser");
 const browserExecutable = bi >= 0 ? args[bi + 1] : undefined;
 const FIRST = 600; // APP_FIRST_FRAME: composition frame = global frame - 600
-const GLOBAL_FRAMES = [745, 1230, 1340, 2150, 3900, 4700];
+const GLOBAL_FRAMES = [745, 1230, 1340, 2150, 3930, 4040, 4700];
 
 const serveUrl = await bundle({ entryPoint: resolve(ROOT, "src/index.ts") });
 const inputProps = { anchors: false, probe: true };

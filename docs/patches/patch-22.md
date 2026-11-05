@@ -14,3 +14,5 @@ CREATE / REPLACE:
 
 CHECK: npm run sfx ; npx tsc --noEmit ; Studio plays audio in sync ; silence at f2370 ; no clipping.
 ```
+
+**Patch 25 amendment (motion):** AUDIO CUES (patch 25). Two timings moved: the S2 to S3 whip now runs f1474-1500 (it was f1482-1500): start the whoosh 8 frames earlier and land its peak on f1500. The S3 to S4 nav swing is gentler (zoom ~1.96, not 2.56) but keeps the same frames. No other cue moved.

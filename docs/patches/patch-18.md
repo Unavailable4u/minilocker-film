@@ -15,3 +15,5 @@ Provide: S6_CAMERA (nav tab 4 "Report" f3720-3750; wide on reportGrid f3780; pus
 
 CHECK: npx tsc --noEmit ; stills at f3740, f3800, f3880, f3950, f4010, f4100, f4200.
 ```
+
+**Patch 25 amendment (motion):** CAMERA (patch 25). Replace the interim `holdShot(3720, 4259, ...)` in the S6 stub completely. 540 frames is long: no hold over 60 frames without a move (holdShot between the report's dimension-card beats), at most one whip, zoom at or under 2.0 on the cards and the ledger block. The scene's callout and captions stay clear of live UI text. Cover f3720-4259 with keyframes; the scene ends on a pose S7 can start from (S7 starts with `fullWindow`, padding 60).

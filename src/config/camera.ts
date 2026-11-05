@@ -56,8 +56,10 @@ export const CAMERA_LIMITS = {
   tiltYWide: 14,
   tiltZ: 3,
   perspective: 1800,
-  /** amplitude of the sinusoidal micro-drift in stage pixels */
-  driftPx: 2,
+  /** amplitude of the sinusoidal float in stage pixels (patch 25: 2 -> 5, with periods of 190 / 257 frames, so a held shot visibly lives) */
+  driftPx: 5,
+  /** amplitude of the slow zoom breathing, as a fraction of the zoom (patch 25). 0.004 = +-0.4 %, one breath every ~310 frames. */
+  floatZoom: 0.004,
   /** the impact shake decays over this many frames */
   shakeFrames: 8,
   /** depth-of-field illusion outside the focus */
@@ -83,4 +85,26 @@ export function kf(frame: number, target: FocusName, opts: Partial<Omit<CameraKe
     ...(opts.frames !== undefined ? { frames: opts.frames } : {}),
     ...(opts.shake !== undefined ? { shake: opts.shake } : {}),
   };
+}
+
+/**
+ * patch 25: a shot that lives. Eases to `target` over `arrive` frames from `frame`, then creeps in by `push` (0.04 = 4 %) in a linear move that ends on
+ * `end`. Use it for every hold longer than about 2 s, so no shot is still (the float in Camera.tsx is on top of this). Returns two keyframes: spread
+ * them into a scene's camera array. The next keyframe must start at `end` or later.
+ */
+export function holdShot(
+  frame: number,
+  end: number,
+  target: FocusName,
+  opts: { padding?: number; arrive?: number; push?: number; scaleBias?: number; rotateX?: number; rotateY?: number } = {},
+): CameraKeyframe[] {
+  const arrive = opts.arrive ?? 36;
+  const push = opts.push ?? 0.04;
+  const bias = opts.scaleBias ?? 1;
+  const common = { padding: opts.padding ?? 96, rotateX: opts.rotateX ?? 0, rotateY: opts.rotateY ?? 0 };
+  if (!(end > frame + arrive)) throw new Error(`holdShot: end f${end} must be later than frame f${frame} + arrive ${arrive}`);
+  return [
+    kf(frame, target, { ...common, scaleBias: bias, ease: "signature", frames: arrive }),
+    kf(frame + arrive, target, { ...common, scaleBias: bias * (1 + push), ease: "linear", frames: end - (frame + arrive) }),
+  ];
 }

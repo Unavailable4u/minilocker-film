@@ -25,6 +25,7 @@ import { LAB } from "../../config/script";
 import type { SceneOverlayProps } from "../types";
 import { s4Data } from "./data";
 import { S4_CURSOR_ENTER, S4_PICK_PADDING, S4_TIMING } from "./shared";
+import { NAV_PADDING } from "../s3/shared";
 
 // ---------------------------------------------------------------------------------------------- camera
 
@@ -94,7 +95,7 @@ const CURSOR_EDGE = 40;
   const data = s4Data(); // throws now, naming what is missing, if the evidence cannot support S4a
 
   // Every place the cursor works must be on the stage, with room, at the camera's pose on that frame. The base keyframe is the nav, where S3 ends.
-  const poses = [kf(2052, "nav", { padding: 96 }), ...S4A1_CAMERA];
+  const poses = [kf(2052, "nav", { padding: NAV_PADDING }), ...S4A1_CAMERA];
   for (const w of S4A1_CURSOR) {
     const cam = getCameraState(w.frame, poses, undefined, { wideTilt: false });
     const p = worldToStage(cam, { x: w.x, y: w.y });

@@ -6,3 +6,5 @@ CREATE / REPLACE:
 - src/MiniLockerFilm.tsx wiring via Remotion <Audio> in <Sequence>s; the OPTIONAL music slot public/audio/music.mp3 (if present: -18 dB, 1.5 s fade-in, auto-duck -6 dB under impacts, hard duck to silence in the f2370 window, fade out the last 2 s) and the OPTIONAL voice slot public/audio/voice.wav (full-length narration; if present, duck music -9 dB under speech by a fixed schedule from copy.ts voiceBlocks). Presence is read from the generated manifest, never at render time from disk.
 
 CHECK: npm run sfx ; npx tsc --noEmit ; Studio plays audio in sync ; silence at f2370 ; no clipping.
+
+MOTION AMENDMENT (patch 25): AUDIO CUES (patch 25). Two timings moved: the S2 to S3 whip now runs f1474-1500 (it was f1482-1500): start the whoosh 8 frames earlier and land its peak on f1500. The S3 to S4 nav swing is gentler (zoom ~1.96, not 2.56) but keeps the same frames. No other cue moved.

@@ -11,3 +11,5 @@ f4980-5019 the stage clears; the dial reforms and COLLAPSES into the Mark (rever
 
 CHECK: npx tsc --noEmit ; stills at f4990, f5020, f5050, f5075, f5099.
 ```
+
+**Patch 25 amendment (motion):** CAMERA (patch 25). Replace the interim `holdShot(4980, 5099, ...)` in the S9 stub completely. S9 may use the wide tilt (14 deg). The dial's return to the logo must be a real camera move, not a hold; 120 frames, so at most two moves.

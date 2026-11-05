@@ -11,3 +11,5 @@ Part B covers f2400-f3299:
 Export S4B_CAMERA, S4B_CURSOR, overlay.
 
 CHECK: npm run proof ; npx tsc --noEmit ; stills at f2420, f2500, f2560, f2640, f2740, f2800, f2900, f3000, f3100, f3250 (with and without the clip).
+
+MOTION AMENDMENT (patch 25): S4b TAIL (patch 16c-16f, f2580-3299). The audit found the camera frozen on `attackSteps` at zoom 1.25 from f2437 to f4260 because nothing moved it. Every 60 frames of this range needs a camera move (holdShot, or a pan to checks / ledger / proof clip). The HashTile now sits at S4_HASH.y = 618 and S4b2's WINDOW_TILE_GAP is 8 (the camera floats up to ~7 px): keep the window's bottom edge clear of it for as long as the tile is up. The last keyframe must hand a pose to S5 that S5 can start from (S5's interim keyframe is `fullWindow`, padding 60).

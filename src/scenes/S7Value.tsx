@@ -127,8 +127,8 @@ const CAPTION_LINES = splitAfter(s7.caption, ". ", "copy.s7.caption");
 export const S7Scrim: React.FC<{ frame: number }> = ({ frame }) => {
   const a = s7ScrimAmount(frame);
   if (a <= 0.001) return null;
-  const filter = `blur(${(S7_SCRIM.blurPx * a).toFixed(2)}px) brightness(${(1 - (1 - S7_SCRIM.brightness) * a).toFixed(3)})`;
-  return <div style={{ position: "absolute", inset: 0, backdropFilter: filter, WebkitBackdropFilter: filter, pointerEvents: "none" }} />;
+  // Dim only (brightness .35 = 65 % black). The 10 px blur is applied to the app layer by MiniLockerFilm (appLook.ts): a backdrop-filter here drew mirrored copies of the window (f4270).
+  return <div style={{ position: "absolute", inset: 0, background: `rgba(5,5,6,${((1 - S7_SCRIM.brightness) * a).toFixed(3)})`, pointerEvents: "none" }} />;
 };
 
 // ---------------------------------------------------------------------------------------------- the two cards

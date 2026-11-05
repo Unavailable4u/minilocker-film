@@ -5,7 +5,8 @@
 // Which parts are measured depends on the frame, because the app shows different things on different frames:
 //   f745   the Workspace form          f1230  the Blast panel's event log, scrolled into view (the scroll is added back)
 //   f1340  the Blast panel after the audit, settled and not scrolled: its Secrets gauge card (patch 13c2)
-//   f2150  the Attack Lab, list not scrolled          f3900  the Report, cards settled (the page's own scroll is added back)
+//   f2150  the Attack Lab, list not scrolled          f3930  the Report, cards settled (the page's own scroll is added back)
+//   f4040  the Report after the ledger was re-verified (the seal has one more line)
 //   f4700  the Infra screen
 import React from "react";
 import { continueRender, delayRender } from "remotion";
@@ -55,6 +56,15 @@ const round = (n: number): number => Math.round(n * 100) / 100;
 export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDivElement | null> }> = ({ frame, rootRef }) => {
   const [handle] = React.useState(() => delayRender("probe"));
   React.useEffect(() => {
+    // patch 18: measure once the page has SETTLED: fonts in, two frames laid out and a further 1.2 s. Measured on the first effect (or after two frames) the
+    // Report's ledger block is still 24 px taller than in a render (its layout changes a moment after mount), so the button came out that much too low.
+    const fonts = (document as unknown as { fonts?: { ready?: Promise<unknown> } }).fonts;
+    let alive = true;
+    const go = (): void => {
+      if (alive) measure();
+    };
+    (fonts?.ready ?? Promise.resolve()).then(() => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(go, 1200))));
+    function measure(): void {
     const host = rootRef.current;
     const root = host?.firstElementChild as HTMLElement | null;
     if (!root) {
@@ -124,7 +134,7 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
           cardX: heroRect.x,
           cardW: heroRect.w,
         };
-      } else if (frame < 4300) {
+      } else if (frame < 4000) {
         // the page is scrolled on this frame: add the scroll back to get PAGE coordinates (before the scroll)
         const sc = keyframeValue(REPORT_SCROLL, frame);
         const page = (el: Element): R => {
@@ -134,7 +144,16 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
         out.report = {
           verifyButton: page(framed(first("Verify ledger now"), root)),
           firstCard: page(framed(first("§1"), root)),
+          // patch 18: every dimension card (§1 ... §9), in page coordinates, in the report's own order, measured after the last card has flipped in
+          // (a card that is still flipping is drawn scaled). The S6 callout for a "not measured" card reads these.
+          cards: Array.from({ length: 9 }, (_, i) => page(framed(first(`§${i + 1}`), root))),
         };
+      } else if (frame < 4300) {
+        // patch 18: after "Verify ledger now" has run, the seal holds one more line (\"Re-verified just now ...\"), so the ledger block is taller and the button,
+        // and every card under it, sit lower by the height of that line. PAGE coordinates again (REPORT_SCROLL is constant here).
+        const sc = keyframeValue(REPORT_SCROLL, frame);
+        const b = rect(framed(first("Verify ledger now"), root));
+        out.reportAfter = { verifyButton: { ...b, y: round(b.y + sc) } };
       } else {
         out.infra = { firstPanel: rect(framed(first("§1"), root)) };
       }
@@ -145,6 +164,10 @@ export const DevProbe: React.FC<{ frame: number; rootRef: React.RefObject<HTMLDi
       console.log("ANCHORS_ERROR " + String((e as Error).message));
     }
     continueRender(handle);
+    }
+    return () => {
+      alive = false;
+    };
   }, [frame, handle, rootRef]);
   return null;
 };

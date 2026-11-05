@@ -14,3 +14,5 @@ Provide S8_CAMERA, S8_CURSOR (empty), overlay.
 
 CHECK: npx tsc --noEmit ; stills at f4580, f4650, f4720, f4780, f4850, f4960.
 ```
+
+**Patch 25 amendment (motion):** CAMERA AND SCRIM (patch 25). Replace the interim `holdShot(4560, 4979, ...)` in the S8 stub completely. S7 leaves the app stepped back: appLook() blurs only inside S7's frames, so the app is sharp again at the cut on f4560; if you want it to come back gradually, extend appLook() with your own ramp (never a backdrop-filter). Architecture diagram beats: no hold over 60 frames without a move or the diagram's own motion; the lower thirds (f4650-4770) must not sit on live UI text.

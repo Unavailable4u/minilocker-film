@@ -28,6 +28,9 @@ import { packetWallFrame } from "../../gfx/EgressWall";
 
 export const S3_BOX = { x: 160, y: 190 } as const;
 
+/** patch 25: the padding of the `nav` shot that S3 ends on and S4a starts from (it was 96 = zoom 2.56, half the stage black above the header; 300 = zoom ~1.96). One number, both scenes. */
+export const NAV_PADDING = 300;
+
 /** The rack inside the box (box-local px): centred left to right, 32 px under the top edge. */
 export function s3Rack(count: number): { x: number; y: number; w: number; h: number; lineRoom: number } {
   const size = decoyRackSize(count);
@@ -235,19 +238,8 @@ export const S3_SCRIM = { dim: 0.55, blurPx: 6 } as const;
 export const S3Scrim: React.FC<{ frame: number }> = ({ frame }) => {
   const a = s3ScrimAmount(frame);
   if (a <= 0.001) return null;
-  const blur = `blur(${(S3_SCRIM.blurPx * a).toFixed(2)}px)`;
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: alpha(theme.paper, S3_SCRIM.dim * a),
-        backdropFilter: blur,
-        WebkitBackdropFilter: blur,
-        pointerEvents: "none",
-      }}
-    />
-  );
+  // Dim only. The 6 px blur is applied to the app layer by MiniLockerFilm (appLook.ts): a backdrop-filter here drew mirrored copies of the window.
+  return <div style={{ position: "absolute", inset: 0, background: alpha(theme.paper, S3_SCRIM.dim * a), pointerEvents: "none" }} />;
 };
 
 // ---------------------------------------------------------------------------------------------- import-time checks

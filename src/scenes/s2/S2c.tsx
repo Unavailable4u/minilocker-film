@@ -50,12 +50,12 @@ export const S2C_TIMING = {
   /** two slow push-ins on the panel (about 4 % and 8 %), so no frame between the audit and the widen is still */
   creepA: { start: 1236, frames: 70 },
   creepB: { start: 1306, frames: 74 },
-  /** the widen to the whole window: it arrives on f1472 and holds ten frames */
-  widen: { start: 1380, frames: 92 },
+  /** the widen to the whole window: it arrives on f1464 and holds ten frames */
+  widen: { start: 1380, frames: 84 },
   /** the closing caption (CUES.s2.captionSteps), gone before the whip lands */
   captionEnd: 1490,
-  /** the whip onto the Secrets gauge: 18 frames, landing on the beat f1500; the roll (2.5 deg) leaves again over the last 9 */
-  whip: { start: 1482, frames: 18, rollBack: 1491 },
+  /** the whip onto the Secrets gauge (patch 25: 18 -> 26 frames, peak speed about 30 % lower): 26 frames, landing on the beat f1500; the roll (2.5 deg) leaves again over the last 9 */
+  whip: { start: 1474, frames: 26, rollBack: 1491 },
 } as const;
 
 // ---------------------------------------------------------------------------------------------- camera

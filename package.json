@@ -16,6 +16,8 @@
     "proof": "node scripts/check-proof.mjs",
     "sfx": "node scripts/make-sfx.mjs",
     "check": "node scripts/check-stills.mjs",
+    "motion": "node tools/audit-motion.mjs",
+    "sheets": "node scripts/make-sheets.mjs",
     "render": "node scripts/render.mjs",
     "render:4k": "node scripts/render.mjs --4k",
     "render:frames": "node scripts/render.mjs --frames",
