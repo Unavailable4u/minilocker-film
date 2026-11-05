@@ -377,6 +377,8 @@ export const badges = {
   patternA: "Pattern A - sandboxed code execution",
   patternB: "Pattern B - sandboxed browser use",
   proofLive: "LIVE",
+  /** Patch 16f: the badge over the recorded proof clip (S4b6). It is shown ONLY when the clip is there; the word LIVE is never used for the reconstruction. */
+  proofLiveLine: "LIVE - recorded on the Vultr VM - unedited",
   proofReconstructed: "RECONSTRUCTED FROM LEDGER",
 } as const;
 
@@ -483,6 +485,14 @@ export const s4 = {
   captionRewind: "Rewind.",
   calloutUndone: "Undone, not erased.",
   captionReal: "Real wipe. Real rewind. Real hashes.",
+  /** Patch 16f: the three numerals of the proof beat (their values come from the attack's result, never from here). "files re-hashed" is gfxB's. */
+  proof: {
+    /** Unit of the checks numeral: "{passed} of {total}". */
+    checksOf: "of",
+    checks: "checks passed",
+    secondsUnit: "s",
+    seconds: "to run the whole attack",
+  },
 } as const;
 
 export const s5 = {

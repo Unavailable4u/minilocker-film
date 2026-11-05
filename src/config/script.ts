@@ -355,6 +355,22 @@ export const INFRA = {
   flashFrames: 16,
 } as const;
 
+// ---------------------------------------------------------------------------------------------- Proof clip
+
+/**
+ * Patch 16f: the proof window of S4b6 (f3030-3299). It plays a REAL screen recording of the hero attack (the wipe, the rewind, the hashes), recorded on the Vultr VM and
+ * left unedited, when `public/proof/manifest.json` says the clip is there; otherwise the window is a code replay of the same steps, read from the ledger, badged
+ * "RECONSTRUCTED FROM LEDGER". `npm run proof` (scripts/check-proof.mjs) writes the manifest from the file; S4b6 imports it at build time.
+ *   - `file`       path of the clip under `public/` (staticFile). Its own audio is never used.
+ *   - `startFrom`  first film frame of the clip that plays (frames of the clip at 30 fps, 0 or more).
+ *   - `endAt`      first frame that does NOT play: the cut is `endAt - startFrom` frames. The film's timing allows 188 to 225 frames (shared.tsx checks it at import).
+ */
+export const PROOF = {
+  file: "proof/rewind.mp4",
+  startFrom: 0,
+  endAt: 210,
+} as const;
+
 // ---------------------------------------------------------------------------------------------- one object for code that walks it all
 
 export const SCRIPT = {
@@ -369,4 +385,5 @@ export const SCRIPT = {
   typed: TYPED,
   report: REPORT,
   infra: INFRA,
+  proof: PROOF,
 } as const;

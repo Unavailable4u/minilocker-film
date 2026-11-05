@@ -66,9 +66,15 @@
 //   Hand-off to 16f (f3030): the scrim, the chain, the seal and its line are all still drawn on f3029, at full strength; the camera is on `attackVerdict`, padding 96, bias 1.06
 //   (arrived f3029); the cursor is hidden. 16f makes the ledger layer leave by editing ONE function, `s4LedgerOpacity` (it returns 1 now), and starts its camera, cursor
 //   waypoints and overlay items on f3030 or later.
+//
+// 16f (f3030-3299) is the proof (every addition below is marked "16f"): the ledger layer leaves (`s4LedgerOpacity`, f3030-3041) while S4b6's own scrim, mounted UNDER it, takes
+// over by exactly the compensating amount (`s4ProofScrim`: the Lab behind stays dimmed to 95 %), the proof group (a window and three numerals) rises f3030-3059 and pushes in
+// 4 % to f3285 (`s4ProofPush`), the clip (or the replay of the ledger's steps) plays from the caption's beat f3060, the numerals count on f3075, f3105 and f3135, the group
+// leaves f3285-3292 and the scrim f3285-3298, so the app is bright and whole on f3299 and the stage is empty. The camera creeps out to `fullWindow` (S4b6.tsx).
+//   Hand-off to S5 (f3300): the camera is on `fullWindow`, padding 60, bias 1 (arrived f3299); nothing is drawn in stage space from f3299.
 import { WINDOW } from "../../config/focus"; // 15b
 import { layout } from "../../config/theme"; // 15b
-import { SCREEN_CHANGES, LAB } from "../../config/script";
+import { PROOF, SCREEN_CHANGES, LAB } from "../../config/script"; // 16f: PROOF
 import { BEAT, CUES, SCENES, STAGE } from "../../config/timeline"; // 15b: BEAT, CUES; 16c: STAGE
 import { SHATTER_FRAMES, latticeSize } from "../../gfx/FileLattice"; // 15b, 15c: SHATTER_FRAMES
 import { GHOST_DRAW_FRAMES } from "../../gfx/GhostContainer"; // 16a
@@ -228,6 +234,29 @@ export const S4_TIMING = {
   drift: { from: 2820, frames: 209, bias: 1.06 },
   /** 16e: the last frame 16e draws on. 16f's first camera keyframe, cursor waypoint and overlay item start at f3030 or later. */
   partEndB5: 3029,
+
+  // ---------------------------------------------------------------- 16f (f3030-3299)
+  /** 16f: the ledger layer (the chain, the seal, the callout, the button and 16e's scrim) leaves, signature; S4b6's scrim takes over under it frame for frame. */
+  ledgerOut: { from: 3030, frames: 12 },
+  /** 16f: the proof group rises (36 px, signature) and is complete on the caption's beat, when the clip (or the replay) starts to play. */
+  proofIn: { from: 3030, frames: 30 },
+  /** 16f: the badge over the window reveals while the group rises. */
+  badgeIn: { from: 3042, frames: 14 },
+  /** 16f: the clip (or the replay) plays from the caption's beat (CUES.s4.captionReal), for `PROOF.endAt - PROOF.startFrom` frames. */
+  play: { from: CUES.s4.captionReal },
+  /** 16f: the three numerals (files re-hashed, checks passed, the run's seconds) rise and count, one after the other, each on a beat. */
+  numerals: [3075, 3105, 3135],
+  /** 16f: every numeral counts for this many frames (StatNumeral's own ease). */
+  numeralFrames: 30,
+  /** 16f: "Real wipe. Real rewind. Real hashes." (CUES.s4.captionReal); it leaves (rising) over its last 12 frames, as the group leaves. */
+  proofCaption: { start: CUES.s4.captionReal, end: 3285 },
+  /** 16f: the group pushes in `scale` (4 %) about its centre, linear, from the moment it rises to the moment it leaves. */
+  proofPush: { from: 3030, frames: 255, scale: 1.04 },
+  /** 16f: the group leaves (a fade with an 18 px drop), and the scrim after it: S4b6's scrim is gone on the last frame of S4. */
+  proofOut: { from: 3285, frames: 8 },
+  scrimOut: { from: 3285, frames: 14 },
+  /** 16f: the last frame of S4. S5's first keyframe starts on f3300 (its whip), from the pose this part's camera arrives on. */
+  partEndB6: 3299,
 } as const;
 
 /**
@@ -259,6 +288,12 @@ export const S4_CUE_ANCHORS = {
   press: { frame: S4_TIMING.press.at },
   verifySweep: { from: S4_TIMING.verify.from, to: S4_TIMING.verify.from + S4_TIMING.verify.frames },
   seal: { frame: S4_TIMING.verify.from + Math.round(S4_TIMING.verify.frames * 0.88) },
+  // 16f: the ledger layer leaves, the proof group rises, the clip (or the replay) starts on the caption's beat, the three numerals count, the group leaves
+  ledgerOut: { from: S4_TIMING.ledgerOut.from, to: S4_TIMING.ledgerOut.from + S4_TIMING.ledgerOut.frames },
+  proofRise: { from: S4_TIMING.proofIn.from, to: S4_TIMING.proofIn.from + S4_TIMING.proofIn.frames },
+  proofPlay: { frame: S4_TIMING.play.from },
+  numerals: [...S4_TIMING.numerals],
+  proofOut: { from: S4_TIMING.proofOut.from, to: S4_TIMING.proofOut.from + S4_TIMING.proofOut.frames },
 } as const;
 
 /** Where the cursor appears (window px): over the detail pane, right of the tiles' row (tiles end at x 771), at the height of the first card. */
@@ -835,11 +870,12 @@ export function s4CatCursor(frame: number, cmdTotal: number, outTotal: number): 
 // ---------------------------------------------------------------------------------------------- 16e: the ledger layer
 
 /**
- * 16e: 0..1, how much of the ledger layer (the scrim, the chain, the seal, the callout and the button) is there. It is 1 on every frame of 16e and, until 16f, after it:
- * 16f edits THIS body to make the layer leave as the proof window comes in (a retire starting on f3030 or later).
+ * 16e: 0..1, how much of the ledger layer (the scrim, the chain, the seal, the callout and the button) is there. It is 1 on every frame of 16e.
+ * 16f: it leaves as the proof window comes in (signature, f3030-3041, one multiplier on the whole layer, 16e's own scrim included).
  */
-export function s4LedgerOpacity(_frame: number): number {
-  return 1;
+export function s4LedgerOpacity(frame: number): number {
+  const t = S4_TIMING.ledgerOut;
+  return 1 - signature(clamp01((frame - t.from) / t.frames));
 }
 
 /** 16e: 0..1, the scrim's fade-in (signature). */
@@ -899,4 +935,79 @@ export function s4PressRipple(frame: number): number {
   if (!(t.callout.to <= t.verify.from + t.verify.frames)) bad("the callout leaves by the end of the sweep (it must not sit on the seal's line)");
   if (!(t.verify.from + t.verify.frames + 30 <= t.partEndB5)) bad("the seal and its line must hold for at least 30 frames before the end of the part");
   if (!(t.drift.from === t.scrim.from && t.drift.from + t.drift.frames <= t.partEndB5)) bad("the drift runs from the scrim to the end of the part, no further");
+})();
+
+// ---------------------------------------------------------------------------------------------- 16f: the proof
+
+/** 0..1, eased: the proof group rises (S4b6: 36 px and a fade; it is complete on the caption's beat f3060). */
+export function s4ProofRise(frame: number): number {
+  const t = S4_TIMING.proofIn;
+  return signature(clamp01((frame - t.from) / t.frames));
+}
+
+/** 0..1, eased: the proof group leaves (S4b6: an 18 px drop and a fade, f3285-3292). */
+export function s4ProofGroupExit(frame: number): number {
+  const t = S4_TIMING.proofOut;
+  return signature(clamp01((frame - t.from) / t.frames));
+}
+
+/** The group's scale: 1 when it rises, `proofPush.scale` (1.04) when it leaves, linear about its centre. */
+export function s4ProofPush(frame: number): number {
+  const t = S4_TIMING.proofPush;
+  return 1 + (t.scale - 1) * clamp01((frame - t.from) / t.frames);
+}
+
+/**
+ * 16f: the opacity of S4b6's own scrim (`theme.paper`). It is mounted UNDER the ledger layer, which carries 16e's scrim at `scrim.alpha` times `s4LedgerOpacity`. What the
+ * Lab behind lets through is (1 - this) x (1 - alpha x layer); this is chosen so that product is the 5 % it let through all along (1 - alpha), and the Lab stays dimmed to
+ * 95 % while the chain fades over it: `alpha (1 - layer) / (1 - alpha layer)` is 0 while the layer is whole and `alpha` when it has gone. From `scrimOut.from` it fades out
+ * (signature) so the app is bright and whole on the last frame of S4.
+ */
+export function s4ProofScrim(frame: number): number {
+  const a = S4_TIMING.scrim.alpha;
+  const layer = s4LedgerOpacity(frame);
+  const cover = (a * (1 - layer)) / (1 - a * layer);
+  const t = S4_TIMING.scrimOut;
+  return cover * (1 - signature(clamp01((frame - t.from) / t.frames)));
+}
+
+// ---------------------------------------------------------------------------------------------- 16f: import-time checks
+
+/** The clip's last frame is held for at most this many frames before the group leaves (a longer hold would read as a frozen video). */
+const PROOF_HOLD_MAX = 45;
+
+(() => {
+  const t = S4_TIMING;
+  const bad = (m: string): never => {
+    throw new Error(`S4 (16f): ${m}`);
+  };
+  if (!(t.ledgerOut.from > t.partEndB5)) bad("16f's first item must start after 16e's last frame (f3029)");
+  if (!(t.proofIn.from >= t.ledgerOut.from)) bad("the group rises as the ledger layer leaves, not before");
+  if (!(t.ledgerOut.from + t.ledgerOut.frames <= t.play.from)) bad("the ledger layer must be gone before the clip starts");
+  if (!(t.play.from === CUES.s4.captionReal && t.play.from % BEAT === 0)) bad('the clip plays from the caption\'s beat (CUES.s4.captionReal), which is a beat');
+  if (!(t.proofIn.from + t.proofIn.frames === t.play.from)) bad("the group is complete on the frame the clip starts to play");
+  if (!(t.badgeIn.from >= t.proofIn.from && t.badgeIn.from + t.badgeIn.frames <= t.play.from)) bad("the badge reveals while the group rises and is complete before the clip plays");
+  if (!(t.numeralFrames === 30)) bad("every numeral counts for 30 frames");
+  for (let i = 0; i < t.numerals.length; i++) {
+    const at = t.numerals[i];
+    if (!(at % BEAT === 0)) bad(`numeral ${i} starts on f${at}: every reveal lands on a beat`);
+    if (!(at >= t.play.from)) bad(`numeral ${i} (f${at}) starts before the clip does`);
+    if (i > 0 && !(at >= t.numerals[i - 1] + t.numeralFrames)) bad(`numeral ${i} (f${at}) starts before numeral ${i - 1} has finished counting`);
+    if (!(at + t.numeralFrames <= t.proofOut.from)) bad(`numeral ${i} (f${at}) is still counting when the group leaves`);
+  }
+  if (!(t.proofCaption.start === CUES.s4.captionReal && t.proofCaption.end === t.proofOut.from)) bad("the caption runs from its cue to the frame the group leaves");
+  if (!(t.proofPush.from === t.proofIn.from && t.proofPush.from + t.proofPush.frames === t.proofOut.from)) bad("the push runs from the frame the group rises to the frame it leaves");
+  if (!(t.proofPush.scale === 1.04)) bad("the group pushes in 4 %");
+  if (!(t.scrimOut.from === t.proofOut.from && t.proofOut.from + t.proofOut.frames <= t.scrimOut.from + t.scrimOut.frames)) bad("the scrim leaves with the group and after it");
+  if (!(t.scrimOut.from + t.scrimOut.frames <= t.partEndB6)) bad("the scrim must be gone by the last frame of S4 (f3299)");
+  if (!(t.partEndB6 === SCENES.S4.end)) bad("this part ends on the last frame of S4");
+
+  // the cut: whole frames, and long enough that the last row of the replay lands inside it, short enough that the window is up when it ends
+  const frames = PROOF.endAt - PROOF.startFrom;
+  if (!(Number.isInteger(PROOF.startFrom) && Number.isInteger(PROOF.endAt) && PROOF.startFrom >= 0)) bad("PROOF.startFrom and PROOF.endAt are whole frames (script.ts), startFrom 0 or more");
+  const min = t.proofOut.from + t.proofOut.frames - PROOF_HOLD_MAX - t.play.from;
+  const max = t.proofOut.from - t.play.from;
+  if (!(frames >= min && frames <= max)) {
+    bad(`the proof cut (PROOF.startFrom ${PROOF.startFrom} to PROOF.endAt ${PROOF.endAt}) is ${frames} frames: it must be ${min} to ${max} (the last frame is held at most ${PROOF_HOLD_MAX} frames before the group leaves, and the cut ends before it does). Change them in src/config/script.ts`);
+  }
 })();

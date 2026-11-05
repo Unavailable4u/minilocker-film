@@ -4,9 +4,13 @@
 //   S4b3  f2580-2699  the cat: the restored line in stage space, the stage retires, the camera moves to the detail pane                           - patch 16c
 //   S4b4  f2700-2819  the checks light, the verdict tile, the donut, the stamp (camera and scroll only; nothing in stage space)                                - patch 16d
 //   S4b5  f2820-3029  the HashChain of the ledger, "Undone, not erased.", "Verify ledger", the seal                                                  - patch 16e
-//   S4b6  f3030-3299  the proof: the clip or the reconstruction, three numerals, the hand-off on the beat f3300                                  - patch 16f (not yet)
+//   S4b6  f3030-3299  the proof: the clip or the reconstruction, three numerals, the hand-off on the beat f3300                                  - patch 16f
 // Keyframes and waypoints are concatenated in this order, so each part's first entry must come after the previous part's last one. The stage object
 // (S4Stage.tsx) is mounted by S4a.tsx under every overlay, and drawn from f2240 on until 16c retires it (f2655-2668).
+//
+// Stacking order of the overlays (first = bottom): S4b6's SCRIM is mounted BEFORE S4b5, under the ledger layer (S4b5: the chain, the seal, the callout, the button and 16e's own
+// scrim). While that layer fades (f3030-3041) the scrim takes over frame for frame, so the Lab behind stays dimmed to 95 % and the chain fades over it instead of being covered.
+// The proof group itself (S4b6, with its caption) is mounted LAST, over everything.
 import React from "react";
 import type { CameraKeyframe, CursorWaypoint } from "../../config/camera";
 import type { SceneOverlayProps } from "../types";
@@ -15,15 +19,18 @@ import { S4B2_CAMERA, S4B2_CURSOR, S4b2 } from "./S4b2";
 import { S4B3_CAMERA, S4B3_CURSOR, S4b3 } from "./S4b3";
 import { S4B4_CAMERA, S4B4_CURSOR } from "./S4b4";
 import { S4B5_CAMERA, S4B5_CURSOR, S4b5 } from "./S4b5";
+import { S4B6_CAMERA, S4B6_CURSOR, S4b6, S4b6Scrim } from "./S4b6";
 
-export const S4B_CAMERA: readonly CameraKeyframe[] = [...S4B1_CAMERA, ...S4B2_CAMERA, ...S4B3_CAMERA, ...S4B4_CAMERA, ...S4B5_CAMERA];
-export const S4B_CURSOR: readonly CursorWaypoint[] = [...S4B1_CURSOR, ...S4B2_CURSOR, ...S4B3_CURSOR, ...S4B4_CURSOR, ...S4B5_CURSOR];
+export const S4B_CAMERA: readonly CameraKeyframe[] = [...S4B1_CAMERA, ...S4B2_CAMERA, ...S4B3_CAMERA, ...S4B4_CAMERA, ...S4B5_CAMERA, ...S4B6_CAMERA];
+export const S4B_CURSOR: readonly CursorWaypoint[] = [...S4B1_CURSOR, ...S4B2_CURSOR, ...S4B3_CURSOR, ...S4B4_CURSOR, ...S4B5_CURSOR, ...S4B6_CURSOR];
 
 export const S4b: React.FC<SceneOverlayProps> = ({ frame }) => (
   <>
     <S4b1 frame={frame} />
     <S4b2 frame={frame} />
     <S4b3 frame={frame} />
+    <S4b6Scrim frame={frame} />
     <S4b5 frame={frame} />
+    <S4b6 frame={frame} />
   </>
 );
