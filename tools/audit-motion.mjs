@@ -5,7 +5,7 @@
 // It also runs every scene's import-time checks (they throw while the bundle loads). No browser needed: `node tools/audit-motion.mjs`.
 // Exit code 0 always (it informs); add --strict to exit 1 when there are warnings.
 import { createRequire } from "node:module";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -53,6 +53,17 @@ try {
 }
 
 const warnings = [];
+
+// BACKDROP: a backdrop-filter in a scene or a graphic draws a mirrored copy of the window in Chrome (patch 25). Blur the app through src/scenes/appLook.ts instead.
+// (src/ui, src/fx and src/dev are not scanned: Header, chrome, AttackLabScreen, Callout and the disabled DOF layer keep theirs, and the film switches the app's off in theme.css.)
+const walk = (d) => readdirSync(d).flatMap((n) => { const f = join(d, n); return statSync(f).isDirectory() ? walk(f) : [f]; });
+for (const dir of ["src/scenes", "src/gfx"]) {
+  for (const f of walk(join(root, dir)).filter((x) => /\.(tsx?|css)$/.test(x))) {
+    readFileSync(f, "utf8").split(/\r?\n/).forEach((line, i) => {
+      if (/backdrop-?filter/i.test(line) && !/^\s*(\/\/|\*|\/\*)/.test(line)) warnings.push(`BACKDROP ${f.slice(root.length + 1).replace(/\\/g, "/")}:${i + 1}  use appLook.ts, not backdrop-filter`);
+    });
+  }
+}
 const t = (f) => `f${f} (${(f / 30).toFixed(1)}s)`;
 
 // still runs

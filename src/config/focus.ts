@@ -213,7 +213,17 @@ export const FOCUS: Record<FocusName, Rect> = {
    * pane's verdict banner (x 620-1437, y 430-567) in one frame, with no control cut by the frame's edge, so the stamp, the blue tile and the donut that fills are all on the screen when they land on f2780. MEASURED.
    */
   attackVerdict: { x: 0, y: 70, w: 1570, h: 520 },
-  /**`r`n   * Report (patch 18, measured): the page's own column (the report article is 1088 px wide, x 256-1344, centred in the window) with 40 px either side, from`r`n   * the bottom of the header (y 67) to the window's bottom edge. The page scrolls under the camera (REPORT_SCROLL), so this is the part of the body that`r`n   * stays on screen; the nine cards (two columns, 535.5 px each, MEASURED.report.cards) pass through it. At padding 96 it frames at zoom 1.07.`r`n   */`r`n  reportGrid: { x: 216, y: GRID.headerH, w: 1168, h: WINDOW.h - GRID.headerH },`r`n  /**`r`n   * Report (patch 18, measured): the ledger block at scroll 560: the seal (with the re-verified line that lands inside it) and the "Verify ledger now" button`r`n   * (page y 1068, so y 508 at scroll 560), over the full width of the article. Zoom 1.59 at padding 96, width-limited.`r`n   */`r`n  verifyButton: { x: 256, y: 346, w: 1088, h: 230 },
+  /**
+   * Report (patch 18, measured): the page's own column (the report article is 1088 px wide, x 256-1344, centred in the window) with 40 px either side, from
+   * the bottom of the header (y 67) to the window's bottom edge. The page scrolls under the camera (REPORT_SCROLL), so this is the part of the body that
+   * stays on screen; the nine cards (two columns, 535.5 px each, MEASURED.report.cards) pass through it. At padding 96 it frames at zoom 1.07.
+   */
+  reportGrid: { x: 216, y: GRID.headerH, w: 1168, h: WINDOW.h - GRID.headerH },
+  /**
+   * Report (patch 18, measured): the ledger block at scroll 560: the seal (with the re-verified line that lands inside it) and the "Verify ledger now" button
+   * (page y 1068, so y 508 at scroll 560), over the full width of the article. Zoom 1.59 at padding 96, width-limited.
+   */
+  verifyButton: { x: 256, y: 346, w: 1088, h: 230 },
   /** Infra: the wiring diagram of nodes joined by arrows */
   infraDiagram: { x: 24, y: GRID.headerH + 140, w: WINDOW.w - 48, h: 420 },
   /** the whole window */

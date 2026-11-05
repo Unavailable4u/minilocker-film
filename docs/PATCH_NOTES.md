@@ -1286,3 +1286,26 @@ New fields, all derived from the attack's ledger and result, each throwing (nami
 - Stills looked at (half size, Remotion with an npm-packaged Chromium, `--gl=swangle`): f2590 (the tile fading), f2625 (the command typed, the line printing), f2645 (the line complete, cursor inside the right safe margin), f2662 (mid-retire), f2685 and f2699 (the camera arrived on the detail pane), and, for 16d's benefit, f2740 and f2790 with this part's camera held.
 - **NOT verified:** motion (the typing speed, the 14-frame cross-dissolve of the stage into the app's card list, which is visible through the fading panel for about 6 frames), the full-size render, f2596-2609 and f2650-2660 in particular.
 - **For 16d:** with this part's camera held, f2740 shows the first four checks lit under "Containment checks", and f2790 shows the list running past the window's bottom edge (stage y ~1002): the sixth check is cut, and the verdict banner is not on screen at the pane's scroll of 520. 16d needs its own focus rects for the checks and the verdict, and probably a retimed `LAB.detailScroll` (further down for the checks, back up for the stamp on f2780). None of that is in this patch.
+
+## PATCH 26 - Repair of patches 16d-16e, 17, 18 as applied (and the missing notes for them)
+
+**Why:** the applied state (HEAD `cf113bd`) did not compile. Found by `npx tsc --noEmit` and `node tools/audit-motion.mjs` on a fresh clone.
+
+**Defects found and fixed**
+1. `src/config/focus.ts` line 216 held ten literal PowerShell escapes (`` `r`n ``) where line breaks belong, so `reportGrid` and `verifyButton` (patch 18) and their comments were fused into one line and the file did not parse (22 syntax errors). Replaced with real line breaks.
+2. `src/scenes/s4/S4b4.tsx` (patch 16d) did not exist, although `S4b.tsx` imports `S4B4_CAMERA` and `S4B4_CURSOR` from it. Created (camera only, as the header of `S4b.tsx` says): `attackChecks` arriving on the beat f2730, a 2 % drift to f2763, the sweep to `attackVerdict` arriving on the stamp f2780, a 3 % push to f2819; no cursor. Its import-time checks: ordering against 16c and 16e, every shot's rectangle inside the stage with 24 px round it, and the evidence's check count against `LAB.checksFit` (8).
+3. `S5Page.tsx` and `S6Evidence.tsx` did not import `React` or `SceneOverlayProps`; `S5Page.tsx` did not export `S5_CURSOR` (which `scenes/index.ts` imports). Added (`S5_CURSOR = []`: no cursor in S5, BIBLE 5).
+4. Both files also ended with a stray carriage return and have CRLF line endings (written by PowerShell). Kept CRLF so this patch's context lines match; the stray final CR is now a newline.
+5. **backdrop-filter was back** (patch 25 rule 5): S5's scrim (stage-sized) and S6's claims strip drew the mirrored window again. Both are now dim-only; their blur goes through `appLook.ts`.
+6. S6's opening `nav` shot ran at zoom 2.5 with a 149 px/frame pan; it now uses the shared `NAV_PADDING` (300, zoom ~1.96).
+
+**Files created:** `src/scenes/s4/S4b4.tsx`. **Changed:** `src/config/focus.ts`, `src/scenes/S5Page.tsx`, `src/scenes/S6Evidence.tsx`, `src/scenes/appLook.ts`, `tools/audit-motion.mjs`, `docs/PATCH_NOTES.md`.
+
+**PUBLIC API (the parts built by patches 16d-18, from the code, since their own notes were never appended)**
+- `S4B4_CAMERA`, `S4B4_CURSOR` (S4b4, no overlay component); `S4B5_CAMERA`, `S4B5_CURSOR`, `S4b5` (16e, the chain, f2820-3029).
+- `S5_TIMING`, `S5_CUE_ANCHORS`, `S5_CAMERA`, `S5_CURSOR`, `S5_SCRIM`, `s5ScrimAmount(frame)`, `S5Page`; `s5Data()` / `S5Data` / `S5Finding` (`src/scenes/s5/data.ts`); `FixturePage`, `FIXTURE`, `fixtureLayerTop` (`src/ui/FixturePage.tsx`).
+- `S6_TIMING`, `S6_CAMERA`, `S6_CURSOR`, `s6ClaimsBlur(frame)`, `S6Evidence`.
+- `appLook(frame)` now takes the maximum blur of S3, S5, S6 (claims strip) and S7.
+- `tools/audit-motion.mjs` also reports `BACKDROP` for any `backdrop-filter` line in `src/scenes` or `src/gfx`.
+
+**Known issues / not verified:** nothing was rendered (no Chrome in the sandbox): every change is checked by `tsc`, by the import-time checks of all scenes and by a full `remotion bundle`, not by frames. Still missing: S4b6 (16f, f3030-3299) and patches 20-24, so f3030-3299 holds the last pose (the audit reports it as STILL). `npm run motion` still reports long STILL runs in S5 (f3380-3704) and S6 (f4109-4200); both are scenes whose action is in stage space, so judge them on the sheets. Patch 16b, and patches 14b/16d/16e/17/18, still have no notes of their own.

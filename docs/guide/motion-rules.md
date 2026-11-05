@@ -15,7 +15,7 @@ They are also pasted into `docs/guide/context-header.md`, so `tools/make-prompt.
    last arrival, from the same pose: no jump.
 5. **No `backdrop-filter`, anywhere.** In Chrome it draws a mirrored, upside-down copy of the window under the camera's 3D transform (seen at f1550 and f4270).
    Step the app back with `appLook(frame)` (`src/scenes/appLook.ts`: blur on the app layer) plus a plain dim overlay. `theme.css` switches `backdrop-filter`
-   off inside `.film-app-layer`.
+   off inside `.film-app-layer`. `npm run motion` reports `BACKDROP` for any such line in `src/scenes` or `src/gfx` (patches 17 and 18 reintroduced it once).
 6. **Captions never sit on live UI text.** Use the strip under the window (`closingWide`, `CAPTION_DROP`) or move the camera, not the caption over a card.
 7. **Every number on a beat.** Cuts, reveals, impacts land on multiples of 15. Moves use the signature ease; linear only for typing, packets, creeps.
 8. **Check before you hand over.** Run `npm run motion` (no STILL over 75 f outside stage-space scenes, no unexplained FAST or DEEP) and

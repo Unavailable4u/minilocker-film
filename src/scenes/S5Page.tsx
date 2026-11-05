@@ -25,6 +25,7 @@
 //
 // Hand-offs. S4's last keyframe is before f3300 (16a: f2400; 16b-16f must end before f3300). S6 (patch 18): its first camera keyframe and cursor waypoint
 // start at f3720 or later, from `fullWindow`, padding 60 (this scene's last pose, arrived f3719). The cursor: none (BIBLE 5).
+import React from "react";
 import { Badge, badgePulse, badgeReveal } from "../fx/Badge";
 import { Caption } from "../fx/Caption";
 import { getCameraState, worldToStage } from "../fx/Camera";
@@ -43,6 +44,7 @@ import { typedText, typingCaret, typingEndFrame } from "../lib/typing";
 import { FIXTURE, FixturePage, fixtureLayerTop } from "../ui/FixturePage";
 import { PANEL_INSET, TAB_STRIP_H, terminalPaneLayout } from "../ui/TerminalPane";
 import { s5Data, type S5Data } from "./s5/data";
+import type { SceneOverlayProps } from "./types";
 const s5 = copy.s5;
 const data: S5Data = s5Data(); // throws now, naming what is missing, if the evidence cannot support the scene
 
@@ -109,6 +111,9 @@ export const S5_CAMERA: readonly CameraKeyframe[] = [
     : []),
   kf(T.settle.from, "fullWindow", { padding: 60, ease: "signature", frames: T.settle.frames }),
 ];
+
+/** No cursor in S5 (BIBLE 5): the page and the agent act, not the film's pointer. */
+export const S5_CURSOR: readonly CursorWaypoint[] = [];
 
 /** No cursor in S5 (BIBLE 5: the cursor is shown in S2, S4a and S6 only). S4's cursor is hidden since f2220. */
 
@@ -694,18 +699,19 @@ const Approval: React.FC<{ frame: number }> = ({ frame }) => {
 
 // ---------------------------------------------------------------------------------------------- scrim
 
-/** The app steps back behind the page and the cards: the same dim and blur as S3's scrim (a backdrop layer, MiniLockerFilm and FilmApp untouched). */
-const SCRIM = { dim: 0.55, blurPx: 6 } as const;
-function scrimAmount(frame: number): number {
+/** The app steps back behind the page and the cards: the same dim and blur as S3's scrim. Patch 25: the blur is NOT a backdrop-filter here (Chrome draws a mirrored copy of the window);
+ *  it is `s5ScrimAmount * S5_SCRIM.blurPx`, applied to the app layer by MiniLockerFilm through appLook.ts. This layer is only the dim. */
+export const S5_SCRIM = { dim: 0.55, blurPx: 6 } as const;
+export function s5ScrimAmount(frame: number): number {
   const s = T.scrim;
   return rise(frame, s.inFrom, s.inTo - s.inFrom) * (1 - rise(frame, s.outFrom, s.outTo - s.outFrom));
 }
 const Scrim: React.FC<{ frame: number }> = ({ frame }) => {
-  const a = scrimAmount(frame);
+  const a = s5ScrimAmount(frame);
   if (a <= 0.001) return null;
-  const blur = `blur(${(SCRIM.blurPx * a).toFixed(2)}px)`;
-  return <div style={{ position: "absolute", inset: 0, background: alpha(theme.paper, SCRIM.dim * a), backdropFilter: blur, WebkitBackdropFilter: blur, pointerEvents: "none" }} />;
+  return <div style={{ position: "absolute", inset: 0, background: alpha(theme.paper, S5_SCRIM.dim * a), pointerEvents: "none" }} />;
 };
+
 
 // ---------------------------------------------------------------------------------------------- the page card
 
@@ -766,4 +772,4 @@ export const S5Page: React.FC<SceneOverlayProps> = ({ frame }) => {
       </div>
     </>
   );
-};
+};

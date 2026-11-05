@@ -5,6 +5,8 @@
 // The blur now goes on the app layer itself as an ordinary `filter` (MiniLockerFilm.tsx), and the scrims keep only the dim.
 import { SCENES } from "../config/timeline";
 import { S3_SCRIM, s3ScrimAmount } from "./s3/shared";
+import { S5_SCRIM, s5ScrimAmount } from "./S5Page";
+import { s6ClaimsBlur } from "./S6Evidence";
 import { S7_SCRIM, s7ScrimAmount } from "./S7Value";
 
 export interface AppLook {
@@ -18,5 +20,8 @@ export function appLook(frame: number): AppLook {
   // Patch 20 (S8) may extend this function with its own ramp if the app should come back gradually instead of on the cut at f4560.
   const inS7 = frame >= SCENES.S7.start && frame <= SCENES.S7.end;
   const b7 = inS7 ? S7_SCRIM.blurPx * s7ScrimAmount(frame) : 0;
-  return { blurPx: Math.max(b3, b7) };
+  // S5's scrim (f3330-3719) and S6's claims strip (f4080-4259) each live only inside their own scene (their amounts are 0 elsewhere)
+  const b5 = S5_SCRIM.blurPx * s5ScrimAmount(frame);
+  const b6 = s6ClaimsBlur(frame);
+  return { blurPx: Math.max(b3, b5, b6, b7) };
 }

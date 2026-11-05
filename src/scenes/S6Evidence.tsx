@@ -24,6 +24,7 @@
 //
 // Hand-offs. The first camera keyframe is f3720 (S5's last keyframe holds until then; a stub S5 contributes none). The last keyframe is the whole window, at rest,
 // arrived f4259: S7 (patch 19) starts from there. The cursor is last at the button; S7 hides it (it is shown in S2, S4a and S6 only, BIBLE 5).
+import React from "react";
 import { Badge, badgeReveal } from "../fx/Badge";
 import { Callout } from "../fx/Callout";
 import { Caption } from "../fx/Caption";
@@ -37,6 +38,8 @@ import { alpha, fonts, layout, theme } from "../config/theme";
 import { CUES, FPS, SCENES, STAGE } from "../config/timeline";
 import { selectCi, selectEvidenceShortId, selectMeasured, selectMeta, selectSummary, selectTask } from "../data/select";
 import { clamp01, signature } from "../lib/ease";
+import { NAV_PADDING } from "./s3/shared";
+import type { SceneOverlayProps } from "./types";
 const s6 = copy.s6;
 
 // ---------------------------------------------------------------------------------------------- timing (all GLOBAL frames)
@@ -80,7 +83,7 @@ const PULL_PADDING = 96;
 
 /**
  * Shots (zoom in brackets):
- *   nav            f3720  the six nav items, big (2.4): the underline slides to Report
+ *   nav            f3720  the six nav items, big (NAV_PADDING = 300, zoom ~1.96, patch 25: was 2.4-2.5 at padding 110): the underline slides to Report
  *   reportGrid     f3780  the article's column from the header's bottom to the window's bottom (1.07), the cards land; it breathes by 2 % on the beats of the
  *                         rows. No larger: the callout of a card in the right-hand column needs about 272 px of bare page between the card and the stage's
  *                         safe margin, which is what a zoom of 1.09 leaves.
@@ -88,7 +91,7 @@ const PULL_PADDING = 96;
  *   fullWindow     f4114  the whole window for the claims strip (1.07), a 3 % creep, then the rest pose
  */
 export const S6_CAMERA: readonly CameraKeyframe[] = [
-  kf(S6_TIMING.navFrom, "nav", { padding: 110, ease: "signature", frames: 24 }),
+  kf(S6_TIMING.navFrom, "nav", { padding: NAV_PADDING, ease: "signature", frames: 24 }),
   kf(S6_TIMING.wideFrom, "reportGrid", { padding: WIDE_PADDING, ease: "signature", frames: REPORT.cardsFrom - S6_TIMING.wideFrom }),
   kf(3806, "reportGrid", { padding: WIDE_PADDING, scaleBias: 1.02, ease: "signature", frames: 34 }),
   kf(3850, "reportGrid", { padding: WIDE_PADDING, scaleBias: 1.0, ease: "signature", frames: 34 }),
@@ -101,7 +104,7 @@ export const S6_CAMERA: readonly CameraKeyframe[] = [
 ];
 
 /** The camera as the film has it from the nav shot on: what <Camera> renders in S6 once the first move has arrived (the callout and the checks read it). */
-const POSE_CAMERA: readonly CameraKeyframe[] = [kf(0, "nav", { padding: 110 }), ...S6_CAMERA];
+const POSE_CAMERA: readonly CameraKeyframe[] = [kf(0, "nav", { padding: NAV_PADDING }), ...S6_CAMERA];
 
 // ---------------------------------------------------------------------------------------------- cursor
 
@@ -282,6 +285,12 @@ const ClaimColumn: React.FC<{ frame: number; claim: Claim; index: number }> = ({
   );
 };
 
+/** Patch 25: the claims strip's 7 px blur of the app, in SCREEN px, for appLook.ts (a backdrop-filter drew a mirrored copy of the window). Only inside S6: the strip is S6's overlay. */
+export function s6ClaimsBlur(frame: number): number {
+  if (frame < S6_TIMING.claimsFrom || frame > SCENES.S6.end) return 0;
+  return 7 * signature(clamp01((frame - S6_TIMING.claimsFrom) / S6_TIMING.scrimFrames));
+}
+
 const ClaimsStrip: React.FC<{ frame: number }> = ({ frame }) => {
   const t = S6_TIMING;
   if (frame < t.claimsFrom) return null;
@@ -292,15 +301,13 @@ const ClaimsStrip: React.FC<{ frame: number }> = ({ frame }) => {
   const footerR = rise(frame, t.footerAt);
   return (
     <>
-      {/* the app drops back: dimmed and softened, so the numbers are the only thing that reads */}
+      {/* the app drops back: dimmed here, softened by appLook.ts (s6ClaimsBlur), so the numbers are the only thing that reads */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           opacity: scrim,
           background: alpha(theme.hookBg, 0.8),
-          backdropFilter: "blur(7px)",
-          WebkitBackdropFilter: "blur(7px)",
           pointerEvents: "none",
         }}
       />
@@ -353,4 +360,4 @@ export const S6Evidence: React.FC<SceneOverlayProps> = ({ frame }) => {
       <Caption text={s6.captionMeasured} highlight="Measured," startFrame={CUES.s6.captionMeasured} endFrame={t.captionEnd2} />
     </>
   );
-};
+};
