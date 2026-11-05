@@ -1351,3 +1351,15 @@ Reads `PROOF` from `script.ts`, looks for the clip, probes it with `ffprobe` whe
 - **The clip mode was tested with a synthetic test-pattern clip (a burned-in timecode), which is NOT in this patch.** There is no recording of the hero attack in the repo: record it on the Vultr VM, save it as `public/proof/rewind.mp4`, trim with `PROOF.startFrom` / `endAt`, then run `npm run proof` and commit the manifest (and the clip, if you want the repo to render it).
 - **NOT verified:** motion (nothing was rendered as a video, so the clip's playback in sequence, `OffthreadVideo`'s frame accuracy and the 4 % push have not been watched), the full-size and 4K renders, the audio hooks (patch 22 does not exist yet), and the look of a REAL recording in the window (a screen recording with a lot of small text may want a larger window than 62 %).
 - `npm run motion` no longer reports f3060-3299 as one STILL run (the camera creeps out to `fullWindow`); the remaining S4 run, f2803-3060, is 16d and 16e, which live in stage space.
+
+## Patch 21-0 - S9 Outro, the split contract (f4980-5099)
+
+Patch 21 (S9) is built by TWO patches that can be written in parallel, 21a and 21b, on top of this contract. Guide: `docs/patches/patch-21-split.md`. **Applies on top of** repo head `76ebf7e`.
+**Changed files:** `src/scenes/S9Outro.tsx` (now the assembly), `src/scenes/stageState.ts` (`APP_CLEAR`, `appReveal` fades the app out), **new:** `src/scenes/s9/shared.ts`, `src/scenes/s9/S9a.tsx` (stub), `src/scenes/s9/S9b.tsx` (stub), `docs/patches/patch-21-split.md`, `docs/patches/prompts/patch-21a.prompt.txt`, `docs/patches/prompts/patch-21b.prompt.txt`.
+
+- `S9Outro.tsx` exports `S9_CAMERA` (`holdShot(4980, 5099, "fullWindow", { padding: 60, arrive: 30, push: 0.04, rotateX: 8, rotateY: -6 })`: move 1 the pull-back f4980-5010, move 2 the slow push to f5099), `S9_CURSOR` (empty) and `S9Outro`, which mounts `<S9a/>` then `<S9b/>` in one `inset: 0` box. **Neither part edits it.**
+- `s9/shared.ts` is the contract: `S9_TIMING` (every frame both parts need), `S9_LAYOUT` (stage rectangles of every row of the end card), `s9Ramp`, `s9Breath` (the Mark's glow, 0.88-1.12, 120-frame cycle), `onBeat`. **Neither part edits it.**
+- `stageState.appReveal`: from f4980 the app fades out (signature, f4980-5004) and is unmounted from f5004. `gridOpacity` (f4980-5000) was already there. From f5005 the stage is bare: gradient, glow, grid paper.
+- The camera moves nothing a viewer can see after f5004 (the app is gone); `npm run motion` reads keyframes, so S9 is not a STILL.
+- `tsc --noEmit` clean; `npm run motion` reports S9 at zoom 1.07-1.11 and no STILL.
+- Each part writes its own notes to `docs/notes/patch-21a.md` / `patch-21b.md`; they are appended to this file once, in order, by the merge step of the guide (so two parallel patches never overwrite `PATCH_NOTES.md`).

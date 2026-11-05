@@ -18,6 +18,12 @@ export const APP_RISE_PX = 1000;
 /** Lowest opacity while the window is rising: "mounted but dimmed". */
 export const APP_DIM = 0.28;
 
+/**
+ * S9 (patch 21 contract): the app window clears. It fades out over these frames (signature ease) and is unmounted from `end` on, so the end card
+ * sits on the bare stage (graphite gradient, glow, grid paper). The camera's pull-back (S9_CAMERA) carries the window away while it fades.
+ */
+export const APP_CLEAR = { start: 4980, end: 5004 } as const;
+
 export interface AppReveal {
   mounted: boolean;
   /** 0..1 */
@@ -35,6 +41,10 @@ export interface AppReveal {
  */
 export function appReveal(frame: number): AppReveal {
   if (frame < APP_MOUNT_FRAME) return { mounted: false, opacity: 0, dy: 0 };
+  if (frame >= APP_CLEAR.start) {
+    const out = signature(clamp01((frame - APP_CLEAR.start) / (APP_CLEAR.end - APP_CLEAR.start)));
+    return out >= 1 ? { mounted: false, opacity: 0, dy: 0 } : { mounted: true, opacity: 1 - out, dy: 0 };
+  }
   const rise = signature(clamp01((frame - APP_MOUNT_FRAME) / (APP_DOCKED_FRAME - APP_MOUNT_FRAME)));
   const lit = signature(clamp01((frame - APP_MOUNT_FRAME) / (APP_LIT_FRAME - APP_MOUNT_FRAME)));
   return { mounted: true, opacity: APP_DIM + (1 - APP_DIM) * lit, dy: (1 - rise) * APP_RISE_PX };
