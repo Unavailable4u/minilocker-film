@@ -1,0 +1,222 @@
+{
+  "_how": "Written by `npm run sfx` (scripts/make-sfx.mjs). `files` lists every synthesized WAV; `music` and `voice` say whether the optional public/audio/music.mp3 and public/audio/voice.wav exist. The film reads this file at build time and never touches the disk while rendering: run `npm run sfx` again after adding or removing music.mp3 or voice.wav.",
+  "format": {
+    "sampleRate": 48000,
+    "bitDepth": 16,
+    "channels": 1
+  },
+  "files": {
+    "key-1.wav": {
+      "seconds": 0.085,
+      "frames": 3,
+      "peakDbfs": -24,
+      "sha256": "c78d4a04dfda73c6e2ccb1cf0e65908c933229c373d75766fdc2ba8448919a48"
+    },
+    "key-2.wav": {
+      "seconds": 0.085,
+      "frames": 3,
+      "peakDbfs": -24,
+      "sha256": "0011bbefde4cdabc7d0f57a2ccc75066740c25491b4e093635dd4820118d8633"
+    },
+    "key-3.wav": {
+      "seconds": 0.085,
+      "frames": 3,
+      "peakDbfs": -24,
+      "sha256": "2c9d83d0eceb9b70cc2a5af0748b643928d15d82700b953e432860731f2416a7"
+    },
+    "ui-tick.wav": {
+      "seconds": 0.08,
+      "frames": 3,
+      "peakDbfs": -12,
+      "sha256": "42d5375d09e71fbb4c1270b5683555163e0afb7f4e9f80d7e9ca9b2af8a42d55"
+    },
+    "click.wav": {
+      "seconds": 0.11,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "e1a4df4029a780e75a29ef614d56c636a30233a23d5fb485a0114fba4749ea5d"
+    },
+    "whoosh.wav": {
+      "seconds": 0.95,
+      "frames": 29,
+      "peakDbfs": -12,
+      "sha256": "b14829bd1eeb25e186d8608e1401c032802a05929821d488ce3484c33d324493"
+    },
+    "sub-impact.wav": {
+      "seconds": 1.6,
+      "frames": 48,
+      "peakDbfs": -12,
+      "sha256": "7cc68c6b903c75282cfbe5fe9e8c75d7c6a79c04ad12e6821a44d3afaa55e8cd"
+    },
+    "shimmer.wav": {
+      "seconds": 1.8,
+      "frames": 54,
+      "peakDbfs": -12,
+      "sha256": "45f43ce9aeaf2a6dcae5a8347471ca22709e36c92094874aaaa422c04e659946"
+    },
+    "chime.wav": {
+      "seconds": 1.4,
+      "frames": 42,
+      "peakDbfs": -12,
+      "sha256": "fa354d88660c321267515e2a75a70714326edc739d4db97576cf64f2cf6b030a"
+    },
+    "ledger-tick.wav": {
+      "seconds": 0.07,
+      "frames": 3,
+      "peakDbfs": -12,
+      "sha256": "f1e9dda1dfbd993b9302f687cd03cc4b9aaf8c948bfc5600d89a5e48154bf783"
+    },
+    "alarm-blip.wav": {
+      "seconds": 0.3,
+      "frames": 9,
+      "peakDbfs": -12,
+      "sha256": "051cc96d07a0e08bce7d6f794280cfed06bb9d424ed6cd52e8f870e60c53c782"
+    },
+    "thud.wav": {
+      "seconds": 0.6,
+      "frames": 18,
+      "peakDbfs": -12,
+      "sha256": "41a667b727481ebea23b57587b39154d71e2dceea4354ab6227bd032e6629376"
+    },
+    "glass-shatter.wav": {
+      "seconds": 0.95,
+      "frames": 29,
+      "peakDbfs": -12,
+      "sha256": "5163074220f9cfa23c0b4866149304063fa3813a03a08d969e785f4467b9d635"
+    },
+    "rewind-riser.wav": {
+      "seconds": 1.5,
+      "frames": 45,
+      "peakDbfs": -12,
+      "sha256": "a97db4142468e953ad4efda4cd63df52d3c43677988c4aedd779281e2e012b57"
+    },
+    "lock-1.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "cbf5b00f0e00201f5df2822b5bdbaeaac9eea4c1e1eca5ff4994854581a2af1c"
+    },
+    "lock-2.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "e47510a832e9bd171fce85aa5ce27e267f59edea41a7e32d99ddd1ebcd7e296a"
+    },
+    "lock-3.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "48f9be7c73d6592eb1390ff9c790fccc4731b1c6ea6ae39a3b2d4953855c825b"
+    },
+    "lock-4.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "9a10ea341e4b743fcf66d39c62bc14395712216a373279ff46272cb2d2fbc697"
+    },
+    "lock-5.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "cfbc9a0ceaf960c809a36d1b989e9946adce3501b053abcc03b50f8ffa5c0bbb"
+    },
+    "lock-6.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "adbf6727713dff0c785fff9ff3c64cfa74c048f5c04e6c75c975f4ac087454d0"
+    },
+    "lock-7.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "bdffce35cd416ddb95ea90fb48812f4034de7bea083cef114d3cf813bb777d46"
+    },
+    "lock-8.wav": {
+      "seconds": 0.12,
+      "frames": 4,
+      "peakDbfs": -12,
+      "sha256": "25bc243f753c0cec5ae3f2cdc623515cc74c945266904840d5bc7bea1be1736c"
+    },
+    "stamp.wav": {
+      "seconds": 0.55,
+      "frames": 17,
+      "peakDbfs": -12,
+      "sha256": "2d4000de5c3dd88eacbe4f004f55a5b8172b0309d4145b4e41c5bb5511963498"
+    },
+    "verify-sweep.wav": {
+      "seconds": 1,
+      "frames": 30,
+      "peakDbfs": -12,
+      "sha256": "93cf800e48a0dab3da749a929fd475b045c087327ae42eacd7b8560c6077946b"
+    },
+    "verify-sweep-long.wav": {
+      "seconds": 1.5,
+      "frames": 45,
+      "peakDbfs": -12,
+      "sha256": "d7557b6a10639c5b7a19e722608e436ffa70625d845967d97792f4301c089b4e"
+    },
+    "success-chord.wav": {
+      "seconds": 2.6,
+      "frames": 78,
+      "peakDbfs": -12,
+      "sha256": "646d2e3a9be14fa3ec0ce57721c74f5d1ae81efd2c01a87ad885f9a6f01da2f3"
+    },
+    "tail.wav": {
+      "seconds": 3,
+      "frames": 90,
+      "peakDbfs": -12,
+      "sha256": "89fda6be1bb07dce318800f8eb03c341913c778ced54b5ac5af691b959d486f5"
+    },
+    "slam.wav": {
+      "seconds": 0.5,
+      "frames": 15,
+      "peakDbfs": -12,
+      "sha256": "9d9b9663568727e9321b46320bc4f4f63f6f27c670b4d25e2cf74de6a7dbc10d"
+    },
+    "glitch.wav": {
+      "seconds": 0.4,
+      "frames": 12,
+      "peakDbfs": -12,
+      "sha256": "c5f7287c314aacb18e899791a6bbf00ce4047394ec8918d965df2b748a078044"
+    },
+    "pop-1.wav": {
+      "seconds": 0.09,
+      "frames": 3,
+      "peakDbfs": -12,
+      "sha256": "ce3e9b2590dc9d0a69a5f643be0fb7b3d8dfbfe1371eeaf3b25bd61f8aa33fce"
+    },
+    "pop-2.wav": {
+      "seconds": 0.09,
+      "frames": 3,
+      "peakDbfs": -12,
+      "sha256": "20907d58d5e0f2f97ff2065ec6c671cb6495fa41c4c04f0b6285a69a14cc25dc"
+    },
+    "pop-3.wav": {
+      "seconds": 0.09,
+      "frames": 3,
+      "peakDbfs": -12,
+      "sha256": "4a21345e9c5dc75de002be756cf2252d7ce4bed52abfebd50f1bf9a670305f2d"
+    },
+    "low-blip.wav": {
+      "seconds": 0.38,
+      "frames": 12,
+      "peakDbfs": -12,
+      "sha256": "5d2837548a4f44f188819b2913a803706e64897bc27c9f752ec9ce134aeab486"
+    },
+    "hit.wav": {
+      "seconds": 0.3,
+      "frames": 9,
+      "peakDbfs": -12,
+      "sha256": "985dc9724b1b06421f15455677dcca1cc5d14b87600b5a5cad66bae4412c2a74"
+    },
+    "pad-swell.wav": {
+      "seconds": 2.8,
+      "frames": 84,
+      "peakDbfs": -12,
+      "sha256": "9c30218d31fb35dfd7ca8a8f77cea28574178c68ec3db10db3af2f857e46f001"
+    }
+  },
+  "music": false,
+  "voice": false
+}

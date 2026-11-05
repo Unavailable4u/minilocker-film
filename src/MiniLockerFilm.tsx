@@ -14,6 +14,7 @@ import { FilmApp } from "./ui/FilmApp";
 import { FILM_CAMERA, FILM_CURSOR, SCENE_OVERLAYS } from "./scenes";
 import { appReveal, CAMERA_DOF, gridOpacity } from "./scenes/stageState";
 import { appLook } from "./scenes/appLook";
+import { FilmAudio } from "./audio/FilmAudio";
 
 /**
  * The film (patch 12a). Layers, bottom to top:
@@ -100,6 +101,8 @@ export const MiniLockerFilm: React.FC = () => {
         <Grain />
         <Vignette />
       </Stage>
+      {/* patch 22: the sound. Draws nothing; its Sequences are siblings of the Stage, so the global-frame convention is untouched. */}
+      <FilmAudio />
     </FontsReady>
   );
 };

@@ -1363,3 +1363,37 @@ Patch 21 (S9) is built by TWO patches that can be written in parallel, 21a and 2
 - The camera moves nothing a viewer can see after f5004 (the app is gone); `npm run motion` reads keyframes, so S9 is not a STILL.
 - `tsc --noEmit` clean; `npm run motion` reports S9 at zoom 1.07-1.11 and no STILL.
 - Each part writes its own notes to `docs/notes/patch-21a.md` / `patch-21b.md`; they are appended to this file once, in order, by the merge step of the guide (so two parallel patches never overwrite `PATCH_NOTES.md`).
+
+## PATCH 22 - Audio
+
+**Applies on top of** repo head `2493dba`.
+**Changed files:** `src/MiniLockerFilm.tsx` (one import, one `<FilmAudio />`), `src/config/filmState.ts` (new export `typedCommands`), `src/config/copy.ts` (new export `voiceBlocks`), `package.json` (`sfx:check`). **New:** `scripts/make-sfx.mjs`, `src/config/sfx.ts`, `src/audio/FilmAudio.tsx`, `public/audio/manifest.json`.
+
+### `npm run sfx` (scripts/make-sfx.mjs)
+Pure Node, no dependencies. Synthesizes 35 WAVs (48 kHz, 16-bit, mono, 23.9 s in all) into `public/audio/` and writes `public/audio/manifest.json` (per file: seconds, frames, peak, sha256; plus whether the optional `music.mp3` and `voice.wav` exist). Noise is seeded by each sound's name, so the same Node version writes byte-identical files. Effects peak at -12 dBFS, key ticks at -24 dBFS; no samples, nothing copyrighted.
+- `npm run sfx:check` (`--check`) writes nothing and fails when the manifest or a file is stale or missing.
+- **The WAVs are not in the patch** (2.3 MB of binary): run `npm run sfx` once after applying it. The manifest IS in the patch, so `tsc` is clean before you do.
+- **After you add or remove `public/audio/music.mp3` or `voice.wav`, run `npm run sfx` again.** The film reads presence from the manifest at build time and never looks at the disk while rendering.
+
+### `src/config/sfx.ts` (the cue list)
+`SFX_CUES: SfxCue[]` = `{ frame, file, volume }`, sorted by frame, built from the frames the scenes already export (`*_CUE_ANCHORS`, `*_TIMING`, `script.ts`, `typing.ts`, `hash.ts`); no scene frame is typed again. 295 cues in the sample evidence (S0 5, S1 10, S2 135, S3 6, S4 77, S5 31, S6 15, S7 2, S8 13, S9 1; the counts follow the evidence).
+- **S0** slams on `S0_TIMING.hits`, glitch on f165. **S1** sub-impact f300, ticks as the rings and the five arcs draw, shimmer f420, soft whoosh f540. **S2** a key tick on every frame a character of a terminal command arrives (`typedCommands`, the terminal's own plan), click f750, a ledger tick per step line, chime at the hidden check pin, three flip ticks at the audit pin, whoosh f1474 (patch 25: peaks f1500). **S3** alarm blip per decoy read (`s3ReadFrames`), thud f1830, verify sweep f1935, stamp f1965, soft whoosh on the nav swing f2052. **S4** click f2220, key ticks for the wipe f2304-2335, glass-shatter f2340, riser f2400, eight `lock-k` plucks over the hash lock (one per two characters of the 16 shown), chime on THE tick f2550, key ticks for the cat command and line, a tick per real check, stamp f2780, a ledger tick per chain block, click f2946, long verify sweep f2950, hit on the seal f2990, a tick per numeral. **S5** whoosh peaking on the whip's landing (f3330), a hit per ledger line (injection f3435, deny f3525, each egress line), a low blip at the deny and at the approval denial, key ticks for the compromised agent's command, stamp f3555. **S6** a tick per report card, click f3960, success chord f4020, a tick per numeral. **S7** two ticks (f4305, f4320). **S8** a pop per diagram node (three pitches) under the pad swell, both from f4620. **S9** tail f5010 (90 frames: it ends on the last frame).
+- **The silence is a rule, not a file.** `assertSfxRules` runs at import and throws when a cue starts in f2370-2399, when a cue that started earlier is still sounding on f2370 (glass-shatter is 29 frames: f2340-2368), when anything starts in S0's near-silence f285-299, or when a cue is off the timeline. It is exported for a check script. Also at import: the manifest must list exactly the files in `SFX_FILES`, and `tail.wav` must be exactly as long as the film's last 90 frames.
+- Not in the BIBLE list, added on purpose: the S5 whip whoosh, the S3-to-S4 swing whoosh (patch 25 says that swing "keeps the same frames", so a cue was assumed), the click on the Attack Lab's Run and on the chain's Verify button, and key ticks for the hostile command. Delete the line in `build()` if you do not want one.
+
+### `src/audio/FilmAudio.tsx` (the wiring)
+One layer next to the Stage: every cue is `<Sequence from layout="none"><Audio/></Sequence>` (siblings of the visuals, so the global-frame convention is untouched).
+- **music.mp3 (optional):** -18 dB, 1.5 s fade-in, -6 dB under `slam`, `sub-impact`, `thud`, `stamp` and `glass-shatter` (3 frames down, 12 held, 24 back), **0 on every frame of f2370-2399** (4 frames down before it, 6 back after), 2 s fade-out, and -9 dB under speech when `voice.wav` exists. One table of 5100 gains built at load: pure in the frame.
+- **voice.wav (optional):** one full-length file from f0 at full level, aligned to `voiceBlocks`. The music duck under each block is a FIXED schedule: `block.start - 8` to `start + words x 60 / 150 x 30` frames, then 12 back.
+- `copy.ts` `voiceBlocks` (V0-V9, BIBLE 8) is NOT part of `copy`. Check "three bugs" in V2 against the fixture before you record.
+
+### Decisions and conventions future patches must follow
+1. A retime of a scene moves its sound by itself; add a cue in `build()` from the scene's own export, never by typing the frame.
+2. Add a new effect in `make-sfx.mjs` AND `SFX_FILES`, then `npm run sfx`: a manifest that disagrees with the list throws at import.
+3. A new sound near f2370 must be over by f2369.
+
+### Known issues
+- `tsc --noEmit` clean; `sfx.ts` bundled with esbuild and loaded in Node (295 cues, `assertSfxRules` passes, and throws for a cue on f2380 and for a 29-frame whoosh on f2369).
+- **Rendered and measured, not listened to.** Audio-only render of f2300-2460 (Remotion, system Chrome): f2370-2399 is exactly 0 (-180 dBFS) with and without a (synthetic) music.mp3; the music steps down before the silence and comes back on f2400; the loudest sample of the slice is -15 dBFS, no clipping. The levels in the render sit 3-4 dB under the files' own peaks, so the keys are about -28 dBFS and the glass-shatter -15 dBFS in the mix.
+- **NOT verified:** the mix by ear, the Studio playing in sync (scrub it), the full 5100-frame render (only that slice was rendered), the loudness targets of BIBLE 9 (-16 LUFS voice, true peak -1.5 dB: `scripts/render.mjs` owns the loudness pass), and a real music or voice file (the music test used a sine).
+- In the sample evidence there are two decoy reads and no egress lines after the injection, so S3 has two alarm blips and S5 no egress hits; a real capture adds them by itself.

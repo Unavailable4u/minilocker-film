@@ -504,6 +504,36 @@ function terminalAt(frame: number, s: Session): TermAt {
   return { lines, caretLine, caretCol, caretOn: busy ? true : caretVisible(frame), arrivals };
 }
 
+/** A command the terminal types: its text, the frame the first character lands on, the frame the whole text is visible on, and the options it types with. */
+export interface TypedCommand {
+  text: string;
+  start: number;
+  end: number;
+  opts: TypingOpts;
+}
+
+/**
+ * Patch 22 (sound). Every command the terminal of `s` types, with the SAME plan `terminalAt` uses (same start, same options, same end), so a key tick can land on
+ * every frame on which a character arrives and never drift from the picture. Pure; it does not change what the terminal draws.
+ */
+export function typedCommands(s: Session): TypedCommand[] {
+  const out: TypedCommand[] = [];
+  const blocks = s.blocks;
+  for (let b = 0; b < blocks.length; b++) {
+    const block = blocks[b];
+    if (!block.typed) continue;
+    const override = block.src === s.typedOverrideIndex ? { start: TYPED.hostileCommand.start, opts: TYPED.hostileCommand.opts as TypingOpts } : null;
+    const start = override ? override.start : block.start;
+    const next = b + 1 < blocks.length ? blocks[b + 1].start : Infinity;
+    const limit = Number.isFinite(next) ? next - 1 : start + 600;
+    const text = block.rows[0].text;
+    const plan = typingPlan(text, start, limit, override);
+    const end = Math.min(typingEndFrame(text, plan.start, plan.opts), Math.max(plan.start + 1, limit));
+    out.push({ text, start: plan.start, end, opts: plan.opts });
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------------------------- workspace
 
 /** Which gauge lights up when this event lands (same rule as DevWorkspace, patch 06). */

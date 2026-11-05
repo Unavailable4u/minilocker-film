@@ -624,3 +624,49 @@ export const s9 = {
 export const copy = { urls, brand, ui, ws, lab, rep, inf, tl, badges, s0, s1, s2, s3, gfxA, gfxB, gfxC, s4, s5, s6, s7, s8, s9 } as const;
 
 export type Copy = typeof copy;
+
+/**
+ * Voice-over blocks (BIBLE 8, patch 22). NOT part of `copy`: this is not on-screen text, so the captions walk and the copy checks never see it. The film works
+ * muted; these blocks matter only when public/audio/voice.wav exists. `start` is the global frame a block begins on (the recording is ONE file aligned to
+ * these frames, BIBLE 9). `src/audio/FilmAudio.tsx` ducks the music under each block by a FIXED schedule derived from `start` and the word count, never from
+ * the audio itself. V4 is spoken around the silence of f2370-2399 (no sound at all, music included); the pause is in the recording, not in this text.
+ * Numbers are NOT spoken in V2-V4: any figure said aloud must be read from the evidence. CHECK "three bugs" in V2 against the fixture before recording.
+ */
+export const voiceBlocks = [
+  { id: "V0", start: 20, text: "AI agents now run commands and browse the web for us. One hostile page, one poisoned package, and they can leak your keys or wipe your disk." },
+  { id: "V1", start: 330, text: "MiniLocker gives an agent real work on untrusted inputs, on Vultr, and shows you exactly what it could not touch." },
+  {
+    id: "V2",
+    start: 700,
+    text: "This is a real task: a third-party library with three bugs and a failing test suite. Every model call goes to Vultr Serverless Inference. The agent reads the code, runs the tests, patches, and runs them again. A hidden check the model never sees decides whether it worked. And the sandbox is audited when it is destroyed.",
+  },
+  {
+    id: "V3",
+    start: 1520,
+    text: "The library also ships a poisoned module. It reads the SSH key and the AWS credentials, because we planted them. Decoys, random per task, worth nothing. Reading one sets off an alarm. It tries to phone home and the egress proxy refuses. Zero real secrets were ever in the sandbox.",
+  },
+  {
+    id: "V4",
+    start: 2140,
+    text: "Now the classic. The agent deletes its entire workspace. We snapshot after every step, so we rewind. A fresh sandbox, the files restored, every file re-hashed against the snapshot. The work is back, and the ledger still shows the delete: undone, not erased. This is the real run, on the Vultr VM.",
+  },
+  {
+    id: "V5",
+    start: 3320,
+    text: "A web page tells the agent to leak its environment. The page is fenced as untrusted, the injection is flagged, the follow-up command is denied, and nothing leaves. Anything risky waits for a human, and defaults to no.",
+  },
+  {
+    id: "V6",
+    start: 3740,
+    text: "Every run produces a Blast Radius report built only from the tamper-evident ledger. Nine dimensions, each measured or honestly marked not measured. The ledger re-verifies on demand. The numbers on this screen come from the runs, not from us.",
+  },
+  { id: "V7", start: 4280, text: "A security reviewer asks one question: what could it touch, and how do you know? A container gives you a promise. MiniLocker gives you a measurement." },
+  {
+    id: "V8",
+    start: 4580,
+    text: "All of it runs on one Vultr VM. Model calls go to Vultr Serverless Inference. Artifacts land in Vultr Object Storage. And what we have not built, we say: no per-task Vultr instance yet.",
+  },
+  { id: "V9", start: 5025, text: "MiniLocker. See exactly what it could not touch." },
+] as const;
+
+export type VoiceBlock = (typeof voiceBlocks)[number];

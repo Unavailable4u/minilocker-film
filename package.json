@@ -15,6 +15,7 @@
     "evidence:final-check": "node scripts/validate-evidence.mjs --final",
     "proof": "node scripts/check-proof.mjs",
     "sfx": "node scripts/make-sfx.mjs",
+    "sfx:check": "node scripts/make-sfx.mjs --check",
     "check": "node scripts/check-stills.mjs",
     "motion": "node tools/audit-motion.mjs",
     "sheets": "node scripts/make-sheets.mjs",
