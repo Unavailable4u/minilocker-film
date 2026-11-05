@@ -81,7 +81,9 @@ if (vultr && vultr.available !== true) {
   fail("infra.vultr.available", `is ${JSON.stringify(vultr.available)}: the film claims a Vultr deployment. Capture from the real Vultr VM${vultr.reason ? ` (server says: ${vultr.reason})` : ""}.`);
 }
 if (vultr?.available === true) {
-  for (const k of ["region", "plan"]) if (!isStr(vultr[k]) || !vultr[k]) fail(`infra.vultr.${k}`, "is missing or empty");
+  if (!isStr(vultr.region) || !vultr.region) fail("infra.vultr.region", "is missing or empty");
+  // The plan is optional: the metadata service of some instances does not return it (the real Infra screen then shows a dash).
+  if (!isStr(vultr.plan) || !vultr.plan) warn("infra.vultr.plan", "is empty: the film shows the region and hostname only");
 }
 req("infra.inference.host", isStr, "a host name");
 req("infra.inference.model", isStr, "a model name");
@@ -169,7 +171,7 @@ if (attacks) {
   }
   const rewind = attacks.rewind_after_rm_rf?.result?.verdict;
   if (rewind && rewind !== "contained") {
-    const sentence = "If rewind_after_rm_rf is not contained, STOP: the film's hero cannot be made. Fix it in the draft repo, freeze, recapture.";
+    const sentence = "If rewind_after_rm_rf is not contained, STOP: the film's hero cannot be made. Fix it in the MiniLocker repo, freeze, recapture.";
     if (rewind === "breached" && !FINAL) warn("attacks.rewind_after_rm_rf.result.verdict", `is "breached". ${sentence}`);
     else fail("attacks.rewind_after_rm_rf.result.verdict", `is "${rewind}", not "contained". ${sentence}`);
   }
@@ -228,10 +230,10 @@ if (ci) {
 }
 
 if (FINAL && ev.meta?.sample === true) {
-  fail("meta.sample", "is true: this is SAMPLE data, not a real capture. Run `npm run evidence -- --base https://<domain> --repo ..\\draft --attacks all` against your live deployment, then run this check again.");
+  fail("meta.sample", "is true: this is SAMPLE data, not a real capture. Run `npm run evidence -- --base https://<domain> --repo ..\\MiniLocker --attacks all` against your live deployment, then run this check again.");
 }
 if (FINAL && ev.meta?.sample === false && !ev.meta.baseUrl) fail("meta.baseUrl", "is empty on a real capture");
-if (FINAL && ev.meta?.sample === false && !ev.meta.commit) warn("meta.commit", "is null: capture with --repo <draft clone> so the film can show the commit");
+if (FINAL && ev.meta?.sample === false && !ev.meta.commit) warn("meta.commit", "is null: capture with --repo <MiniLocker clone> so the film can show the commit");
 
 // ---------- text scan -------------------------------------------------------------------------------------------------
 const token = (process.env.MINILOCKER_TOKEN ?? "").trim();

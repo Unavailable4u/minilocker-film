@@ -1,7 +1,7 @@
 // Named focus rectangles of the recreated MiniLocker window, in LOGICAL coordinates (1600 x 900, origin top-left of the window).
 // The virtual camera (src/fx/Camera.tsx) frames one of these per keyframe. Nothing else in the film types a UI coordinate.
 //
-// DERIVED FROM THE REAL LAYOUT (draft repo, frontend/src/App.tsx and BIBLE 10):
+// DERIVED FROM THE REAL LAYOUT (MiniLocker repo, frontend/src/App.tsx and BIBLE 10):
 //   - header 67.47 px, MEASURED in patch 05 (65.47 inner + 1 px accent hairline + 1 px border; logo + wordmark on the left, six nav
 //     items starting at x 375.11, status chip, theme button and token on the right)
 //   - Workspace grid: 22rem | 1fr | 27rem at the 17 px root = 374 | 767 | 459 (they add up to 1600)

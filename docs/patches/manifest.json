@@ -329,5 +329,17 @@
     "pasteExisting": "`docs/PATCH_NOTES.md`, plus any files you suspect (or the problem list below)",
     "pasteReference": "",
     "attachRaw": "section 12 (quality bar), section 1 (coverage map), section 2 (rules)"
+  },
+  "26": {
+    "title": "PATCH 26 - Real-repo marketing pass",
+    "sections": [
+      6,
+      8
+    ],
+    "appendices": [],
+    "needs": "all",
+    "pasteExisting": "`docs/PATCH_NOTES.md`, `docs/notes/real-repo-facts.md`, `src/config/copy.ts`, `src/data/types.ts`, `src/data/select.ts`, `src/scenes/S8Vultr.tsx`, `scripts/capture-evidence.mjs`, `scripts/validate-evidence.mjs`, `evidence/measured.json`",
+    "pasteReference": "",
+    "attachRaw": "section 6 (storyboard), section 8 (captions)"
   }
 }

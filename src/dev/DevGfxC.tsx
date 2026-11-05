@@ -43,8 +43,8 @@ const note = (px: number, color: string): React.CSSProperties => ({ fontFamily: 
 function architectureChips(): ArchChip[] {
   const infra = selectInfra();
   const vm = infra.vultr;
-  if (!vm.available || !vm.hostname || !vm.region || !vm.plan) {
-    throw new Error("DevGfxC: evidence.infra.vultr has no hostname, region and plan, so \"Vultr VM\" cannot be claimed. Re-capture from the Vultr VM with \"npm run evidence\".");
+  if (!vm.available || !vm.hostname || !vm.region) {
+    throw new Error("DevGfxC: evidence.infra.vultr has no hostname and region, so \"Vultr VM\" cannot be claimed. Re-capture from the Vultr VM with \"npm run evidence\".");
   }
   const inf = infra.inference;
   if (!inf.vultr || !inf.host || !inf.model) {
@@ -54,7 +54,7 @@ function architectureChips(): ArchChip[] {
     throw new Error("DevGfxC: evidence.infra.storage is not an attached Vultr Object Storage. Re-capture with \"npm run evidence\".");
   }
   return [
-    { name: copy.s8.lowerThirds[0], facts: `${vm.hostname} · ${vm.region} · ${vm.plan}` },
+    { name: copy.s8.lowerThirds[0], facts: vm.plan ? `${vm.hostname} · ${vm.region} · ${vm.plan}` : `${vm.hostname} · ${vm.region}` },
     { name: copy.s8.lowerThirds[1], facts: `${inf.host} · ${inf.model}` },
     { name: copy.s8.lowerThirds[2], facts: copy.gfxC.storageFacts },
   ];

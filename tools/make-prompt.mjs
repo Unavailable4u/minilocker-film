@@ -1,6 +1,6 @@
 // Assembles a paste-ready prompt for one patch.
 //   node tools/make-prompt.mjs 0
-//   node tools/make-prompt.mjs 6 --draft ../draft
+//   node tools/make-prompt.mjs 6 --repo ../MiniLocker   (--draft still works)
 // Output: prompts-out/patch-NN.md  (context header + files + BIBLE sections + patch prompt)
 // Pure Node 20, no dependencies, works on Windows.
 import fs from "node:fs";
@@ -15,17 +15,17 @@ const flag = (name) => {
 };
 const num = args.find((a) => /^\d+$/.test(a));
 if (num === undefined) {
-  console.error("Usage: node tools/make-prompt.mjs <patch number 0-24> [--draft <path to draft repo>] [--no-files]");
+  console.error("Usage: node tools/make-prompt.mjs <patch number 0-26> [--repo <path to MiniLocker repo>] [--no-files]");
   process.exit(1);
 }
 const nn = String(num).padStart(2, "0");
 const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/patches/manifest.json"), "utf8"));
 const patch = manifest[nn];
 if (!patch) {
-  console.error(`No patch ${nn}. Valid: 00-24.`);
+  console.error(`No patch ${nn}. Valid: 00-24 and 26.`);
   process.exit(1);
 }
-const draft = flag("--draft") || process.env.MINILOCKER_REPO || "";
+const draft = flag("--repo") || flag("--draft") || process.env.MINILOCKER_REPO || "";
 const withFiles = !args.includes("--no-files");
 
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\s+$/, "");
@@ -54,19 +54,19 @@ if (existing.length) {
   }
 }
 
-// 2. reference files from the draft repo
+// 2. reference files from the MiniLocker repo
 const refs = withFiles ? ticks(patch.pasteReference) : [];
 if (refs.length) {
-  out.push("\n\n=== REFERENCE FILES FROM THE draft REPO (read-only; port them, do not invent the UI) ===");
+  out.push("\n\n=== REFERENCE FILES FROM THE MiniLocker REPO (read-only; port them, do not invent the UI) ===");
   out.push(`Which parts are needed: ${patch.pasteReference}`);
   for (const rel of refs) {
     if (!draft) {
-      notes.push(`Reference file not included (no --draft path): ${rel}`);
+      notes.push(`Reference file not included (no --repo path): ${rel}`);
       continue;
     }
     const full = path.join(draft, rel);
     if (!fs.existsSync(full)) {
-      notes.push(`MISSING reference file in draft repo: ${rel}`);
+      notes.push(`MISSING reference file in MiniLocker repo: ${rel}`);
       continue;
     }
     const body = fs.readFileSync(full, "utf8").replace(/\s+$/, "");

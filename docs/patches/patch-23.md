@@ -2,7 +2,7 @@
 
 **Needs:** 12
 **Paste existing:** `docs/PATCH_NOTES.md`, `package.json`, `src/Root.tsx`, `src/config/copy.ts`
-**Paste reference (draft repo):** `docs/SUBMISSION.md` (the "Submission form" checklist)
+**Paste reference (MiniLocker repo):** `docs/SUBMISSION.md` (the "Submission form" checklist)
 **Attach from BIBLE:** section 12 (all), section 8 (captions)
 
 ```

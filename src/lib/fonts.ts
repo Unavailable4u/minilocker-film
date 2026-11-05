@@ -11,7 +11,7 @@ export interface FontSpec {
   style: "normal" | "italic";
 }
 
-/** The 7 files in the draft repo at frontend/src/fonts (all OFL). */
+/** The 7 files in the MiniLocker repo at frontend/src/fonts (all OFL). */
 export const FONT_FILES: readonly FontSpec[] = [
   { family: FAMILY_SERIF, file: "cmu-serif-500-roman.woff2", weight: "500", style: "normal" },
   { family: FAMILY_SERIF, file: "cmu-serif-500-italic.woff2", weight: "500", style: "italic" },

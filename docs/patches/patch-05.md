@@ -2,7 +2,7 @@
 
 **Needs:** 00, 01
 **Paste existing:** `docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/config/copy.ts`, `src/config/focus.ts`, `src/ui/Mark.tsx`, `src/ui/theme.css`
-**Paste reference (draft repo):** `frontend/src/index.css` (all), `frontend/src/ui.tsx` (all), `frontend/src/App.tsx` (the header JSX and the SCREENS array only)
+**Paste reference (MiniLocker repo):** `frontend/src/index.css` (all), `frontend/src/ui.tsx` (all), `frontend/src/App.tsx` (the header JSX and the SCREENS array only)
 **Attach from BIBLE:** section 4, section 10 (Window and header)
 
 ```

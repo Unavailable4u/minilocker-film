@@ -3,7 +3,7 @@
 // on Windows. Run it once, on frozen code, after filling evidence/measured.json by hand.
 //
 //   PowerShell:  $env:MINILOCKER_TOKEN="<token>"
-//                npm run evidence -- --base https://<domain> --repo ..\draft --attacks all --takes 3
+//                npm run evidence -- --base https://<domain> --repo ..\MiniLocker --attacks all --takes 3
 //
 // Flags
 //   --base <https://host>      the deployment (required)
@@ -12,7 +12,7 @@
 //   --attacks core|all         the 5 core attacks (default) or all 15 (needed for the "15/15" claim)
 //   --measured <file>          the hand-filled numbers (default evidence/measured.json)
 //   --out <file>               default src/data/evidence.json
-//   --repo <path>              clone of the draft repo, to record its commit (git rev-parse HEAD)
+//   --repo <path>              clone of the MiniLocker repo, to record its commit (git rev-parse HEAD)
 //
 // What it does, in order: GET /api/infra, /api/scenarios, /api/attacks; run the attacks one at a time (waits out 429);
 // for each attack GET its task, events (SSE replay), report and ledger verification; start fix_repo_v2 tasks until one has
@@ -28,7 +28,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CORE = ["rewind_after_rm_rf", "hostile_page_injection", "credential_theft_exfil", "malicious_repo_hook", "exfil_unknown_domain"];
 const TOOL_OUTPUT_MAX = 600;
 const TASK_TIMEOUT_MS = 10 * 60 * 1000;
-const CI_REPO = "Unavailable4u/draft";
+const CI_REPO = "shaikh-dotcom/MiniLocker";
 
 // ---------- arguments -----------------------------------------------------------------------------------------------
 function parseArgs(argv) {

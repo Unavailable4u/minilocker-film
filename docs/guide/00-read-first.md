@@ -26,15 +26,15 @@ You have one film bible (**BIBLE**, the last half of this file). This guide spli
 4. **Look = your real app**, not `docs/assets/cover.png`: graphite background, warm off-white ink, ONE crimson accent, CMU Serif + CMU Typewriter fonts (already vendored in your repo), and the concentric-ring Mark. In your app "clean" is BLUE (a gradient), not green; the film keeps that. (`cover.png` uses green; the cover for submission is regenerated from the film in Patch 23 so the two match.)
 5. **The through-line object is the Blast Radius dial** (5 concentric arcs from `RadiusDial`). It is born from the logo in S1, docks into the Workspace panel in S2, fills as gauges are measured, and returns as the logo in S9.
 
-**Dates (Bangladesh time).** Kickoff is Tue Nov 3, 10 PM. The page says "End of Submissions: Nov 9, 5:00 AM" (that is 23:00 UTC on Nov 8; your `SUBMISSION.md` says 22:00 UTC, so use that, the earlier one). Suggested plan:
+**Dates (Bangladesh time).** Kickoff is Tue Nov 3, 10 PM. The page says "End of Submissions: Nov 9, 5:00 AM". The working deadline is Sunday Nov 8, 6 PM Bangladesh time (12:00 UTC); the hard limit is about 4 AM Nov 9. Submit well before the working deadline. Suggested plan:
 
 | When | What |
 |---|---|
 | Nov 3-4 | Patches 00-07 (look and UI kit). Uses the SAMPLE evidence, so no VM needed. |
 | Nov 5 | Patches 08-11 (explainer graphics, script/state). |
-| Nov 6 | Patches 12-21 (all scenes). |
-| Nov 7 | Code frozen in `draft`. Run capture on the Vultr VM (BIBLE section 7), record the proof clip, patches 22-23, run `npm run evidence:final-check`. |
-| Nov 8 | Patch 24 QA, final render, upload to lablab, submit early. Do not wait for the last hour. |
+| Nov 6 | Real-repo alignment (patch 26): the plans now point at the MiniLocker repository; apply the scene polish and render a test film. |
+| Nov 7 | Final render and submission assets, upload to lablab, play the link logged out. |
+| Nov 8 | Submit well before 6 PM Bangladesh time (12:00 UTC). The hard limit is about 4 AM Nov 9. |
 
 ---
 
@@ -44,7 +44,7 @@ You have one film bible (**BIBLE**, the last half of this file). This guide spli
 
 1. **CONTEXT HEADER** (section A below). Same text every time.
 2. **Existing files** the patch lists under "Paste existing" (from YOUR new film repo). Always includes `docs/PATCH_NOTES.md`. For patch 00 there is nothing yet.
-3. **Reference files from the `draft` repo** the patch lists under "Paste reference" (read-only: the AI ports them, it does not invent the UI). Patches 02 and 05-07 depend on this. Clone it: `git clone https://github.com/Unavailable4u/draft.git`.
+3. **Reference files from the `MiniLocker` repo** the patch lists under "Paste reference" (read-only: the AI ports them, it does not invent the UI). Patches 02 and 05-07 depend on this. Clone it: `git clone https://github.com/shaikh-dotcom/MiniLocker.git`.
 4. **BIBLE sections** the patch lists under "Attach from BIBLE". Copy them straight out of the bottom half of this file.
 5. **The patch prompt** (the box under that patch).
 

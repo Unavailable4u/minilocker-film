@@ -127,7 +127,7 @@ export const S4_TIMING = {
   rail: { from: 2262, frames: 18 },
   /** 15b: snapshot node 1 lands on a beat, with the first 8 hex of the real hash (its label reveals over the node's second half). */
   node: { at: 2280, frames: 14 },
-  /** 15b: "The agent works. Snapshot after every step." (CUES.s4.captionWorks): it leaves (rising) over its last 12 frames, so it is gone by f2296. */
+  /** 15b: "Real work. Snapshot after every step." (CUES.s4.captionWorks): it leaves (rising) over its last 12 frames, so it is gone by f2296. */
   caption: { start: CUES.s4.captionWorks, end: 2296 },
   /** 15b: the last frame 15b draws on. 15c's first camera keyframe, cursor waypoint and overlay item start at f2300 or later (LAB.stepAt.wipe). */
   partEndA2: 2299,

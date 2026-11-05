@@ -2,14 +2,14 @@
 // Installs the offline assets the film needs. Pure Node (20+), no dependencies, Windows-friendly, idempotent.
 //
 //   npm run assets
-//   npm run assets -- --from ../draft
+//   npm run assets -- --from ../MiniLocker
 //   npm run assets -- --force
 //
 // What it does
 //   1. Copies the 7 CMU woff2 files and OFL.txt into public/fonts/.
-//      Source order: (1) a local clone of the draft repo, given by --from <path> or the env var MINILOCKER_REPO
+//      Source order: (1) a local clone of the MiniLocker repo, given by --from <path> or the env var MINILOCKER_REPO
 //      (files are read from <path>/frontend/src/fonts), else (2) download from
-//      https://raw.githubusercontent.com/Unavailable4u/draft/main/frontend/src/fonts/<file>.
+//      https://raw.githubusercontent.com/shaikh-dotcom/MiniLocker/main/frontend/src/fonts/<file>.
 //      Every font file must be non-empty and start with the wOF2 magic bytes.
 //   2. Creates public/brand/ and writes public/brand/manifest.json, which records whether
 //      public/brand/vultr-logo.svg exists. src/ui/VultrLogo.tsx reads that manifest at build time, so nothing
@@ -26,7 +26,7 @@ const FONT_DIR = path.join(ROOT, "public", "fonts");
 const BRAND_DIR = path.join(ROOT, "public", "brand");
 const LOGO_FILE = "vultr-logo.svg";
 const MANIFEST = path.join(BRAND_DIR, "manifest.json");
-const RAW_BASE = "https://raw.githubusercontent.com/Unavailable4u/draft/main/frontend/src/fonts/";
+const RAW_BASE = "https://raw.githubusercontent.com/shaikh-dotcom/MiniLocker/main/frontend/src/fonts/";
 
 const FONT_FILES = [
   "cmu-serif-500-roman.woff2",
@@ -49,12 +49,12 @@ function parseArgs(argv) {
     if (a === "--force") out.force = true;
     else if (a === "--from") {
       const v = argv[i + 1];
-      if (!v || v.startsWith("--")) fail("--from needs a path to a clone of the draft repo.");
+      if (!v || v.startsWith("--")) fail("--from needs a path to a clone of the MiniLocker repo.");
       out.from = v;
       i++;
     } else if (a.startsWith("--from=")) out.from = a.slice("--from=".length);
     else if (a === "--help" || a === "-h") {
-      console.log("Usage: node scripts/fetch-assets.mjs [--from <path-to-draft-clone>] [--force]");
+      console.log("Usage: node scripts/fetch-assets.mjs [--from <path-to-MiniLocker-clone>] [--force]");
       process.exit(0);
     } else fail(`Unknown argument: ${a}`);
   }
@@ -207,6 +207,6 @@ if (!hasLogo) {
 if (failedFonts > 0) {
   console.error("");
   console.error(`[assets] ${failedFonts} file(s) could not be installed.`);
-  console.error("  Clone the draft repo next to this one and run:  npm run assets -- --from ../draft");
+  console.error("  Clone the MiniLocker repo next to this one and run:  npm run assets -- --from ../MiniLocker");
   process.exit(1);
 }

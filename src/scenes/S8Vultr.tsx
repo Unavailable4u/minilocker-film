@@ -143,7 +143,7 @@ function chips(): readonly ArchChip[] {
   if (!storage.attached || !storage.vultr) throw new Error("S8: evidence.infra.storage is not an attached Vultr bucket");
   const [vm, inf, obj] = copy.s8.lowerThirds;
   chipCache = [
-    { name: vm, facts: `${text("infra.vultr.region", vultr.region)} - ${text("infra.vultr.plan", vultr.plan)}` },
+    { name: vm, facts: vultr.plan ? `${text("infra.vultr.region", vultr.region)} - ${vultr.plan}` : text("infra.vultr.region", vultr.region) },
     { name: inf, facts: `${text("infra.inference.host", inference.host)}/v1 - ${text("infra.inference.model", inference.model)}` },
     { name: obj, facts: copy.gfxC.storageFacts },
   ];

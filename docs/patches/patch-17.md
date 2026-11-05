@@ -2,7 +2,7 @@
 
 **Needs:** 11, 12
 **Paste existing:** `docs/PATCH_NOTES.md`, `src/scenes/S5Page.tsx` (stub), `src/config/script.ts`, `src/config/filmState.ts`, `src/config/camera.ts`, `src/config/focus.ts`, `src/config/copy.ts`, `src/ui/primitives.tsx`, `src/fx/Callout.tsx`, `src/fx/Badge.tsx`
-**Paste reference (draft repo):** `images/browser/fixtures/injection.html`, `frontend/src/Browser.tsx`
+**Paste reference (MiniLocker repo):** `images/browser/fixtures/injection.html`, `frontend/src/Browser.tsx`
 **Attach from BIBLE:** section 6 (S5), section 8, Appendix B, Appendix C
 
 ```

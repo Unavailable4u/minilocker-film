@@ -1,6 +1,6 @@
 // S4a assembly (patches 15a, 15b, 15c). Concatenates the three parts of S4a; patch 16's S4b follows at f2400 (assembled by S4Rewind.tsx).
 //   S4a1  f2100-2219  the underline slides to "Attack Lab", the camera lands, the cursor sweeps the tiles, selects the hero and rides Run     - patch 15a
-//   S4a2  f2220-2299  the click on Run, the real steps build, the FileLattice and the first snapshot node, "The agent works."                 - patch 15b
+//   S4a2  f2220-2299  the click on Run, the real steps build, the FileLattice and the first snapshot node, "Real work."                 - patch 15b
 //   S4a3  f2300-2399  the wipe command types large, the lattice shatters (f2340), silence and WIPED_0 (f2370), "Everything gone."            - patch 15c
 // Keyframes and waypoints are concatenated in this order, so each part's first entry must come after the previous part's last one. S4b (patch 16) starts
 // at f2400 and is assembled by S4Rewind.tsx, which concatenates S4A_* and S4B_* and renders both overlays: this file keeps the three names it imports.

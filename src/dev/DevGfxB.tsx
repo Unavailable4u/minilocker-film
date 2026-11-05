@@ -1,7 +1,7 @@
 // DEV ONLY (patch 09). Plays the S4 "wipe, then rewind" explainer (src/gfx: FileLattice, HashTile, GhostContainer, SnapshotTimeline,
 // HashChain) over DEV_GFX_B_FRAMES frames, in the timing of BIBLE 6 S4 (scene frame = frame + 2160), using the evidence of the
 // attack `rewind_after_rm_rf`.
-//   f60..100    the FileLattice arrives (scene f2220); caption "The agent works. Snapshot after every step."
+//   f60..100    the FileLattice arrives (scene f2220); caption "Real work. Snapshot after every step."
 //   f72, f96    snapshot 0 and snapshot 1 land on the SnapshotTimeline (snapshot 1 with its real 8-hex hash); the playhead follows
 //   f130..      the real wipe command types large in mono (right column)
 //   f180..210   THE WIPE: tiles shatter outward (30 f), colour drains to 70% saturation; caption "Everything gone."

@@ -10,7 +10,7 @@ and writes src/data/evidence.json.
 Every number in the output is made up and the file says so (meta.sample = true). Fully deterministic: no clock, no random.
 
     node tools/sample/gen-sample.mjs
-    python tools/sample/assemble.py --repo ../draft
+    python tools/sample/assemble.py --repo ../MiniLocker
 """
 import argparse
 import hashlib
@@ -30,14 +30,14 @@ def fake_sha(label: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", default=str(ROOT.parent / "draft"), help="path to a clone of the draft (product) repo")
+    ap.add_argument("--repo", default=str(ROOT.parent / "MiniLocker"), help="path to a clone of the MiniLocker (product) repo")
     ap.add_argument("--stage1", default=str(HERE / "stage1.json"))
     ap.add_argument("--out", default=str(ROOT / "src" / "data" / "evidence.json"))
     args = ap.parse_args()
 
     backend = Path(args.repo) / "backend"
     if not (backend / "minilocker" / "ledger" / "report.py").exists():
-        print(f"cannot find {backend}/minilocker/ledger/report.py: pass --repo <path to the draft clone>", file=sys.stderr)
+        print(f"cannot find {backend}/minilocker/ledger/report.py: pass --repo <path to the MiniLocker clone>", file=sys.stderr)
         return 1
     sys.path.insert(0, str(backend))
     from minilocker.ledger.chain import verify_events  # noqa: E402
@@ -133,7 +133,7 @@ def main() -> int:
             "realSecrets": {"runsWithReal": 0, "runs": 20},
             "bakeoff": {"model": model},
         },
-        "ci": {"conclusion": "success", "url": "https://github.com/Unavailable4u/draft/actions/runs/0",
+        "ci": {"conclusion": "success", "url": "https://github.com/shaikh-dotcom/MiniLocker/actions/runs/0",
                "sha": fake_sha("draft-commit")[:40]},
     }
 

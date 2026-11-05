@@ -16,10 +16,10 @@ The image above does not show until `out/preview.gif` has been copied to `docs/p
 2. ffmpeg and ffprobe on PATH. On Windows: `winget install Gyan.FFmpeg`, then open a NEW terminal so PATH is refreshed.
 3. git.
 4. In this folder: `npm install`.
-5. If you need the fonts or you are going to capture evidence, clone the `draft` repository next to this one:
+5. If you need the fonts or you are going to capture evidence, clone the `MiniLocker` repository next to this one:
 
 ```
-git clone https://github.com/Unavailable4u/draft.git
+git clone https://github.com/shaikh-dotcom/MiniLocker.git
 ```
 
 ## The whole flow
@@ -49,7 +49,7 @@ line), 2 usage error.
 |---|---|---|
 | `npm run studio` | `remotion studio src/index.ts` | None. Opens the Remotion Studio for editing and preview. |
 | `npm run typecheck` | `tsc --noEmit` | None. |
-| `npm run assets` | `node scripts/fetch-assets.mjs` | `--from <path>` (a local clone of the draft repo), `--force`. |
+| `npm run assets` | `node scripts/fetch-assets.mjs` | `--from <path>` (a local clone of the MiniLocker repo), `--force`. |
 | `npm run evidence` | `node scripts/capture-evidence.mjs` | `--base <https://host>` (required), `--token`, `--takes <n>`, `--attacks core\|all`, `--measured <file>`, `--out <file>`, `--repo <path>`. See BIBLE 7.2. |
 | `npm run evidence:check` | `node scripts/validate-evidence.mjs` | `--file <path>`. Passes on the SAMPLE evidence. |
 | `npm run evidence:final-check` | `node scripts/validate-evidence.mjs --final` | Exits 0 only for real, complete evidence. |
@@ -150,18 +150,18 @@ The frames carry no audio, so this file is silent; add the soundtrack separately
 ## Licensing
 
 Remotion has its own license, and companies may need a company license. See https://www.remotion.dev/license and decide
-for your own case. The MiniLocker product repository carries its own LICENSE file: see the draft repository.
+for your own case. The MiniLocker product repository carries its own LICENSE file: see the MiniLocker repository.
 
 ## The lablab checklist
 
-Copied from the "Submission form" block of `docs/SUBMISSION.md` in the draft repository:
+Copied from the "Submission form" block of `docs/SUBMISSION.md` in the MiniLocker repository:
 
 - [ ] Title, short and long description, tags.
 - [ ] Cover image: PNG or JPG, 16:9 (`out/cover.png`).
 - [ ] Video: MP4, up to 3 minutes, one containment moment, plays while logged out (`out/minilocker-demo.mp4`).
 - [ ] Slide deck: PDF, built from `out/slides-pack`.
-- [ ] Repository URL, application URL (the Vultr domain), demo platform = Vultr.
-- [ ] Code frozen at least six hours before the deadline (22:00 UTC, Nov 8); submitted early.
+- [ ] Repository URL, application URL (https://minilocker.duckdns.org), demo platform = Vultr.
+- [ ] Code frozen; submitted well before the deadline (Sunday Nov 8, 6 PM Bangladesh time, 12:00 UTC).
 
 Viewing protocol before upload (BIBLE 12.3, item 12): watch it once muted at 100% on a laptop, once with sound on
 headphones, and once on a phone; then upload to an unlisted link and play it logged out.

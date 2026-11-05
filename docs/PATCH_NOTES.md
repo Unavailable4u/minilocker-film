@@ -49,7 +49,7 @@ docs/PATCH_NOTES.md
 untouched), `.smcp`, `.display`, `.hatch-bad`, `.bg-ok`. No transitions or animations.
 
 **src/config/copy.ts**: `copy` (all groups), plus `urls`, `brand`, `badges`, `s0`..`s9`, `type Copy`.
-Text only, no measured values. `urls.demo` is intentionally an empty string until the real Vultr domain is set.
+Text only, no measured values. `urls.demo` is `https://minilocker.duckdns.org`, a DuckDNS name that points at the Vultr VM (set in patch 26).
 
 **src/lib/ease.ts**: `SIGNATURE_BEZIER`, `signature`, `easeInOut` (= signature), `clamp01`,
 `mapRange(value, inMin, inMax, outMin, outMax, easing?)` (clamped), `easeOutBack(t, s?)`,
@@ -63,7 +63,7 @@ Text only, no measured values. `urls.demo` is intentionally an empty string unti
 **src/lib/prng.ts**: `mulberry32(seed): () => number` (sequential), `rand(seed): number` (stateless, [0,1)),
 `randRange(seed, min, max)`, `randInt(seed, min, max)` (inclusive), `hashStringToSeed(text): number` (FNV-1a).
 
-**src/lib/fonts.ts**: `FONT_FILES` (the 7 woff2 files of the draft repo), `loadFonts(): Promise<void>` (never rejects,
+**src/lib/fonts.ts**: `FONT_FILES` (the 7 woff2 files of the MiniLocker repo), `loadFonts(): Promise<void>` (never rejects,
 one warning if files are missing), `<FontsReady>{children}</FontsReady>` (delayRender until loaded).
 Files expected in public/fonts: cmu-serif-{500,700}-{roman,italic}.woff2,
 cmu-typewriter-text-{500-roman,500-italic,700-roman}.woff2.
@@ -88,7 +88,7 @@ Each later patch that adds a Dev composition resends this whole file.
    Patch 22 owns it.
 
 ### Known issues
-- `urls.demo` is empty. Set it to the real Vultr domain before the final render.
+- `urls.demo` is `https://minilocker.duckdns.org` (set in patch 26).
 - Verified by `tsc --noEmit`, a webpack bundle of the project, and unit checks of the pure helpers. Not verified in
   the Studio or a real render (no browser was available in the build environment): please open the Studio.
 
@@ -112,8 +112,8 @@ src/Root.tsx (registers `DevBrandSheet`), docs/PATCH_NOTES.md
 ### PUBLIC API
 
 **scripts/fetch-assets.mjs** (`npm run assets`, pure Node 20, idempotent)
-- `npm run assets -- --from <path-to-draft-clone>` or env `MINILOCKER_REPO` (reads `<path>/frontend/src/fonts`), else downloads
-  from raw.githubusercontent.com/Unavailable4u/draft/main/frontend/src/fonts. `--force` overwrites files that are already valid.
+- `npm run assets -- --from <path-to-MiniLocker-clone>` or env `MINILOCKER_REPO` (reads `<path>/frontend/src/fonts`), else downloads
+  from raw.githubusercontent.com/shaikh-dotcom/MiniLocker/main/frontend/src/fonts. `--force` overwrites files that are already valid.
 - Copies the 7 CMU woff2 files and OFL.txt into public/fonts. Each font must be non-empty and start with the wOF2 magic bytes;
   an invalid file that is already there is replaced. Exit code 1 if any font could not be installed.
 - Writes `public/brand/manifest.json` = `{ "vultrLogo": boolean, "vultrLogoFile": "vultr-logo.svg" }` (true only if
@@ -195,9 +195,9 @@ sandbox.audit, sandbox.destroyed, task.end), the five core attacks with full Att
 Rebuild it (deterministic, no clock, no random):
 ```
 node tools/sample/gen-sample.mjs                       # stage 1 -> tools/sample/stage1.json
-python tools/sample/assemble.py --repo ../draft        # stage 2 -> src/data/evidence.json
+python tools/sample/assemble.py --repo ../MiniLocker        # stage 2 -> src/data/evidence.json
 ```
-Stage 2 builds every `report` and `verify` with the product's own `build_report` and `verify_events` (backend of the draft clone), and
+Stage 2 builds every `report` and `verify` with the product's own `build_report` and `verify_events` (backend of the MiniLocker clone), and
 refuses to write if a sample hash chain does not verify there: the JS-made chains are cross-checked against the Python code.
 
 ### Evidence shape (src/data/types.ts, BIBLE 7.1)
@@ -242,7 +242,7 @@ no value is invented here). Arrays are typed mutable only so they pass straight 
 (see the header). `eventFrames` can push a very dense burst past its segment's end: the scene decides what to do. Throws `LedgerClock: ...`
 for empty, out-of-order, overlapping or over-held segments.
 
-**scripts/capture-evidence.mjs** (`npm run evidence -- --base https://<domain> --repo ..\draft --attacks all --takes 3`; token from
+**scripts/capture-evidence.mjs** (`npm run evidence -- --base https://<domain> --repo ..\MiniLocker --attacks all --takes 3`; token from
 `--token` or env `MINILOCKER_TOKEN`, never written; `--measured`, `--out` optional). Ledger events come from the SSE endpoint
 (`/api/tasks/{id}/events`, which replays finished tasks), because `GET /api/tasks/{id}` only returns an event count. Waits out 429. Takes
 run one at a time and stop at the first one with a passing hidden check AND a decoy read; otherwise the best take is kept and
@@ -1104,7 +1104,7 @@ Patch 14 (S3, f1500-2099) is split like S2: `S3Decoys.tsx` assembles `s3/S3a.tsx
   - a SOLID backing panel (`theme.paper`) hanging from the top edge over the left half (x 96-820, y -40 to 722), dropping in from f2240. It is opaque and runs off the top on purpose: a translucent floating version let the app's card text show through the tiles and left a card cropped over its top edge;
   - the `FileLattice`, 6 x 4, intact, building f2250-2280. The hero tile (2 x 2, `heroIndex` 8) is labelled with the real file name from the evidence (`precious.txt`); the other 20 tiles are a schematic and say so in the footnote (`copy.gfxB.schematic`);
   - the `SnapshotTimeline` rail (draws f2262-2280) with node 1 landing on the beat f2280, showing the first 8 hex of the real SHA-256 (`f546ce19` in the sample evidence).
-- **Caption:** "The agent works. Snapshot after every step." from `CUES.s4.captionWorks` (f2220), leaving by f2296.
+- **Caption:** "Real work. Snapshot after every step." from `CUES.s4.captionWorks` (f2220), leaving by f2296.
 - **`focus.ts` `attackSteps`:** {x 0, y 640, w 1450, h 432}. Not a retune of `attackDetail`: the step column is at window x 621.5-1437.5 (derived in `shared.tsx` `S4_COLUMN` from `LAB_LIST_W`, the pane padding and the column width), about 140 px left of where `attackDetail` assumes. The pane's title and italic summary are above the frame on purpose (a half-cut title reads as a mistake).
 - **Pure stage functions** in `shared.tsx` (`s4PanelProgress`, `s4LatticeState`, `s4RailProgress`, `s4NodeProgress`) are the only place the stage's timing lives.
 
@@ -1427,3 +1427,26 @@ One layer next to the Stage: every cue is `<Sequence from layout="none"><Audio/>
 - **Rebased onto patch 22 (the changes made for that, none of them in the split parts):** (1) `render` preflight now runs `make-sfx.mjs --check` and stops with `Fix: npm run sfx` when a sound file is missing or stale, because patch 22 commits `public/audio/manifest.json` but not the WAVs, so a manifest on disk no longer means the sounds exist (before, `render` only warned about a missing manifest). (2) Slides 06 and 07 and the README no longer say S8 is a stub. (3) `text-assets.mjs` already reads `voiceBlocks` from `copy.ts` (patch 22 added the export), so the voice script no longer falls back to `docs/bible/bible-08.md`. (4) `PATCH_NOTES.md` is the one file both patches edit at the same place; this section sits after patch 22's.
 - **Rebase checks:** patch 22 then patch 23 applies cleanly on `2493dba` (the notes hunk was merged by hand); `npm ci` ok; `npx tsc --noEmit` clean; `npm run sfx:check` ok after `npm run sfx`. **No browser was available for the rebase, so nothing was rendered**: the f4786 choice for slide 06 comes from reading S8's timing and easing, not from a frame, so open it in the Studio before submitting.
 - Warnings that remain and are NOT bugs of this patch: the voice-over blocks V0, V5, V7 and V9 run 0.5, 1.2, 0.4 and 0.7 s over their slots at 150 words per minute (the words or the slots need a decision); `meta.baseUrl` is empty in the sample evidence, so the S9 demo host row is missing from the sample film; `docs/notes/patch-21a.md` and `patch-21b.md` are still waiting for the merge into this file.
+
+---
+
+## PATCH 26 - Real-repo alignment (applied directly) and marketing pass (prompt in docs/patches/patch-26.md)
+
+**What changed, with no AI session needed**
+- Every plan, script and prompt now points at the real product, https://github.com/shaikh-dotcom/MiniLocker, not `Unavailable4u/draft`
+  (README, docs/guide, docs/bible, docs/patches and prompts, scripts/fetch-assets.mjs, scripts/capture-evidence.mjs, tools/make-prompt.mjs,
+  tools/sample/assemble.py). `tools/make-prompt.mjs` takes `--repo <path>`; `--draft` still works as an alias.
+- `copy.urls.repo` is the real repository; `copy.urls.demo` is `https://minilocker.duckdns.org`.
+- The Vultr plan is optional: the real VM's metadata service returns none, so S8 and DevGfxC show the region (and hostname on the dev sheet) and
+  `validate-evidence.mjs` warns instead of failing.
+- Wording: the Attack Lab is scripted, so `s4.captionWorks` is "Real work. Snapshot after every step." and V4 says "A command wipes the entire
+  workspace." The S0 tag is "WHAT AN UNCONSTRAINED AGENT COULD DO".
+- Deadline and schedule in README and docs/guide: working deadline Sunday Nov 8, 6 PM Bangladesh time (12:00 UTC); hard limit about 4 AM Nov 9.
+- New: docs/notes/real-repo-facts.md (what exists in the product and what must never appear on screen).
+
+**Still to do: patch 26 prompt** (S8 inference chip with the bake-off line, S8 storage chip with host and bucket, S4/S5 wording audit, S9/S6 check).
+Run `node tools/make-prompt.mjs 26 --repo ../MiniLocker` and paste the result into a new AI session.
+
+**Warnings**
+- `src/data/evidence.json` in git is still the SAMPLE file. Evidence captured before Object Storage was wired (product commit `be6ea6b`) shows
+  `storage.vultr: false`, and S8 refuses to draw the chip: re-capture in that case.

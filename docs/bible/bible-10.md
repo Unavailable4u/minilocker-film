@@ -1,4 +1,4 @@
-## BIBLE 10. Recreated UI spec (what to port from the draft repo)
+## BIBLE 10. Recreated UI spec (what to port from the MiniLocker repo)
 
 Rule: port faithfully, translate Tailwind to inline styles. 1rem = 17 px (html font-size 17px). Logical canvas 1600x900. Fidelity beats invention: if something is unclear, the pasted source file wins.
 

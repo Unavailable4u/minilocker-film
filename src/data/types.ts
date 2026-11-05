@@ -75,7 +75,7 @@ export type EvidenceMeta = {
   sample: boolean;
   /** ISO timestamp of the capture (SAMPLE: a fixed made-up one). */
   capturedAt: string;
-  /** sha of the draft repo the numbers come from, or null when unknown. */
+  /** sha of the MiniLocker repo the numbers come from, or null when unknown. */
   commit: string | null;
   /** the deployment that was captured, e.g. https://demo.example. Empty for the SAMPLE. */
   baseUrl: string;

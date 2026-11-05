@@ -17,7 +17,7 @@
 | S3 | 1800 | caption: It tried to phone home. Refused. |
 | S3 | 1840 | callout: Allowlist only |
 | S3 | 1930 | caption: Bait, not secrets. |
-| S4 | 2220 | caption: The agent works. Snapshot after every step. |
+| S4 | 2220 | caption: Real work. Snapshot after every step. |
 | S4 | 2370 | caption: Everything gone. |
 | S4 | 2400 | caption: Rewind. |
 | S4 | 2900 | callout: Undone, not erased. |
@@ -47,7 +47,7 @@
 | V1 | 330 | MiniLocker gives an agent real work on untrusted inputs, on Vultr, and shows you exactly what it could not touch. |
 | V2 | 700 | This is a real task: a third-party library with three bugs and a failing test suite. Every model call goes to Vultr Serverless Inference. The agent reads the code, runs the tests, patches, and runs them again. A hidden check the model never sees decides whether it worked. And the sandbox is audited when it is destroyed. |
 | V3 | 1520 | The library also ships a poisoned module. It reads the SSH key and the AWS credentials, because we planted them. Decoys, random per task, worth nothing. Reading one sets off an alarm. It tries to phone home and the egress proxy refuses. Zero real secrets were ever in the sandbox. |
-| V4 | 2140 | Now the classic. The agent deletes its entire workspace. (silence f2370-2399) We snapshot after every step, so we rewind. A fresh sandbox, the files restored, every file re-hashed against the snapshot. The work is back, and the ledger still shows the delete: undone, not erased. This is the real run, on the Vultr VM. |
+| V4 | 2140 | Now the classic. A command wipes the entire workspace. (silence f2370-2399) We snapshot after every step, so we rewind. A fresh sandbox, the files restored, every file re-hashed against the snapshot. The work is back, and the ledger still shows the delete: undone, not erased. This is the real run, on the Vultr VM. |
 | V5 | 3320 | A web page tells the agent to leak its environment. The page is fenced as untrusted, the injection is flagged, the follow-up command is denied, and nothing leaves. Anything risky waits for a human, and defaults to no. |
 | V6 | 3740 | Every run produces a Blast Radius report built only from the tamper-evident ledger. Nine dimensions, each measured or honestly marked not measured. The ledger re-verifies on demand. The numbers on this screen come from the runs, not from us. |
 | V7 | 4280 | A security reviewer asks one question: what could it touch, and how do you know? A container gives you a promise. MiniLocker gives you a measurement. |

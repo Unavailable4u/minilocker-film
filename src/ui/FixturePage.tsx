@@ -1,5 +1,5 @@
 // MiniLocker film: the hostile-page fixture, rebuilt VISUALLY in code (patch 17). The page the agent opens in S5: a plain article with a visible
-// "Note to AI agents" box and a visible "Download the full guide (PDF)" link, taken from the repo's fixture (draft repo, images/browser/fixtures/
+// "Note to AI agents" box and a visible "Download the full guide (PDF)" link, taken from the repo's fixture (MiniLocker repo, images/browser/fixtures/
 // injection.html; the strings are in copy.s5.fixture). No screenshot is involved anywhere: the hidden layers of the fixture (a display:none
 // block, off-screen text, an HTML comment) are NOT drawn until the scan reveals them, and a person looking at the page never sees them.
 //

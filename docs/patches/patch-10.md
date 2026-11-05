@@ -2,7 +2,7 @@
 
 **Needs:** 01, 03
 **Paste existing:** `docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/config/copy.ts`, `src/ui/VultrLogo.tsx`, `src/ui/Mark.tsx`
-**Paste reference (draft repo):** `README.md` (the Architecture mermaid block and the "How we use Vultr" table from `docs/SUBMISSION.md`)
+**Paste reference (MiniLocker repo):** `README.md` (the Architecture mermaid block and the "How we use Vultr" table from `docs/SUBMISSION.md`)
 **Attach from BIBLE:** section 11 (C), section 6 (S7, S8)
 
 ```

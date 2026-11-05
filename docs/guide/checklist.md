@@ -25,6 +25,7 @@
 - [ ] 22 Audio
 - [ ] 23 Render + submission assets
 - [ ] 24 QA
+- [ ] 26 Real-repo marketing pass (S8 chips, wording audit)
 - [ ] **On the Vultr VM, code frozen:** `npm run evidence` then `npm run evidence:final-check`
 - [ ] Record `public/proof/rewind.mp4` (1920x1080, 30 fps, under 14 s), `npm run proof`
 - [ ] Final: `npm install`, `npm run assets`, `npm run sfx`, `npm run render`, `npm run submission`

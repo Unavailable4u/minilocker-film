@@ -9,7 +9,7 @@
 //     `LAB.stepAt`): this part draws nothing over them.
 //   - f2240-2280 the STAGE (S4Stage.tsx): the backing panel (f2240), the FileLattice builds in (f2250-2280), the rail draws on (f2262-2280), and snapshot
 //     node 1 lands on the beat f2280 with the first 8 hex of the real snapshot hash.
-//   - f2220-2296 the caption "The agent works. Snapshot after every step." (CUES.s4.captionWorks).
+//   - f2220-2296 the caption "Real work. Snapshot after every step." (CUES.s4.captionWorks).
 //   - f2250-2299 a 2 % push on the steps.
 //
 // Hand-offs. 15a's last cursor waypoint (f2216) is on Run's centre; this part's one waypoint is the click on the same point. 15c's first camera keyframe,

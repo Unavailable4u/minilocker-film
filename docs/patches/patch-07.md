@@ -2,7 +2,7 @@
 
 **Needs:** 02, 05
 **Paste existing:** `docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/ui/primitives.tsx`, `src/lib/derive.ts`, `src/data/types.ts`, `src/data/select.ts`
-**Paste reference (draft repo):** `frontend/src/AttackLab.tsx`, `frontend/src/Report.tsx`, `frontend/src/Infra.tsx`, `frontend/src/Timeline.tsx`
+**Paste reference (MiniLocker repo):** `frontend/src/AttackLab.tsx`, `frontend/src/Report.tsx`, `frontend/src/Infra.tsx`, `frontend/src/Timeline.tsx`
 **Attach from BIBLE:** section 10 (Attack Lab, Report, Infra), Appendix D
 
 ```

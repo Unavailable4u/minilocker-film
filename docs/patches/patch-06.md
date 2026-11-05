@@ -2,7 +2,7 @@
 
 **Needs:** 01, 02, 04, 05
 **Paste existing:** `docs/PATCH_NOTES.md`, `src/config/theme.ts`, `src/ui/primitives.tsx`, `src/ui/RadiusDial.tsx`, `src/ui/TerminalView.tsx`, `src/lib/derive.ts`, `src/data/types.ts`
-**Paste reference (draft repo):** `frontend/src/components.tsx` (all), `frontend/src/Terminal.tsx`, `frontend/src/App.tsx` (the Workspace function only)
+**Paste reference (MiniLocker repo):** `frontend/src/components.tsx` (all), `frontend/src/Terminal.tsx`, `frontend/src/App.tsx` (the Workspace function only)
 **Attach from BIBLE:** section 10 (Workspace, Blast panel), Appendix C
 
 ```
