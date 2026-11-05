@@ -3,13 +3,14 @@
 //   node scripts/make-sheets.mjs --every 5       -> a thumbnail every 5 frames
 //   node scripts/make-sheets.mjs --from 1400 --to 1700 --every 4
 //   node scripts/make-sheets.mjs --zip           -> also out/sheets.zip (Windows: uses Compress-Archive)
-// Needs out/frames/element-NNNN.jpeg (npx remotion render MiniLockerFilm-Preview out/frames --sequence --image-format=jpeg --jpeg-quality=80).
+// Needs out/frames/element-NNNN.jpeg (npx remotion render MiniLockerFilm-Preview out/frames --sequence --image-format=jpeg --jpeg-quality=80)
+// or the PNG sequence of `npm run render:frames` (patch 23), which is also read.
 import { readdirSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const arg = (name, def) => { const i = process.argv.indexOf(name); return i >= 0 ? Number(process.argv[i + 1]) : def; };
 const every = arg("--every", 10), from = arg("--from", 0);
-const files = existsSync("out/frames") ? readdirSync("out/frames").filter((f) => /^element-\d+\.jpe?g$/.test(f)).sort() : [];
+const files = existsSync("out/frames") ? readdirSync("out/frames").filter((f) => /^element-\d+\.(jpe?g|png)$/.test(f)).sort() : [];
 if (files.length === 0) { console.error("No frames in out/frames. Render them first (see the header of this file)."); process.exit(1); }
 const digits = files[0].match(/element-(\d+)\./)[1].length;
 const ext = files[0].split(".").pop();

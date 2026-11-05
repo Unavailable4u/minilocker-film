@@ -8,11 +8,12 @@ import { createRequire } from "node:module";
 import { mkdtempSync, writeFileSync, rmSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
-const root = resolve(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
+// fileURLToPath decodes %20 and handles the drive letter; URL.pathname does neither (a folder name with a space broke the audit).
+const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const esbuild = require("esbuild");
 
 const LIMIT_STILL = 75; // frames (2.5 s) of an almost motionless camera

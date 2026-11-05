@@ -13,11 +13,14 @@ import { DEV_GFX_C_FRAMES, DevGfxC } from "./dev/DevGfxC";
 import { DEV_APP_FRAMES, DevApp } from "./dev/DevApp";
 import { FPS, STAGE, TOTAL } from "./config/timeline";
 
-// Dev-only compositions (DevBrandSheet, DevFxSheet, DevText, DevShell, DevWorkspace, DevScreens, DevGfxA, DevGfxB, DevGfxC, DevApp, ...) are added by the
-// patches that introduce them. Each of those patches resends this whole file.
+// Two groups, in this order:
+//   1. FINAL: the film (MiniLockerFilm, what scripts/render.mjs renders) and its half-size Studio preview (MiniLockerFilm-Preview). Nothing else is final.
+//   2. DEV ONLY: the Dev* sheets of patches 01-11, kept so a part of the film can be reviewed alone in the Studio. They are never rendered into the film.
+// Each patch that adds a dev composition resends this whole file (the dev group grows at the bottom).
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* ---- FINAL ---- */}
       <Composition
         id="MiniLockerFilm"
         component={MiniLockerFilm}
@@ -34,6 +37,7 @@ export const RemotionRoot: React.FC = () => {
         width={STAGE.w / 2}
         height={STAGE.h / 2}
       />
+      {/* ---- DEV ONLY: review sheets, not part of the film ---- */}
       {/* dev only (patch 01) */}
       <Composition
         id="DevBrandSheet"
