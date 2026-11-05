@@ -1092,3 +1092,69 @@ Patch 14 (S3, f1500-2099) is split like S2: `S3Decoys.tsx` assembles `s3/S3a.tsx
 - **NOT verified:** motion (the landing's feel, the cursor's 12 f flick from the tile row to Run, which is 35 window px per frame and the film's fastest), and f2100-2112 (S3's nav hold with the underline mid-slide: unchanged by this patch).
 - The window's left edge is 58-103 px inside the stage in this shot (`attackLabPick` is narrower than the stage's aspect): that strip is the stage background. It is intended; a wider region would shrink the tiles.
 - The evidence is still the SAMPLE (`meta.sample`): the hash, the file text and "WIPED_0" are sample data.
+
+## Patch 15b - S4a Rewind: the Attack Lab and the wipe, part 2 of 3: the agent works (f2220-2299)
+
+**Changed files:** `src/scenes/s4/S4a.tsx` (resent: concatenates S4a1 + S4a2, mounts the stage under the captions), `src/scenes/s4/S4a2.tsx` (new: camera, the Run click, the caption, geometry checks), `src/scenes/s4/S4Stage.tsx` (new: the persistent stage object), `src/scenes/s4/shared.tsx` (15a's content untouched; a marked "15b" section added), `src/config/focus.ts` (one new focus, `attackSteps`), `docs/PATCH_NOTES.md`. `S4Rewind.tsx`, `S4b.tsx`, `data.ts` and `S4a1.tsx` are untouched.
+
+### What 15b contains
+- **Run click:** f2220 (`LAB.pressAt`), the only click of S4a, on the point 15a's last waypoint rests on. The cursor fades out over the following 8 frames (`hide`), so it does not sit under the panel. The app's own press, busy ring (f2223), write step (f2236) and result (f2232) are filmState's; 15b draws nothing over them.
+- **Camera:** f2226 a 24 f signature move from `attackLabPick` to `attackSteps` (padding 96, zoom 1.19), arriving on the beat f2250; f2250-2299 a 2 % push (bias 1.02), arriving on the last frame of the part. No tilt.
+- **The stage (`S4Stage.tsx`), one persistent object in stage space:**
+  - a SOLID backing panel (`theme.paper`) hanging from the top edge over the left half (x 96-820, y -40 to 722), dropping in from f2240. It is opaque and runs off the top on purpose: a translucent floating version let the app's card text show through the tiles and left a card cropped over its top edge;
+  - the `FileLattice`, 6 x 4, intact, building f2250-2280. The hero tile (2 x 2, `heroIndex` 8) is labelled with the real file name from the evidence (`precious.txt`); the other 20 tiles are a schematic and say so in the footnote (`copy.gfxB.schematic`);
+  - the `SnapshotTimeline` rail (draws f2262-2280) with node 1 landing on the beat f2280, showing the first 8 hex of the real SHA-256 (`f546ce19` in the sample evidence).
+- **Caption:** "The agent works. Snapshot after every step." from `CUES.s4.captionWorks` (f2220), leaving by f2296.
+- **`focus.ts` `attackSteps`:** {x 0, y 640, w 1450, h 432}. Not a retune of `attackDetail`: the step column is at window x 621.5-1437.5 (derived in `shared.tsx` `S4_COLUMN` from `LAB_LIST_W`, the pane padding and the column width), about 140 px left of where `attackDetail` assumes. The pane's title and italic summary are above the frame on purpose (a half-cut title reads as a mistake).
+- **Pure stage functions** in `shared.tsx` (`s4PanelProgress`, `s4LatticeState`, `s4RailProgress`, `s4NodeProgress`) are the only place the stage's timing lives.
+
+### PUBLIC API
+- `S4A2_CAMERA` (2 keyframes: f2226, f2250), `S4A2_CURSOR` (1 waypoint: f2220, click, hide), `S4a2`; `S4Stage`.
+- `shared.tsx`: `S4_TIMING` gains `open`, `settle`, `panel`, `lattice`, `rail`, `node`, `caption`, `partEndA2`; new `S4_COLUMN`, `S4_LATTICE`, `S4_PANEL`, `S4_LATTICE_AT`, `S4_RAIL`, `s4NodeX(slot)`, `S4LatticeState`.
+
+### Decisions and conventions future patches must follow
+1. **15c's first camera keyframe, cursor waypoint and overlay item start at f2300 or later** (`LAB.stepAt.wipe`). 15b ends on `attackSteps`, padding 96, bias 1.02 (arrived f2299): 15c's 3 % punch at f2340 is relative to that bias.
+2. **15c and patch 16 EXTEND `S4Stage.tsx` and the functions in `shared.tsx`; they never draw a second lattice.** 15c fills `shatter` and `desaturate` in `s4LatticeState`; patch 16 fills `reassemble`, the ghost container and the rewound node (`s4NodeX(slot)` is where its tether leaves from).
+3. **The app's own rows below the window are clipped.** At `attackSteps` the window's bottom edge is at stage y ~590, so the app's step rows after the wipe row (the cat at f2582) fall below it, and `LAB.detailScroll` only scrolls at f2660. Patch 16 has to show the cat output in stage space or scroll the pane earlier.
+4. `S4_CUE_ANCHORS` (patch 22) is still 15c's.
+5. The import-time checks in `S4a2.tsx` throw if the step column ever starts under the panel (12 px clear needed), ends within 48 px of the stage's edge, or if the window's bottom edge comes within 24 px of the rail. Change `attackSteps` or `S4_PANEL` and the build tells you which moved.
+
+### Known issues
+- `tsc --noEmit` clean; the import-time checks pass on the SAMPLE evidence.
+- Stills looked at (half size, Remotion with the npm-packaged Chromium, `--gl=swangle`): f2219, f2225 (busy ring, cursor on Run), f2244 (camera mid-move, panel not yet visible), f2270 (lattice building, rail drawing), f2299 (the hand-off: lattice intact, node 1 with its hash, caption gone, the first step row on the right).
+- **NOT verified:** motion (the camera's 24 f opening, and the cursor's fade-out), and the final render at full size. At zoom 1.19 the pane's step text is small; that is the cost of keeping the column in the right half, and 15c's wipe command is stage space, so it does not depend on that zoom.
+- The lattice sits low in the panel (about 170 px of blank sheet above it at full size) and the top of the right half is blank pane. Both are intended: the panel hangs from the top edge, and the pane's title is kept out of the frame.
+- The evidence is still the SAMPLE (`meta.sample`): the hash and the file name are sample data.
+
+## Patch 15c - S4a Rewind: the Attack Lab and the wipe, part 3 of 3: the wipe (f2300-2399)
+
+**Applies on top of 15b.** **Changed files:** `src/scenes/s4/S4a.tsx` (resent: concatenates S4a1 + S4a2 + S4a3), `src/scenes/s4/S4a3.tsx` (new: camera, cursor, caption, geometry checks), `src/scenes/s4/S4Stage.tsx` (the command, the token slab, the shared shake), `src/scenes/s4/shared.tsx` (a marked "15c" section; one 15b constant changed, see below), `docs/PATCH_NOTES.md`. `S4Rewind.tsx`, `S4b.tsx`, `data.ts`, `S4a1.tsx`, `S4a2.tsx`, `focus.ts` are untouched.
+
+### What 15c contains
+- **f2300-2339 the command.** The real wipe command (`s4Data().wipe.command`) types on the STAGE, in the blank band above the lattice, linear, f2304-2336 (about 2.4 characters a frame), with a block cursor; complete 4 frames before the wipe. It is laid out from the evidence (`s4CommandLayout`): the largest mono size in 24-34 px at which it wraps at spaces to two lines inside the panel (30 px in the sample: `rm -rf /workspace/* /workspace/.[!.]*;` / `echo WIPED_$(ls -A /workspace | wc -l)`), with a 4 px `theme.bad` rule to its left. The app's own wipe row appears on f2300 beside it (filmState's).
+- **f2340 THE WIPE** (`LAB.wipeLandsAt`, a beat): the FileLattice shatters (`shatter` 0 to 1 over `SHATTER_FRAMES` = 30, ending on f2370) and drains to 30 % (`desaturate` 0 to 0.3 over 12 frames); the command dims to 35 %.
+- **Camera:** f2340 the punch, 3 % on top of 15b's bias (1.02 x 1.03), 6 frames, with an impact shake of 12 px; f2346 a relax to bias 1.03 arriving f2398. The stage SHARES the shake (`s4Shake`: the same seeded sines as `Camera.tsx`, keyed on the keyframe's frame), so the panel, the shards and the token jolt with the app instead of standing still against it. The caption is not shaken.
+- **f2370 silence and the token.** The real output (`s4Data().wipe.token`, `WIPED_0`) slams in (opacity in 4 frames, scale 1.1 to 1 in 10) at the size that fits the lattice's width (162 px in the sample, mono bold, `theme.bad`) on a hatched slab in the lattice's place; the empty slots show through it. Caption "Everything gone." from `CUES.s4.captionGone` (f2370) until "Rewind." (f2400): it leaves over f2388-2399.
+- **Cursor:** none (`S4A3_CURSOR` is empty). 15b hid it after the click; S4a's only click is Run's.
+- **`S4_CUE_ANCHORS`** (new, `shared.tsx`), for patch 22: `glassShatter` = {frame 2340} and `silence` = {from 2370, to 2399, inclusive}. Both are read from `S4_TIMING`, not typed again.
+
+### 15b constant changed
+`PANEL_PAD_BOTTOM` 70 -> 40. The lattice (and its footnote) sit 30 px lower in the panel (lattice y 178 -> 208), which gives the command its band (safe margin 96 to 16 px above the lattice) and also fixes the blank top of the panel that 15b's notes listed. The footnote still ends 24+ px inside the panel and the panel still ends 48 px above the rail.
+
+### PUBLIC API
+- `S4A3_CAMERA` (2 keyframes: f2340, f2346), `S4A3_CURSOR` (empty), `S4a3` (the caption); `S4_CUE_ANCHORS`.
+- `shared.tsx`: `S4_TIMING` gains `cmdIn`, `type`, `wipe`, `shatter`, `desat`, `dim`, `punch`, `relax`, `token`, `silence`, `captionGone`, `partEndA3`; new `S4_COMMAND`, `S4CommandLayout`, `s4CommandLayout`, `s4CommandOpacity`, `s4CommandChars`, `s4CommandCursor`, `s4TokenLayout`, `s4TokenState`, `s4Shake`. `s4LatticeState` now returns `shatter` and `desaturate`.
+
+### Decisions and conventions future patches must follow
+1. **Patch 16's first camera keyframe, cursor waypoint and overlay item start at f2400 or later**, from `attackSteps`, padding 96, bias 1.03 (arrived f2398).
+2. **Patch 16 EXTENDS `S4Stage.tsx` and `shared.tsx`; it does not draw a second lattice.** From f2400 the stage still draws: the panel, the empty slots under the hatched slab with `WIPED_0`, the dimmed command, the footnote and node 1. Patch 16 must retire or replace the slab and the command (they are functions of the frame: add its own fade-out in `s4TokenState` / `s4CommandOpacity`) and fill `reassemble` in `s4LatticeState` (the shards return from where `shatter` scattered them, which the lattice reproduces from its seeds).
+3. **The punch brings the steps column within 4 px of the panel's right edge** for a few frames (it is 12 px clear at 15b's pose). `S4a3.tsx` checks it (4 px from the panel, 24 px from the stage's right edge, window bottom 24 px above the rail) at the punch's arrival, the relax's and f2399.
+4. **The app's own rows below the window** (the rewind row f2400, the cat row f2582) are still clipped below the window's bottom edge at `attackSteps`; see 15b: patch 16 shows the cat output in stage space or scrolls the pane earlier.
+5. The silence is f2370-2399 inclusive; the sound returns on f2400 (patch 16's first beat). Patch 22 reads `S4_CUE_ANCHORS`.
+
+### Known issues
+- `tsc --noEmit` clean; every import-time check runs and passes on the SAMPLE evidence.
+- Stills looked at (half size): f2320 (typing, cursor on line 2), f2350 (shards mid-flight, camera punched, command dimming), f2380 (the token, the caption mid-rise), f2399 (the token held, the caption leaving). **NOT looked at:** f2300, f2336, f2340 and f2345 (the frames of the hit itself), and motion: the shake (12 px, 8 frames), the shards' drift across the pane (up to 14 px/frame, fading over 30 frames) and the token's slam.
+- The shards fly over the steps column and the app's own wipe row for about 30 frames (intended: "tiles shatter outward"); they fade out.
+- The drain (30 %) applies to the lattice only, which is mostly shards by the time it has reached its full value.
+- The evidence is still the SAMPLE: the command, `WIPED_0` and the hash are sample data.

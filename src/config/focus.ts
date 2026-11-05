@@ -73,6 +73,7 @@ export type FocusName =
   | "attackGrid"
   | "attackDetail"
   | "attackLabPick"
+  | "attackSteps"
   | "reportGrid"
   | "verifyButton"
   | "infraDiagram"
@@ -96,6 +97,7 @@ export const FOCUS_NAMES: readonly FocusName[] = [
   "attackGrid",
   "attackDetail",
   "attackLabPick",
+  "attackSteps",
   "reportGrid",
   "verifyButton",
   "infraDiagram",
@@ -164,6 +166,15 @@ export const FOCUS: Record<FocusName, Rect> = {
    * the card at a zoom the 34 px tiles can be read at (attackSummary and attackGrid are each one half of this).
    */
   attackLabPick: { x: 0, y: GRID.headerH + 8, w: 820, h: 470 },
+  /**
+   * S4a (patch 15b): the steps of the Attack Lab's detail pane, with the stage's left half free for the explainer. The camera centres its focus, so the
+   * rect reaches from the window's left edge (x 0) to the right edge of the pane's step column (x 1450: the column ends at 1437.5, see
+   * shared.tsx S4_COLUMN) and from just above the "What happened" rows (y 640) to 140 px under the window's bottom edge: at padding 96 that is zoom 1.19,
+   * width-limited, with the column in the right half of the stage (x ~837-1809), the first step row at stage y ~280 and the window's bottom edge at
+   * ~y 590, clear of the snapshot rail (y 770). The title and the italic summary of the pane are above the frame on purpose: a half-cut title at
+   * the top edge reads as a mistake, so the focus is centred low enough (y 856) that they are fully out.
+   */
+  attackSteps: { x: 0, y: 640, w: 1450, h: 432 },
   /** Report: the nine dimension cards */
   reportGrid: { x: 24, y: GRID.headerH + 90, w: WINDOW.w - 48, h: 640 },
   /** Report: the "Verify ledger now" button in the ledger block */
