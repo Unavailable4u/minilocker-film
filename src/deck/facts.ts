@@ -2,9 +2,10 @@
 // (guide section 7, trap 2). A value the evidence does not hold makes the function throw and name the path, as select.ts does, so a slide can never
 // print a number the capture does not contain.
 import { s8 } from "../config/copy";
-import { selectMeasured, selectTask } from "../data/select";
+import { selectAttack, selectAttackEvents, selectMeasured, selectTask } from "../data/select";
 import { describe } from "../lib/derive";
 import { s3Data } from "../scenes/s3/data";
+import { s4Data } from "../scenes/s4/data";
 import { s5Data } from "../scenes/s5/data";
 
 function fail(path: string, why: string): never {
@@ -122,4 +123,80 @@ export function hookEscapes(): { escaped: number; runs: number } {
   const m = selectMeasured().hookEscaped;
   if (!isCount(m.escaped) || !isCount(m.runs)) return fail("evidence.measured.hookEscaped.escaped / runs", "is missing or not a number");
   return { escaped: m.escaped, runs: m.runs };
+}
+
+/** One snapshot of the rewind attack's ledger: its number and its SHA-256 (64 hex). */
+export interface SnapshotFact {
+  n: number;
+  hash: string;
+}
+
+/** What slide 07 reads about the rewind attack (`LAB.hero`, "rewind_after_rm_rf"), all through the film's own S4 data. */
+export interface RewindStory {
+  /** "precious.txt": the file the attack writes, wipes and gets back (the hero tile's label, as in the film). */
+  file: string;
+  /** The write_file step's path ("/workspace/precious.txt"). */
+  writePath: string;
+  /** The real wipe command and the line it prints ("WIPED_0"). */
+  wipe: { command: string; token: string };
+  /** Snapshots taken up to and including the one the rewind goes back to, oldest first (snapshot 0 is the start of the task). */
+  kept: SnapshotFact[];
+  /** Snapshots the rewind threw away (the ledger's `timeline.rewound.discarded`). */
+  discarded: SnapshotFact[];
+  /** The snapshot the rewind restored, with the hash the ledger recorded for the restored tree (s4Data refuses a restore that did not match). */
+  restored: SnapshotFact;
+  /** Files re-hashed after the restore (`timeline.rewound.verified.files`). */
+  files: number;
+  /** Checks passed of total, and the seconds the whole attack took (the AttackResult's `duration_s`). */
+  checks: { passed: number; total: number };
+  seconds: number;
+  /** The attack's ledger as verified: how many events, and the head hash. */
+  ledger: { events: number; head: string };
+}
+
+/**
+ * The rewind attack as slide 07 draws it. Same data as the film's S4 (src/scenes/s4/data.ts, which throws when the evidence cannot support it: a restore
+ * that did not match, a missing wipe, a ledger that does not verify). The only addition is the snapshots taken BEFORE the one the rewind goes back to
+ * (snapshot 0, the start of the task), which the film does not draw: they are the `snapshot.created` events of the same ledger.
+ */
+export function rewindStory(): RewindStory {
+  const d = s4Data();
+  const kept: SnapshotFact[] = [];
+  for (const e of selectAttackEvents(d.hero.name)) {
+    if (e.type !== "snapshot.created") continue;
+    const n = e.payload.id;
+    const hash = e.payload.sha256;
+    if (typeof n !== "number" || typeof hash !== "string" || !/^[0-9a-f]{64}$/.test(hash)) {
+      return fail(`evidence.attacks.${d.hero.name}.events[snapshot.created, event ${e.id}]`, "has no numeric id / 64-hex sha256");
+    }
+    if (n <= d.snapshot.n) kept.push({ n, hash });
+  }
+  if (kept.length === 0 || kept[kept.length - 1].n !== d.snapshot.n) {
+    return fail(`evidence.attacks.${d.hero.name}.events[snapshot.created]`, `has no snapshot ${d.snapshot.n}, the one the rewind goes back to`);
+  }
+  const base = d.write.path;
+  return {
+    file: base.slice(base.lastIndexOf("/") + 1),
+    writePath: base,
+    wipe: { command: d.wipe.command, token: d.wipe.token },
+    kept,
+    discarded: d.rewound.discarded.map((x) => ({ n: x.n, hash: x.hash })),
+    restored: { n: d.rewound.toSnapshot, hash: d.rewound.restoredHash },
+    files: d.rewound.files,
+    checks: { passed: d.outcome.checksPassed, total: d.outcome.checksTotal },
+    seconds: d.outcome.seconds,
+    ledger: { events: d.seal.events, head: d.seal.head },
+  };
+}
+
+/**
+ * The attack's own proof line for the delete: the label and detail of its first attack-scoped check ("Deleted file came back": "the file was gone after
+ * the delete and back after the rewind"), as the Attack Lab prints them. Refuses a check that did not pass: the slide says the file came back.
+ */
+export function rewindProof(): { label: string; detail: string } {
+  const name = s4Data().hero.name;
+  const c = selectAttack(name).checks.find((x) => x.scope === "attack");
+  if (!c) return fail(`evidence.attacks.${name}.result.checks`, "has no attack-scoped check (the proof that the deleted file came back)");
+  if (c.status !== "pass") return fail(`evidence.attacks.${name}.result.checks[${c.label}]`, `is "${c.status}", not "pass": slide 07 says the file came back`);
+  return { label: c.label, detail: c.detail };
 }

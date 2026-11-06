@@ -15,6 +15,7 @@ import { S03 } from "./slides/S03";
 import { S04 } from "./slides/S04";
 import { S05 } from "./slides/S05";
 import { S06 } from "./slides/S06";
+import { S07 } from "./slides/S07";
 import { S11 } from "./slides/S11";
 
 const BUILT: Readonly<Record<number, React.FC>> = {
@@ -24,6 +25,7 @@ const BUILT: Readonly<Record<number, React.FC>> = {
   4: S04,
   5: S05,
   6: S06,
+  7: S07,
   11: S11,
 };
 

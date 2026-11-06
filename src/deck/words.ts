@@ -1,7 +1,7 @@
 // Deck wording that is NOT in src/config/copy.ts: kickers, slide titles and the notes beside screenshots.
 // Same rules as copy.ts: no measured value here (numbers, hosts, models, hashes come from src/data/select.ts), no exclamation marks,
 // never "secure", "unhackable", "provably safe", "zero risk". Anything the film already says is imported from copy.ts, not retyped.
-import { rep, s0, s1, s2, s3, s5, s7, ws } from "../config/copy";
+import { gfxB, rep, s0, s1, s2, s3, s4, s5, s7, ws } from "../config/copy";
 
 const cap = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -68,6 +68,30 @@ export const W = {
     hookRuns: "runs where the hook got out",
     /** The Report's Secrets card line, in the Report's own words (copy.rep.headline). */
     secretsLine: { planted: rep.headline.decoysPlanted, read: rep.headline.read, used: rep.headline.used, noReal: rep.headline.noReal },
+  },
+  s07: {
+    kicker: "§ 06 · Wipe, rewind, re-hash",
+    /** the film's caption, unchanged */
+    title: s4.captionReal,
+    /** the film's three captions of the storyboard, in order */
+    captions: [s4.captionWorks, s4.captionGone, s4.captionRewind],
+    /** the callout of the film's timeline, drawn on the rewind's arc */
+    undone: s4.calloutUndone,
+    /** word before the path of the file the attack writes ("wrote /workspace/precious.txt") */
+    wrote: "wrote",
+    /** the lattice's own honesty line (copy.gfxB.schematic): only the labelled tile is a real file */
+    schematic: gfxB.schematic,
+    /** "N file(s) re-hashed - all matched", assembled from the film's own words (same format as S4b2's counter) */
+    rehashedOne: gfxB.fileRehashed,
+    rehashedMany: gfxB.filesRehashed,
+    allMatched: gfxB.allMatched,
+    /** labels of the evidence strip: "checks passed" and "to run the whole attack" are the film's (copy.s4.proof), the middle one is the deck's */
+    checks: s4.proof.checks,
+    events: "ledger events verified",
+    seconds: s4.proof.seconds,
+    secondsUnit: s4.proof.secondsUnit,
+    /** the caption over the live crop of the Attack Lab's verdict */
+    verdict: "the Attack Lab's verdict",
   },
   s11: {
     kicker: "§ 10 · Why this is different",
