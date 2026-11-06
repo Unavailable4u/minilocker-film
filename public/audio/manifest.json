@@ -218,5 +218,5 @@
     }
   },
   "music": false,
-  "voice": false
+  "voice": true
 }

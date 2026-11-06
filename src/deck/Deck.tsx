@@ -18,7 +18,9 @@ import { S06 } from "./slides/S06";
 import { S07 } from "./slides/S07";
 import { S08 } from "./slides/S08";
 import { S09 } from "./slides/S09";
+import { S10 } from "./slides/S10";
 import { S11 } from "./slides/S11";
+import { S12 } from "./slides/S12";
 
 const BUILT: Readonly<Record<number, React.FC>> = {
   1: S01,
@@ -30,7 +32,9 @@ const BUILT: Readonly<Record<number, React.FC>> = {
   7: S07,
   8: S08,
   9: S09,
+  10: S10,
   11: S11,
+  12: S12,
 };
 
 export const DECK_SLIDES = DECK.total;

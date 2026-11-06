@@ -1,7 +1,7 @@
 // Deck wording that is NOT in src/config/copy.ts: kickers, slide titles and the notes beside screenshots.
 // Same rules as copy.ts: no measured value here (numbers, hosts, models, hashes come from src/data/select.ts), no exclamation marks,
 // never "secure", "unhackable", "provably safe", "zero risk". Anything the film already says is imported from copy.ts, not retyped.
-import { gfxA, gfxB, lab, rep, s0, s1, s2, s3, s4, s5, s7, ws } from "../config/copy";
+import { brand, gfxA, gfxB, gfxC, lab, rep, s0, s1, s2, s3, s4, s5, s6, s7, s8, ws } from "../config/copy";
 
 const cap = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -140,9 +140,47 @@ export const W = {
     /** shown in the Studio (never in the PDF) while public/deck/R1.png is not there */
     missing: "public/deck/R1.png is missing: take shot R1 (docs/guide/SLIDE_DECK_GUIDE.md, section 6)",
   },
+  s10: {
+    kicker: "§ 09 · The evidence",
+    /** the film's two captions of the Report scene, unchanged: the claim and its answer */
+    title: s6.captionMeasured,
+    lead: s6.caption,
+    /** mono caption over the chain: "ledger" and the attack's own title (read from the evidence) */
+    ledger: "ledger",
+    /** the honesty line under the tamper drawing: it is a drawing of how the chain works, not a run */
+    schematic: "schematic, not a run",
+    tamperCaption: "Change one event and every hash after it stops matching.",
+    /** labels of the three numerals */
+    blocked: "network attempts blocked",
+    memory: "MiB peak memory",
+    wall: "wall clock",
+    wallUnit: "s",
+    /**
+     * The tag on the Browser card. The film never says "Not measured says so" about a card that is `not_used` (see the header of
+     * src/scenes/S6Evidence.tsx): that phrase (copy.s6.calloutNotMeasured) is for `not_measured` only. A `not_used` card gets this phrase instead.
+     */
+    notUsed: "Not used says so",
+    /** caption under the Report crop */
+    shotCaption: "the Report, as the app shows it",
+    /** heading over the legend of all nine dimensions (the crop shows the first eight cards) */
+    legendCaption: "the nine dimensions",
+  },
   s11: {
     kicker: "§ 10 · Why this is different",
     /** the film's one caption, split into its two sentences (derived, so copy.s7.caption stays the one source) */
     title: s7.caption.match(/[^.]+\./g)?.map((t) => t.trim()) ?? [s7.caption],
+  },
+  s12: {
+    kicker: `§ 11 · ${brand.builtOn}`,
+    /** the film's own caption, unchanged: it is the claim */
+    title: s8.caption,
+    /** the limits, in the film's own words (copy.s8.limits), and the heading and footnote of its LimitsCard */
+    limitsTitle: gfxC.limitsTitle,
+    limits: s8.limits,
+    footnote: gfxC.limitsFootnote,
+    /** caption over the table of the three Vultr products */
+    tableCaption: "what runs on Vultr",
+    /** words in front of the two links */
+    links: { repo: "code", demo: "live demo" },
   },
 } as const;
