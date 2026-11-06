@@ -52,3 +52,16 @@ export const Shot: React.FC<ShotProps> = ({ at, crop = { x: 0, y: 0, w: LOGICAL.
     </div>
   );
 };
+
+/**
+ * Where a point of the app (logical px, read off the grid) lands in slide-content px, for a Shot drawn at (`left`, `top`) with the same `width` and `crop`.
+ * Use it for Pin positions so a pin follows the picture when the shot is resized or re-cropped.
+ */
+export function mapPoint(
+  p: { x: number; y: number },
+  shot: { left: number; top: number; width: number; crop?: { x: number; y: number; w: number; h: number } },
+): { left: number; top: number } {
+  const crop = shot.crop ?? { x: 0, y: 0, w: LOGICAL.w, h: LOGICAL.h };
+  const k = shot.width / crop.w;
+  return { left: shot.left + (p.x - crop.x) * k, top: shot.top + (p.y - crop.y) * k };
+}

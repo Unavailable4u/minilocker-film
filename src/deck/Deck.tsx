@@ -1,24 +1,31 @@
-// The slide deck composition: ONE FRAME = ONE SLIDE. Add a slide by creating src/deck/slides/SNN.tsx and listing it in SLIDES.
-// Build with `npm run deck` (see scripts/make-deck.mjs). Work in the light Studio: `npm run studio:light`.
+// The slide deck composition: ONE FRAME = ONE SLIDE (frame 0 = slide 1). Work in the light Studio: `npm run studio:light`.
+// Build with `npm run deck` (see scripts/make-deck.mjs).
+//
+// To add a slide: create src/deck/slides/SNN.tsx, import it here and add it to BUILT. Slides that are not in BUILT show <Pending/> in the
+// Studio, so slide N stays frame N while the deck is partial. `make-deck.mjs` reads `built` from the composition props, renders only
+// those slides and leaves the pending ones out of the PDF, so a partial deck is always a valid PDF.
 import React from "react";
 import { useCurrentFrame } from "remotion";
 import "../ui/theme.css";
 import { FontsReady } from "../lib/fonts";
+import { DECK, Pending } from "./kit";
 import { S01 } from "./slides/S01";
+import { S03 } from "./slides/S03";
 
-const SLIDES: readonly React.FC[] = [
-  S01,
-  // S02, S03, ... S12
-];
+const BUILT: Readonly<Record<number, React.FC>> = {
+  1: S01,
+  3: S03,
+};
 
-export const DECK_SLIDES = SLIDES.length;
+export const DECK_SLIDES = DECK.total;
+export const BUILT_SLIDES: number[] = Object.keys(BUILT).map(Number).sort((a, b) => a - b);
 
-export const Deck: React.FC = () => {
-  const i = useCurrentFrame();
-  const Slide = SLIDES[Math.min(i, SLIDES.length - 1)];
-  return (
-    <FontsReady>
-      <Slide />
-    </FontsReady>
-  );
+export interface DeckProps extends Record<string, unknown> {
+  built: number[];
+}
+
+export const Deck: React.FC<DeckProps> = () => {
+  const n = useCurrentFrame() + 1;
+  const Slide = BUILT[Math.min(n, DECK_SLIDES)];
+  return <FontsReady>{Slide ? <Slide /> : <Pending n={n} />}</FontsReady>;
 };

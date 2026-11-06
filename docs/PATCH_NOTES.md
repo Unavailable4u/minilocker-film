@@ -1537,3 +1537,6 @@ After `--refresh-attack`, S5 still threw: the BEGIN marker was there but no END 
 - `s5/data.ts`: when the END marker is absent and the clip marker follows the text, the film shows the page text the ledger holds, ends it with an ellipsis, and rebuilds the end line from the BEGIN marker's nonce. The product's `fence()` always writes that line, so nothing is invented beyond the nonce-matching marker. When the END marker is present it is used as before.
 - `capture-evidence.mjs --refresh-attack` now says which of the two it found instead of "whole".
 - No new capture is needed: the evidence you refreshed already holds what the parser needs.
+
+## Slide deck (separate track)
+The 12-slide PDF is built from `src/deck/` (composition `MiniLockerDeck`, light theme). Patch plan, conventions and status: `docs/guide/DECK_PATCHES.md`. Content per slide: `docs/guide/SLIDE_DECK_GUIDE.md`. Deck patch 1 (slides 01 and 03 plus kit changes) is in.

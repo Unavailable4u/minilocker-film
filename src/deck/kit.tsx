@@ -26,12 +26,12 @@ export const Numeral: React.FC<{ value: React.ReactNode; label: string; tone?: "
   </div>
 );
 
-/** A numbered crimson dot to put on a screenshot. Position it with left/top in slide px. */
-export const Pin: React.FC<{ n: number; left: number; top: number }> = ({ n, left, top }) => (
+/** The numbered crimson dot on its own (inline use, e.g. in a note list). */
+export const Dot: React.FC<{ n: number; size?: number }> = ({ n, size = 44 }) => (
   <div
     style={{
-      position: "absolute", left, top, width: 44, height: 44, borderRadius: 22, background: theme.accent, color: "#fff",
-      display: "flex", alignItems: "center", justifyContent: "center", fontFamily: fonts.mono, fontSize: 26,
+      flex: "none", width: size, height: size, borderRadius: size / 2, background: theme.accent, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center", fontFamily: fonts.mono, fontSize: Math.round(size * 0.59),
       boxShadow: "0 6px 16px -6px rgba(217,15,61,.6)",
     }}
   >
@@ -39,10 +39,49 @@ export const Pin: React.FC<{ n: number; left: number; top: number }> = ({ n, lef
   </div>
 );
 
-/** The slide shell: paper background, grid, footer. Children are positioned in slide px (1920 x 1080). */
-export const Slide: React.FC<{ n: number; children: React.ReactNode }> = ({ n, children }) => (
+/** A numbered crimson dot to put on a screenshot. `left` and `top` are the dot's CENTRE in slide-content px (see mapPoint in Shot.tsx). */
+export const Pin: React.FC<{ n: number; left: number; top: number }> = ({ n, left, top }) => (
+  <div style={{ position: "absolute", left: left - 22, top: top - 22 }}>
+    <Dot n={n} />
+  </div>
+);
+
+/** A numbered note beside a screenshot: dot, heading (serif 36), body (serif 30). Matches the Pin with the same number. */
+export const Note: React.FC<{ n: number; title: string; children: React.ReactNode }> = ({ n, title, children }) => (
+  <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+    <Dot n={n} />
+    <div>
+      <div style={{ fontFamily: fonts.serif, fontSize: 36, lineHeight: 1.1, color: theme.ink }}>{title}</div>
+      <div style={{ fontFamily: fonts.serif, fontSize: 30, lineHeight: 1.25, color: theme.ink2, marginTop: 6 }}>{children}</div>
+    </div>
+  </div>
+);
+
+/** A mono pill (model name, host, licence). Text must come from copy.ts or the evidence selectors. */
+export const Pill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div
+    style={{
+      display: "inline-block", fontFamily: fonts.mono, fontSize: 26, color: theme.ink2, background: theme.sheet,
+      border: `1px solid ${theme.rule2}`, borderRadius: 999, padding: "8px 22px", whiteSpace: "nowrap",
+    }}
+  >
+    {children}
+  </div>
+);
+
+/**
+ * The slide shell: paper background, grid, footer. Children are positioned in slide px, inside a box that starts at (96, 72) and is 1728 x 920.
+ * `backdrop` is drawn between the grid and the content (cover only). `footer` replaces the default footer text (cover only).
+ */
+export const Slide: React.FC<{ n: number; children: React.ReactNode; backdrop?: React.ReactNode; footer?: { left: React.ReactNode; right: React.ReactNode } }> = ({
+  n,
+  children,
+  backdrop,
+  footer,
+}) => (
   <AbsoluteFill style={{ background: theme.paper, fontFamily: fonts.serif, color: theme.ink }}>
     <GridPaper />
+    {backdrop}
     <div style={{ position: "absolute", left: DECK.mx, right: DECK.mx, top: DECK.top, bottom: DECK.footerH + 24 }}>{children}</div>
     <div
       style={{
@@ -50,10 +89,16 @@ export const Slide: React.FC<{ n: number; children: React.ReactNode }> = ({ n, c
         display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: fonts.mono, fontSize: 22, color: theme.ink3,
       }}
     >
-      <span>MiniLocker · Vultr Agent Rush · Blast Radius Zero</span>
-      <span>
-        {n} / {DECK.total}
-      </span>
+      <span>{footer ? footer.left : "MiniLocker · Vultr Agent Rush · Blast Radius Zero"}</span>
+      <span>{footer ? footer.right : `${n} / ${DECK.total}`}</span>
     </div>
   </AbsoluteFill>
+);
+
+/** Stands in for a slide that is not built yet, so slide N is always frame N in the Studio. make-deck.mjs skips these: they never reach the PDF. */
+export const Pending: React.FC<{ n: number }> = ({ n }) => (
+  <Slide n={n}>
+    <Eyebrow>pending</Eyebrow>
+    <Title>Slide {String(n).padStart(2, "0")} is not built yet</Title>
+  </Slide>
 );
