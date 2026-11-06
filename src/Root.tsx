@@ -11,6 +11,7 @@ import { DEV_GFX_A_FRAMES, DevGfxA } from "./dev/DevGfxA";
 import { DEV_GFX_B_FRAMES, DevGfxB } from "./dev/DevGfxB";
 import { DEV_GFX_C_FRAMES, DevGfxC } from "./dev/DevGfxC";
 import { DEV_APP_FRAMES, DevApp } from "./dev/DevApp";
+import { Deck, DECK_SLIDES } from "./deck/Deck";
 import { FPS, STAGE, TOTAL } from "./config/timeline";
 
 // Two groups, in this order:
@@ -37,6 +38,8 @@ export const RemotionRoot: React.FC = () => {
         width={STAGE.w / 2}
         height={STAGE.h / 2}
       />
+      {/* The slide deck (docs/guide/SLIDE_DECK_GUIDE.md): one frame per slide, 1920x1080. Built by scripts/make-deck.mjs, never part of the film. */}
+      <Composition id="MiniLockerDeck" component={Deck} durationInFrames={DECK_SLIDES} fps={FPS} width={STAGE.w} height={STAGE.h} />
       {/* ---- DEV ONLY: review sheets, not part of the film ---- */}
       {/* dev only (patch 01) */}
       <Composition
