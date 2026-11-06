@@ -1,7 +1,7 @@
 // Deck wording that is NOT in src/config/copy.ts: kickers, slide titles and the notes beside screenshots.
 // Same rules as copy.ts: no measured value here (numbers, hosts, models, hashes come from src/data/select.ts), no exclamation marks,
 // never "secure", "unhackable", "provably safe", "zero risk". Anything the film already says is imported from copy.ts, not retyped.
-import { gfxB, rep, s0, s1, s2, s3, s4, s5, s7, ws } from "../config/copy";
+import { gfxA, gfxB, lab, rep, s0, s1, s2, s3, s4, s5, s7, ws } from "../config/copy";
 
 const cap = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -92,6 +92,53 @@ export const W = {
     secondsUnit: s4.proof.secondsUnit,
     /** the caption over the live crop of the Attack Lab's verdict */
     verdict: "the Attack Lab's verdict",
+  },
+  s08: {
+    kicker: "§ 07 · Pattern B",
+    /** the film's two captions of the hostile-page scene, unchanged: the claim and its answer */
+    title: s5.captionHijack,
+    lead: s5.captionFlagged,
+    /** the badge of the film's scene ("Pattern B - sandboxed browser use") */
+    badge: s5.badge,
+    /** the start of the path */
+    page: "page",
+    /**
+     * The five gates, in the order the product applies them. `label` says what the gate does (the fence's is the film's own label, split at its dashes;
+     * the approval's is the film's caption, whose second sentence is the default). `outcome` is the word on the chip; a denial is "denied", as the ledger
+     * ("Policy deny", "Approval denied") and the Report say it.
+     */
+    gates: {
+      fence: { title: "Fence", label: s5.fenceLabel.split(" - "), outcome: "wrapped" },
+      scan: { title: "Scanner", label: ["flags the injection"], outcome: "flagged" },
+      policy: { title: "Policy", label: ["denies the follow-up command"], outcome: "denied" },
+      approval: { title: "Approval", label: [s5.captionHuman], outcome: "denied" },
+      egress: { title: "Egress wall", label: [s3.calloutAllowlist], outcome: "not reached", refused: gfxA.refused, none: "nothing arrived" },
+    },
+    /** the two packets that were stopped: what the compromised agent tried after the page, by the ledger's own tool names */
+    packets: { command: "command", link: "link", request: "request" },
+    /** the scanner's evidence line, "6 findings, 2 hidden" (counts from the ledger) */
+    findings: "findings",
+    hidden: "hidden",
+    /** captions of the two crops under the path */
+    pageCaption: "hidden layers shown",
+    approvalCaption: "the approval, in the app's transcript",
+    /** the stamp, and the labels of its three facts, are the film's own (copy.s5.stamp / stampFacts) */
+    stamp: s5.stamp,
+    facts: s5.stampFacts,
+  },
+  s09: {
+    kicker: "§ 08 · The Attack Lab",
+    /** the Attack Lab's own sentence, unchanged: it is the claim */
+    title: lab.summary.explainLead,
+    /** caption over the real screenshot, and over the categories */
+    shotCaption: "the Attack Lab, after Run all attacks",
+    categoriesCaption: "the attacks, by category",
+    contained: "attacks contained",
+    breached: lab.summary.breached,
+    /** "The same definitions run in CI as" + code, then the conclusion of the capture's CI run */
+    ci: { lead: lab.summary.explainCi, code: lab.summary.explainCode, run: "CI run" },
+    /** shown in the Studio (never in the PDF) while public/deck/R1.png is not there */
+    missing: "public/deck/R1.png is missing: take shot R1 (docs/guide/SLIDE_DECK_GUIDE.md, section 6)",
   },
   s11: {
     kicker: "§ 10 · Why this is different",

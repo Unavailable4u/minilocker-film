@@ -2,7 +2,7 @@
 // (guide section 7, trap 2). A value the evidence does not hold makes the function throw and name the path, as select.ts does, so a slide can never
 // print a number the capture does not contain.
 import { s8 } from "../config/copy";
-import { selectAttack, selectAttackEvents, selectMeasured, selectTask } from "../data/select";
+import { selectAttack, selectAttackCatalog, selectAttackEvents, selectCi, selectMeasured, selectSummary, selectTask } from "../data/select";
 import { describe } from "../lib/derive";
 import { s3Data } from "../scenes/s3/data";
 import { s4Data } from "../scenes/s4/data";
@@ -199,4 +199,71 @@ export function rewindProof(): { label: string; detail: string } {
   if (!c) return fail(`evidence.attacks.${name}.result.checks`, "has no attack-scoped check (the proof that the deleted file came back)");
   if (c.status !== "pass") return fail(`evidence.attacks.${name}.result.checks[${c.label}]`, `is "${c.status}", not "pass": slide 07 says the file came back`);
   return { label: c.label, detail: c.detail };
+}
+
+/** What slide 08 reads about the hostile-page attack (`hostile_page_injection`), all through the film's own S5 data (src/scenes/s5/data.ts). */
+export interface DefenseStory {
+  /** The untrusted-data marker the page text was wrapped in, with the nonce the product chose for that call: "<<<BEGIN UNTRUSTED xxxxxxxx>>>". */
+  fence: string;
+  /** The scanner's ledger entry: how many findings, and how many of them hide from a human reader (display:none, off-screen text, comments). */
+  scan: { findings: number; hidden: number };
+  /** The compromised agent's follow-up command, and the risk of the policy decision that denied it. */
+  command: { text: string; risk: string };
+  /** The navigation the policy sent to a human (`approval.requested`) and how it ended. null when the ledger has no approval beat. */
+  approval: null | { summary: string };
+  /** The hosts of the run's `egress.blocked` lines. The film only draws these when the ledger has them: an empty list means nothing ever reached the wall. */
+  egressHosts: string[];
+  /** The report's three facts behind the stamp "nothing left the sandbox": bytes out, egress allowed, real secrets found in the sandbox. */
+  stamp: { bytesOut: number; egressAllowed: number; realSecrets: number };
+}
+
+/**
+ * The hostile-page run as slide 08's defense path draws it. s5Data() refuses an attack that was not contained, a ledger without the fence, the scanner or the
+ * deny, and a report that does not support the stamp, so the slide cannot claim a stop the ledger does not hold. The only thing read here that the film does
+ * not draw is the approval's summary (the film draws the whole modal; the path needs the one line).
+ */
+export function defenseStory(): DefenseStory {
+  const d = s5Data();
+  return {
+    fence: d.fence.begin,
+    scan: { findings: d.injection.findings.length, hidden: d.injection.hidden },
+    command: { text: d.command, risk: d.deny.risk },
+    approval: d.approval ? { summary: d.approval.summary } : null,
+    egressHosts: d.egress.map((x) => x.host),
+    stamp: { bytesOut: d.stamp.bytesOut, egressAllowed: d.stamp.egressAllowed, realSecrets: d.stamp.realSecrets },
+  };
+}
+
+/** What slide 09 reads about the Attack Lab: the summary of the run of all attacks, and the conclusion of the CI run of the same definitions. */
+export interface AttackLabFacts {
+  total: number;
+  contained: number;
+  breached: number;
+  inconclusive: number;
+  /** The GitHub Actions conclusion of the capture's CI run ("success"), or null when the evidence has none. */
+  ci: string | null;
+}
+
+export function attackLabFacts(): AttackLabFacts {
+  const s = selectSummary();
+  for (const [k, v] of Object.entries({ total: s.total, contained: s.contained, breached: s.breached, inconclusive: s.inconclusive })) {
+    if (!isCount(v)) return fail(`evidence.attackSummary.${k}`, "is missing or not a number");
+  }
+  return { total: s.total, contained: s.contained, breached: s.breached, inconclusive: s.inconclusive, ci: selectCi().conclusion ?? null };
+}
+
+/**
+ * The attacks of the Attack Lab grouped by category, in lab order (the capture's GET /api/attacks): the category's own word and the attack titles under it.
+ * Titles only: the evidence stores a full result for five of the fifteen, so the slide shows no per-attack verdict.
+ */
+export function attackGroups(): { category: string; titles: string[] }[] {
+  const out: { category: string; titles: string[] }[] = [];
+  for (const a of selectAttackCatalog()) {
+    if (!a.category || !a.title) return fail(`evidence.attackCatalog[${a.name}]`, "has no category or title");
+    const g = out.find((x) => x.category === a.category);
+    if (g) g.titles.push(a.title);
+    else out.push({ category: a.category, titles: [a.title] });
+  }
+  if (out.length === 0) return fail("evidence.attackCatalog", "is empty");
+  return out;
 }

@@ -12,7 +12,7 @@ Every patch leaves a valid, shippable PDF (`npm run deck` skips slides that are 
 | 2 | 02 problem, 04 Pattern A, 11 why different | `SixVerdicts`, `LoopStrip`; `CompareTable` at progress 1; `facts.ts`; kit `Ratio`, `Tag` | nothing | done |
 | 3 | 05 containment, 06 bait | `Cutaway` (`ContainerBox` + `EgressWall` + `DecoyRack`), `AttemptTable`; `facts.ts` readers for the hook log and secrets tally | nothing | done |
 | 4 | 07 wipe / rewind / re-hash | `Storyboard3` (`FileLattice`, `HashTile`, `SnapshotTimeline`, `GhostContainer`); `facts.ts` readers for the rewind attack | nothing | done |
-| 5 | 08 hostile page, 09 Attack Lab | `DefensePath`, `AttackCategories` | **`public/deck/R1.png`** (guide section 6) | todo |
+| 5 | 08 hostile page, 09 Attack Lab | `DefensePath`, `AttackCategories`, `RealShot` | **`public/deck/R1.png`** (guide section 6) | done (slide 09 is not in the PDF until `R1.png` exists) |
 | 6 | 10 evidence, 12 Vultr + limits | `TamperSchematic`, `HashChain` from the rewind events, `ArchitectureDiagram`, `LimitsCard` | nothing | todo |
 | 7 | QA | evidence audit script, checklist run | nothing | todo |
 
@@ -62,3 +62,18 @@ If time runs out, the seven-slide cut from the guide is 01, 03, 04, 05, 07, 10, 
 - **Not printed.** The guide's "say" line (the rewind replaces the sandbox, the ledger keeps everything) is spoken; "Undone, not erased." carries it on the slide.
 - **Small text.** The rail's labels (20 px), the hash tile (22 px) and the schematic line (22 px) are below the 28 px floor; they are the film's own drawings and the guide's own sizes. The claim, the file name, the verdict word and every numeral are 24 px or larger.
 - **Rendering here.** The workspace could not download Remotion's Chrome (host not reachable); `REMOTION_BROWSER_EXECUTABLE=/usr/bin/google-chrome npm run deck -- --only=7` rendered the slide.
+
+## Notes on patch 5
+
+- **R1.png is the one thing you owe this patch.** Slide 09 draws it through `RealShot` (`src/deck/RealShot.tsx`, same frame as `Shot`). While `public/deck/R1.png` is missing the Studio shows a hatched frame that names the file, and `make-deck.mjs` skips slide 09 with `slide 9 skipped (not in the PDF): missing public/deck/R1.png`, so a placeholder can never reach the PDF. The list of files a slide needs is `NEEDS` at the top of the script. Take the shot as guide section 6 says: Attack Lab, Paper theme, 1600 x 900, after **Run all attacks** reads all contained. The image is shown whole (top-left anchored, 16:9), so any 16:9 capture works.
+- **Slide 08 path.** The guide draws one packet. The ledger of `hostile_page_injection` holds two follow-up attempts, so the path draws two, each stopped where the ledger stopped it: the `curl` command at the policy gate (`policy.decision` deny) and the navigation at the approval gate (`approval.requested` then `approval.denied`). The rail is dashed after the first stop because what follows is a second attempt, not the same packet. The egress wall has no `egress.blocked` line in this ledger (network attempts 0), so it is drawn as an outlined bar with no packet and the chip says "not reached". If a re-capture does hold egress lines, the gate turns into a stop with the hosts printed and the word "refused"; if it holds no approval event, the approval gate is left out. Nothing is drawn as a stop the ledger does not hold.
+- **Scanner counts.** The page hides three layers, but the scanner reported 6 findings of which 2 are hidden (`injection.suspected`). The card prints the ledger's counts ("6 findings, 2 hidden"), not "three".
+- **Fence evidence** is the BEGIN marker with the nonce the product chose for that call. The END marker is not in the ledger (the product clips a browse result before it writes it, see `s5/data.ts`), so it is not printed.
+- **Approval crop** uses frame 3700, not 3620: at 3620 the transcript has the request but not the denial, and the denial is the stop. Crop `{ x: 0, y: 530, w: 400, h: 156 }`, read off `<Shot grid />`.
+- **"60 s" is not printed.** The default-to-denial timeout is in `real-repo-facts.md` but not in the evidence. The card says what the film says ("Risky actions wait for a human. Default: no.").
+- **Numerals.** Slide 08 has the stamp's three (bytes out, egress allowed, real secrets in sandbox; all read from the report through `s5Data()`). Slide 09 has two (contained of total, breached) and the CI conclusion as a pill. The small mono strings in the gate cards (counts, command, nonce) are evidence printed next to the drawing, not evidence-strip numerals.
+- **Slide 09 right column** is the catalog grouped by category in lab order (`facts.attackGroups()`), titles only: the evidence holds a full result for five of the fifteen, so no per-attack verdict. The caption says "the attacks, by category" rather than a count, because a count typed in a caption is a number the evidence did not supply.
+- **Slide 09 title** is the Attack Lab's own sentence (`lab.summary.explainLead`), at 56 px on two lines. It is the claim, so it is not shortened.
+- **Section numbers** follow patch 1: "§ 07" and "§ 08".
+- **Small text.** Gate evidence and chips are 26 px mono (inside the guide's 26 to 30 range for evidence), captions under crops are 24 px, and the page crop on slide 08 is a picture of a page, not text a judge has to read. Gate labels, titles, the claim and every numeral are 28 px or larger.
+- **Rendering here.** `REMOTION_BROWSER_EXECUTABLE=/usr/bin/google-chrome npm run deck` (all built slides) and `npm run deck -- --only=8,9`.
