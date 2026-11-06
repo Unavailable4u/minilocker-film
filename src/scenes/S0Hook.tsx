@@ -1,14 +1,23 @@
-// S0 Hook (f0-299) "One bad page" (BIBLE 6). Patch 12b.
+// S0 Hook (f0-299) "Six agents, one bad day" (BIBLE 6; opening redrawn in patch 27).
 //
-// STAGE-space overlay: one OPAQUE layer (so the glitch can add its three channel copies back together) holding the stage's own
-// gradient and glow, the page card, the typed lines and the four terminal lines. The caption and the dot sit above it.
-// Everything is a pure function of the GLOBAL frame. The film's camera is not used to move pixels here (the app is not mounted
-// before f560): S0_CAMERA gives the 3% punches and the slow push, and this file applies the camera's scale and shake to its content.
+// What you see
+//   f12-60    six agent screens rise into a 3 x 2 grid under the line "Six agents. Six ordinary tasks." Each is given a plain job and types one command.
+//   f105-150  the screens fail one by one, on the four beats f105 / f120 / f135 / f150 (the four `slam` sounds): a red flash and a verdict chip
+//             ("read a private key", "deleted everything", ...). Two screens fail on the same beat as another (f120, f135).
+//   f165-177  the glitch. The screens drop to 30 % and 2 px of blur under it, so they stay on stage as a texture.
+//   f180-270  the caption lands ON TOP of the dimmed screens ("Agents with a shell and a browser / are one bad page away from a bad day.").
+//   f248-272  the screens are gone; f270-285 the caption is drawn into the dot that S1 starts from (HOOK_DOT); the dot holds until f299.
+//
+// STAGE-space overlay: one OPAQUE layer (so the glitch can add its three channel copies back together) holding the stage background and the six screens.
+// The caption, the tag and the dot sit above it. Everything is a pure function of the GLOBAL frame. The film's camera is not used to move pixels here
+// (the app is not mounted before f540): S0_CAMERA gives the 3% punches and the slow push, and this file applies the camera's scale and shake to its content.
+//
+// Things other files read from here, which must keep their names and meaning: S0_CAMERA / S0_CURSOR (the camera chain of S1), HOOK_DOT (S1's dot),
+// S0_TIMING.hits and S0_TIMING.glitch (the sound effects, src/config/sfx.ts).
 import React from "react";
 import { getCameraState } from "../fx/Camera";
 import { KineticText } from "../fx/KineticText";
-import { Spotlight } from "../fx/Spotlight";
-import { StageGlow } from "../fx/StageGlow";
+import { StageBackground } from "../fx/StageBackground";
 import { GlitchLayer } from "../ui/GlitchLayer";
 import { kf, type CameraKeyframe, type CursorWaypoint } from "../config/camera";
 import { copy } from "../config/copy";
@@ -17,6 +26,7 @@ import { FPS, STAGE } from "../config/timeline";
 import { clamp01, easeOutBack, signature } from "../lib/ease";
 import { spr } from "../lib/spring";
 import { typedText, typingEndFrame, type TypingOpts } from "../lib/typing";
+import { MONO_ADVANCE, estimateWidth } from "../fx/util";
 import type { SceneOverlayProps } from "./types";
 
 const s0 = copy.s0;
@@ -25,22 +35,28 @@ const SERIF = fonts.serif;
 
 // ---------------------------------------------------------------------------------------------- timing (all GLOBAL frames)
 
-const AGENT_OPTS: TypingOpts = {};
-const HIDDEN_OPTS: TypingOpts = { cps: 170, pausePunct: 0.5, pauseSpace: 0.2 };
+const TASK_OPTS: TypingOpts = { cps: 55 };
+const COMMAND_OPTS: TypingOpts = { cps: 60, pausePunct: 0.8, pauseSpace: 0.3 };
 
 export const S0_TIMING = {
   /** pure #050505 until this frame */
   coverEnd: 12,
-  pageRise: { start: 12, end: 59 },
-  agentLine: { start: 20, opts: AGENT_OPTS },
-  scan: { start: 60, frames: 24 },
-  hidden: { start: 66, opts: HIDDEN_OPTS },
-  /** the four terminal hits, one per beat */
+  /** screen i starts to rise on `start + i * stagger` */
+  rise: { start: 12, stagger: 5 },
+  /** the line over the grid */
+  label: { start: 26 },
+  /** screen i types its task from `start + i * stagger`, then its command 5 frames after the task is done */
+  type: { start: 30, stagger: 6, taskOpts: TASK_OPTS, commandOpts: COMMAND_OPTS },
+  /** the four beats the screens fail on (the `slam` sounds) */
   hits: [105, 120, 135, 150] as const,
+  /** the frame screen i fails on, one of `hits` (2 and 5 fail with another screen) */
+  landAt: [105, 120, 135, 150, 120, 135] as const,
   /** the glitch: 12 frames in total, peaking in the middle */
   glitch: { start: 165, end: 177 },
-  /** the page and terminal are gone from this frame */
-  collapseEnd: 179,
+  /** the screens drop to `to` (0.3 = 30 %) of their opacity, and `blurPx` px of blur, between these frames; the caption lands on them. Raise `to` to see them more. */
+  dim: { start: 165, end: 185, to: 0.3, blurPx: 2 },
+  /** the screens leave completely, before the crush into the dot */
+  out: { start: 248, end: 272 },
   captionLine1: 180,
   captionLine2: 210,
   /** everything is pulled into the dot f270-285 and the dot holds until f299 */
@@ -66,137 +82,119 @@ export const S0_CURSOR: readonly CursorWaypoint[] = [];
 
 const BASE_SCALE = getCameraState(0, [S0_CAMERA[0]]).scale;
 
-// ---------------------------------------------------------------------------------------------- the page card
+// ---------------------------------------------------------------------------------------------- the six screens
 
-/** Stage rectangle of the generic article card. */
-const PAGE = { x: 560, y: 110, w: 800, h: 440 } as const;
-/** The terminal card, under the agent line. */
-const TERM = { x: 630, y: 668, w: 660, h: 232 } as const;
+/** One screen (stage px) and the gaps of the 3 x 2 grid. The grid is centred left to right; its top leaves room for the line above it. */
+const CARD = { w: 430, h: 250 } as const;
+const GAP = 36;
+const COLS = 3;
+const GRID = {
+  x: (STAGE.w - (COLS * CARD.w + (COLS - 1) * GAP)) / 2,
+  y: 262,
+} as const;
+const LABEL_Y = 168;
 
-const Bar: React.FC<{ w: number | string; h?: number; tone?: number }> = ({ w, h = 12, tone = 0.1 }) => (
-  <div style={{ width: w, height: h, borderRadius: h / 2, background: `rgba(242,241,237,${tone})` }} />
-);
+const FONT = 17;
+const PAD = 22;
 
-const Page: React.FC<{ frame: number }> = ({ frame }) => {
-  const rise = spr(frame, FPS, S0_TIMING.pageRise.start, "panel");
-  const t = clamp01(rise);
-  const hiddenShown = typedText(s0.hiddenText, frame, S0_TIMING.hidden.start, S0_TIMING.hidden.opts);
-  const hiddenOn = hiddenShown.length > 0;
+const Screen: React.FC<{ frame: number; i: number }> = ({ frame, i }) => {
+  const T = S0_TIMING;
+  const spec = s0.screens[i];
+  const col = i % COLS;
+  const row = Math.floor(i / COLS);
+  const x = GRID.x + col * (CARD.w + GAP);
+  const y = GRID.y + row * (CARD.h + GAP);
+
+  const riseStart = T.rise.start + i * T.rise.stagger;
+  const rise = spr(frame, FPS, riseStart, "panel");
+  if (rise <= 0.001) return null;
+
+  const land = T.landAt[i];
+  const failed = frame >= land;
+  const flash = failed ? 1 - clamp01((frame - land) / 9) : 0;
+  const chipK = failed ? easeOutBack(clamp01((frame - land) / 7)) : 0;
+
+  const taskStart = T.type.start + i * T.type.stagger;
+  const cmdStart = typingEndFrame(spec.task, taskStart, T.type.taskOpts) + 5;
+  const task = typedText(spec.task, frame, taskStart, T.type.taskOpts);
+  const cmd = typedText(spec.command, frame, cmdStart, T.type.commandOpts);
+
+  // the bar creeps along while the agent works and stops where it failed
+  const progress = 0.86 * clamp01((frame - riseStart - 10) / (land - riseStart - 10));
+  const dots = ".".repeat(1 + (Math.floor(frame / 8) % 3));
+  // a little knock on the failed screen
+  const knock = failed ? Math.sin(((frame - land) / 9) * Math.PI * 2) * 3 * (1 - clamp01((frame - land) / 9)) : 0;
+
   return (
     <div
       style={{
         position: "absolute",
-        left: PAGE.x,
-        top: PAGE.y,
-        width: PAGE.w,
-        height: PAGE.h,
-        opacity: clamp01(t * 1.4),
-        transform: `translateY(${((1 - rise) * 120).toFixed(2)}px) perspective(1400px) rotateX(${((1 - rise) * 9).toFixed(3)}deg) rotateZ(${(-0.6 * rise).toFixed(3)}deg)`,
-        transformOrigin: "50% 100%",
+        left: x,
+        top: y,
+        width: CARD.w,
+        height: CARD.h,
+        boxSizing: "border-box",
         borderRadius: 14,
         background: theme.sheet,
-        border: `1px solid ${theme.rule2}`,
-        boxShadow: "0 40px 100px rgba(0,0,0,.7)",
+        border: `1.5px solid ${failed ? alpha(theme.bad, 0.35 + 0.6 * flash) : theme.rule2}`,
+        boxShadow: `0 28px 70px rgba(0,0,0,.65), 0 0 ${(40 * flash).toFixed(1)}px ${alpha(theme.bad, 0.5 * flash)}, inset 0 0 ${(34 * flash).toFixed(1)}px ${alpha(theme.bad, 0.3 * flash)}`,
+        opacity: clamp01(rise * 1.4),
+        transform: `translate(${knock.toFixed(2)}px, ${((1 - Math.min(1, rise)) * 90).toFixed(2)}px)`,
         overflow: "hidden",
       }}
     >
-      {/* browser bar: three dots and an address, no real site */}
-      <div style={{ height: 44, display: "flex", alignItems: "center", gap: 10, padding: "0 18px", borderBottom: `1px solid ${theme.rule}`, background: theme.raised }}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: theme.rule2 }} />
-        ))}
-        <div style={{ marginLeft: 14, flex: 1, height: 26, borderRadius: 6, background: theme.sunken, border: `1px solid ${theme.rule}`, display: "flex", alignItems: "center", padding: "0 12px", fontFamily: MONO, fontSize: 15, color: theme.ink3 }}>
-          {s0.pageUrl}
+      {/* header: a dot, the agent's name, its state */}
+      <div style={{ height: 42, display: "flex", alignItems: "center", gap: 10, padding: `0 ${PAD}px`, borderBottom: `1px solid ${theme.rule}`, background: theme.raised }}>
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: failed ? theme.bad : theme.ink3 }} />
+        <div style={{ fontFamily: MONO, fontSize: 16, color: theme.ink2, letterSpacing: "0.04em" }}>{spec.agent}</div>
+        <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 15, color: theme.ink3, whiteSpace: "pre" }}>{failed ? "" : `${s0.running}${dots}`}</div>
+      </div>
+
+      <div style={{ padding: `18px ${PAD}px 0`, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ height: 24, fontFamily: MONO, fontSize: FONT, lineHeight: "24px", color: theme.ink2, whiteSpace: "pre" }}>
+          <span style={{ color: theme.ink3 }}>{task.length > 0 ? "agent > " : ""}</span>
+          {task}
+        </div>
+        <div style={{ height: 24, fontFamily: MONO, fontSize: FONT, lineHeight: "24px", color: theme.ink, whiteSpace: "pre" }}>
+          {cmd.length > 0 ? (
+            <>
+              <span style={{ color: theme.accentInk }}>{cmd.slice(0, 2)}</span>
+              {cmd.slice(2)}
+            </>
+          ) : null}
+        </div>
+        <div style={{ marginTop: 8, height: 8, borderRadius: 4, background: theme.rule, overflow: "hidden" }}>
+          <div style={{ width: `${(progress * 100).toFixed(2)}%`, height: "100%", borderRadius: 4, background: failed ? theme.bad : theme.ink3 }} />
         </div>
       </div>
-      <div style={{ padding: "30px 44px" }}>
-        <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 40, letterSpacing: "-0.012em", color: theme.ink }}>{s0.pageTitle}</div>
-        <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 15, color: theme.ink3 }}>12 min read</div>
-        <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 13 }}>
-          <Bar w="96%" />
-          <Bar w="91%" />
-          <Bar w="94%" />
-          <Bar w="58%" />
-        </div>
-        {/* the hidden text: invisible until the scan reveals it, then typed in crimson */}
+
+      {/* the verdict: lands on the beat, hatched as well as red (red never carries the meaning alone) */}
+      {failed && (
         <div
           style={{
-            marginTop: 26,
-            minHeight: 84,
-            padding: "12px 18px",
+            position: "absolute",
+            left: PAD,
+            bottom: 20,
+            height: 38,
+            boxSizing: "border-box",
+            display: "flex",
+            alignItems: "center",
+            padding: "0 16px",
             borderRadius: 8,
-            borderLeft: `3px solid ${theme.accent}`,
-            background: hiddenOn ? alpha(theme.accent, 0.08) : "transparent",
+            border: `1.5px solid ${theme.bad}`,
+            background: `${theme.hatchBad}, ${theme.badWash}`,
             fontFamily: MONO,
-            fontSize: 19,
-            lineHeight: 1.45,
-            color: theme.accentInk,
-            wordBreak: "break-word",
-            visibility: hiddenOn ? "visible" : "hidden",
+            fontSize: FONT,
+            color: theme.bad,
+            whiteSpace: "nowrap",
+            opacity: clamp01(chipK * 2),
+            transformOrigin: "0 50%",
+            transform: `scale(${(1.18 - 0.18 * chipK).toFixed(4)})`,
           }}
         >
-          {hiddenShown}
+          {spec.verdict}
         </div>
-        <div style={{ marginTop: 20 }}>
-          <Bar w="93%" tone={0.07} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ---------------------------------------------------------------------------------------------- the terminal
-
-const Terminal: React.FC<{ frame: number }> = ({ frame }) => {
-  const hits = S0_TIMING.hits;
-  if (frame < hits[0]) return null;
-  // the red edge flash of the most recent hit
-  const last = hits.reduce((acc, h) => (frame >= h ? h : acc), hits[0]);
-  const flash = 1 - clamp01((frame - last) / 8);
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: TERM.x,
-        top: TERM.y,
-        width: TERM.w,
-        height: TERM.h,
-        borderRadius: 12,
-        background: theme.sunken,
-        border: `1px solid ${alpha(theme.accent, 0.25 + 0.6 * flash)}`,
-        boxShadow: `0 30px 80px rgba(0,0,0,.7), 0 0 ${(46 * flash).toFixed(1)}px ${alpha(theme.accent, 0.55 * flash)}, inset 0 0 ${(40 * flash).toFixed(1)}px ${alpha(theme.accent, 0.35 * flash)}`,
-        padding: "26px 32px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        overflow: "hidden",
-      }}
-    >
-      {s0.terminal.map((line, i) => {
-        const h = hits[i];
-        const p = clamp01((frame - h) / 6);
-        if (frame < h) return <div key={i} style={{ height: 34 }} />;
-        const k = easeOutBack(p);
-        return (
-          <div
-            key={i}
-            style={{
-              height: 34,
-              fontFamily: MONO,
-              fontSize: 24,
-              lineHeight: "34px",
-              whiteSpace: "pre",
-              color: theme.ink,
-              opacity: clamp01(p * 2),
-              transform: `scale(${(1.22 - 0.22 * k).toFixed(4)})`,
-              transformOrigin: "0 50%",
-            }}
-          >
-            <span style={{ color: theme.accentInk }}>{line.slice(0, 2)}</span>
-            {line.slice(2)}
-          </div>
-        );
-      })}
+      )}
     </div>
   );
 };
@@ -213,9 +211,14 @@ export const S0Hook: React.FC<SceneOverlayProps> = ({ frame }) => {
   // glitch: 0 -> 1 -> 0 over 12 frames
   const g = clamp01((frame - T.glitch.start) / (T.glitch.end - T.glitch.start));
   const glitch = frame < T.glitch.start || frame > T.glitch.end ? 0 : Math.sin(Math.PI * g) ** 0.6;
-  // the page collapses while the glitch plays
-  const collapse = signature(clamp01((frame - T.glitch.start) / (T.collapseEnd - T.glitch.start)));
-  const pageOn = frame < T.collapseEnd;
+
+  // the screens: full -> dimmed under the glitch -> gone before the crush
+  const dim = signature(clamp01((frame - T.dim.start) / (T.dim.end - T.dim.start)));
+  const out = signature(clamp01((frame - T.out.start) / (T.out.end - T.out.start)));
+  const screensOpacity = (1 - (1 - T.dim.to) * dim) * (1 - out);
+  const screensBlur = T.dim.blurPx * dim;
+  const screensScale = 1 - 0.05 * dim - 0.06 * out;
+  const screensOn = frame < T.out.end;
 
   // crush into the dot
   const crush = signature(clamp01((frame - T.crush.start) / (T.crush.end - T.crush.start)));
@@ -223,27 +226,67 @@ export const S0Hook: React.FC<SceneOverlayProps> = ({ frame }) => {
   const breathe = frame > T.crush.end ? 1 + 0.03 * Math.sin(((frame - T.crush.end) / 15) * Math.PI) : 1;
 
   const tagOpacity = clamp01((frame - 12) / 8) * (1 - clamp01((frame - 168) / 10));
+  const labelIn = signature(clamp01((frame - T.label.start) / 16));
+  const labelOpacity = labelIn * (1 - dim);
   const scale = zoom.toFixed(5);
   const shake = `translate(${cam.shakeX.toFixed(2)}px, ${cam.shakeY.toFixed(2)}px)`;
+
+  // a soft dark pool behind the caption, so the words read over the dimmed screens
+  const poolOpacity = clamp01((frame - 172) / 14) * (1 - crush);
 
   return (
     <div style={{ position: "absolute", inset: 0 }}>
       <GlitchLayer strength={glitch} seed={11}>
-        {/* the opaque layer: the stage's own gradient and glow (identical to the film's, so S1 starts seamlessly) */}
-        <div style={{ position: "absolute", inset: 0, background: theme.stageGradient, overflow: "hidden" }}>
-          <StageGlow />
+        {/* the opaque layer: the stage background (the same picture the film draws, so S1 starts seamlessly) and the six screens */}
+        <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+          <StageBackground />
           <div style={{ position: "absolute", inset: 0, transformOrigin: "50% 50%", transform: `${shake} scale(${scale})` }}>
-            {pageOn && (
-              <div style={{ position: "absolute", inset: 0, transformOrigin: "50% 50%", transform: `scale(${(1 - 0.3 * collapse).toFixed(4)})`, opacity: 1 - 0.85 * collapse }}>
-                <Page frame={frame} />
-                <Spotlight startFrame={T.scan.start} durationFrames={T.scan.frames} rect={PAGE} radius={14} intensity={0.2} />
-                <div style={{ position: "absolute", left: PAGE.x, top: PAGE.y + PAGE.h + 34, fontFamily: MONO, fontSize: 28, color: theme.ink2, whiteSpace: "pre" }}>
-                  {typedText(s0.agentLine, frame, T.agentLine.start, T.agentLine.opts)}
-                </div>
-                <Terminal frame={frame} />
+            {screensOn && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  transformOrigin: "50% 50%",
+                  transform: `scale(${screensScale.toFixed(4)})`,
+                  opacity: screensOpacity,
+                  filter: screensBlur > 0.05 ? `blur(${screensBlur.toFixed(2)}px)` : undefined,
+                }}
+              >
+                {labelOpacity > 0.001 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: LABEL_Y + (1 - labelIn) * 18,
+                      width: STAGE.w,
+                      textAlign: "center",
+                      fontFamily: SERIF,
+                      fontStyle: "italic",
+                      fontWeight: 500,
+                      fontSize: 40,
+                      color: theme.ink2,
+                      opacity: labelOpacity,
+                    }}
+                  >
+                    {s0.label}
+                  </div>
+                )}
+                {s0.screens.map((_, i) => (
+                  <Screen key={i} frame={frame} i={i} />
+                ))}
               </div>
             )}
           </div>
+          {poolOpacity > 0.001 && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: poolOpacity,
+                background: "radial-gradient(ellipse 1250px 380px at 50% 50%, rgba(5,5,6,0.5), rgba(5,5,6,0) 72%)",
+              }}
+            />
+          )}
         </div>
       </GlitchLayer>
 
@@ -288,12 +331,30 @@ export const S0Hook: React.FC<SceneOverlayProps> = ({ frame }) => {
   );
 };
 
-/** Frames at which the typed lines finish (checks and later patches read them). */
-export const S0_TYPING_END = {
-  agent: typingEndFrame(s0.agentLine, S0_TIMING.agentLine.start, S0_TIMING.agentLine.opts),
-  hidden: typingEndFrame(s0.hiddenText, S0_TIMING.hidden.start, S0_TIMING.hidden.opts),
-} as const;
+// ---------------------------------------------------------------------------------------------- import-time checks
 
-if (S0_TYPING_END.agent > 52 || S0_TYPING_END.hidden > 96) {
-  throw new Error(`S0: typed lines must finish by f52 (agent) and f96 (hidden); got ${S0_TYPING_END.agent} and ${S0_TYPING_END.hidden}`);
-}
+/** Frames at which each screen finishes typing its command (checks and later patches read them). */
+export const S0_TYPING_END = s0.screens.map((spec, i) => {
+  const T = S0_TIMING;
+  const taskStart = T.type.start + i * T.type.stagger;
+  const cmdStart = typingEndFrame(spec.task, taskStart, T.type.taskOpts) + 5;
+  return typingEndFrame(spec.command, cmdStart, T.type.commandOpts);
+});
+
+(() => {
+  const T = S0_TIMING;
+  if (s0.screens.length !== T.landAt.length) throw new Error(`S0: ${s0.screens.length} screens in copy.ts but ${T.landAt.length} fail frames in S0_TIMING.landAt`);
+  s0.screens.forEach((spec, i) => {
+    if (!T.hits.includes(T.landAt[i] as (typeof T.hits)[number])) throw new Error(`S0: screen ${i + 1} fails on f${T.landAt[i]}, which is not one of the four beats ${T.hits.join(", ")}`);
+    if (S0_TYPING_END[i] > T.landAt[i] - 6) throw new Error(`S0: screen ${i + 1} finishes typing on f${S0_TYPING_END[i]}, too close to its failure on f${T.landAt[i]}`);
+    const inner = CARD.w - 2 * PAD;
+    const w = estimateWidth(spec.command, FONT, MONO_ADVANCE);
+    if (w > inner) throw new Error(`S0: the command "${spec.command}" is about ${Math.round(w)} px wide, more than the ${inner} px inside a screen`);
+    const verdictW = estimateWidth(spec.verdict, FONT, MONO_ADVANCE) + 32;
+    if (verdictW > inner) throw new Error(`S0: the verdict "${spec.verdict}" is about ${Math.round(verdictW)} px wide, more than the ${inner} px inside a screen`);
+  });
+  const gridBottom = GRID.y + 2 * CARD.h + GAP;
+  if (!(gridBottom <= STAGE.h - 96 - 40)) throw new Error(`S0: the grid reaches y ${gridBottom}, into the tag's row`);
+  if (!(T.glitch.start >= T.landAt[T.landAt.length - 1] + 6)) throw new Error("S0: the glitch must start after the last screen has failed");
+  if (!(T.out.end <= T.crush.start + 2)) throw new Error("S0: the screens must be gone as the crush into the dot starts");
+})();

@@ -12,8 +12,8 @@
 //
 // 14c: the teardown audit runs over the box. ContainerBox's audit line sweeps it (f1935-1965), its stamp "real secrets in sandbox: {n}" lands on the
 // beat f1965 (n is `s3Data().audit.realSecretsInSandbox`, which data.ts guarantees is 0 and S3c re-checks), the rack and the plate step back behind
-// it, the whole group is then pulled back to the strip left of the live gauges (`s3BoxPose`), the seal ring closes on it (f2040-2066) and it leaves
-// (f2078-2094). The group is ONE wrapper: chips, ring, stamp and the attack tag all scale together.
+// it, the seal ring closes round the box at its full size (f1984-2004) and the whole group then dissolves where it stands (`s3BoxPose`: fade, 3 % swell,
+// short blur, f2004-2022; patch 27 replaced the old pull-back-and-drag). The group is ONE wrapper: chips, ring, stamp and the attack tag go together.
 import React from "react";
 import { Badge, badgePulse, badgeReveal } from "../../fx/Badge";
 import { alpha, fonts, theme } from "../../config/theme";
@@ -119,7 +119,7 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
   const secrets = data.audit.realSecretsInSandbox;
   if (secrets !== 0) throw new Error(`S3: the audit stamp would read ${secrets}; the film must not show a stamp for a sandbox that held real secrets`);
   const pose = s3BoxPose(frame);
-  const moved = pose.scale !== 1 || pose.tx !== 0 || pose.ty !== 0;
+  const dissolving = pose.scale !== 1 || pose.blurPx > 0.05;
 
   return (
     <div
@@ -130,7 +130,8 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
         width: STAGE.w,
         height: STAGE.h,
         transformOrigin: "0 0",
-        transform: moved ? `translate(${pose.tx.toFixed(3)}px, ${pose.ty.toFixed(3)}px) scale(${pose.scale.toFixed(5)})` : undefined,
+        transform: dissolving ? `translate(${pose.tx.toFixed(3)}px, ${pose.ty.toFixed(3)}px) scale(${pose.scale.toFixed(5)})` : undefined,
+        filter: pose.blurPx > 0.05 ? `blur(${pose.blurPx.toFixed(2)}px)` : undefined,
         opacity: pose.opacity,
         pointerEvents: "none",
       }}

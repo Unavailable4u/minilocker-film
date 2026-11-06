@@ -7,18 +7,18 @@ import { FontsReady } from "./lib/fonts";
 import { Camera, getCameraState } from "./fx/Camera";
 import { Cursor } from "./fx/Cursor";
 import { Grain } from "./fx/Grain";
-import { GridPaper } from "./fx/GridPaper";
-import { StageGlow } from "./fx/StageGlow";
+import { StageBackground } from "./fx/StageBackground";
 import { Vignette } from "./fx/Vignette";
 import { FilmApp } from "./ui/FilmApp";
 import { FILM_CAMERA, FILM_CURSOR, SCENE_OVERLAYS } from "./scenes";
-import { appReveal, CAMERA_DOF, gridOpacity } from "./scenes/stageState";
+import { appReveal, CAMERA_DOF } from "./scenes/stageState";
 import { appLook } from "./scenes/appLook";
 import { FilmAudio } from "./audio/FilmAudio";
 
 /**
  * The film (patch 12a). Layers, bottom to top:
- *   stage gradient + drifting crimson glow -> grid paper (S1 / S9 only) -> <Camera> { FilmApp, Cursor } -> scene overlays -> grain -> vignette.
+ *   stage background (the picture in src/config/background.ts; the old gradient + crimson glow when that is switched off) -> <Camera> { FilmApp, Cursor } -> scene overlays -> grain -> vignette.
+ *   The red engineering-grid floor that S1 and S9 used to fade in is gone (gridOpacity / GridPaper stay in the repo, unused).
  *
  * Everything that changes between scenes lives in src/scenes/*: this file imports them through the barrel (src/scenes/index.ts)
  * and is not edited again. Scenes are mounted by a FRAME TEST, not <Sequence from>: a Sequence would shift useCurrentFrame() to
@@ -56,19 +56,13 @@ export const MiniLockerFilm: React.FC = () => {
   const { fps } = useVideoConfig();
   const cam = getCameraState(frame, FILM_CAMERA, fps);
   const reveal = appReveal(frame);
-  const grid = gridOpacity(frame);
   // The blur is a plain CSS filter on the app layer, in app px (screen px / zoom). Never a backdrop-filter: see appLook.ts.
   const blurLocal = appLook(frame).blurPx / cam.scale;
 
   return (
     <FontsReady>
       <Stage>
-        <StageGlow />
-        {grid > 0 && (
-          <div style={{ position: "absolute", inset: 0, opacity: grid }}>
-            <GridPaper perspective />
-          </div>
-        )}
+        <StageBackground />
 
         <Camera keyframes={FILM_CAMERA} dof={CAMERA_DOF}>
           {reveal.mounted && (

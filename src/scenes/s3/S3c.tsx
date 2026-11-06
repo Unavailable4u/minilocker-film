@@ -7,12 +7,14 @@
 //   - f1935-1965 the teardown audit: ContainerBox's line sweeps the box. f1965 (a beat) the stamp "real secrets in sandbox: 0" lands, the rack and the
 //     plate step back behind it, and the camera takes a small impact (the dimmed app jolts; the stage-space box does not). ALL of this is S3Box.tsx:
 //     the box is one object. This file owns the caption and the camera.
-//   - f2004-2018 the hand-back: S3Scrim leaves (shared.tsx) and the camera goes from the dimmed window to the live Blast panel (`blastPanel`, arrives
-//     f2032) so the app's own gauges are on screen, the Secrets card among them. The box is pulled back (S3Box, `s3BoxPose`) into the strip left of
-//     the panel, so the stamp's 0 and the gauge's 0 are on one frame.
-//   - f2040-2066 the seal ring closes on the pulled-back box (S3Box). f2052-2088 the camera swings from the panel to the header nav
-//     (`nav`, padding 96), where S4 starts at f2100: the underline slides to "Attack Lab" (script.ts SCREEN_CHANGES, hover lead from f2080). The sealed
-//     box holds until f2078 and leaves (fade, drift left) before the camera has landed, so it never crosses the nav.
+//   - f1984-2004 the seal ring closes round the box at its full size (S3Box), the frame after the stamp has settled.
+//   - f2004-2022 the hand-back (patch 27): S3Scrim leaves (shared.tsx), the camera goes from the dimmed window to the live Blast panel (`blastPanel`,
+//     arrives f2032) so the app's own gauges are on screen, the Secrets card among them, and the sealed box dissolves where it stands (S3Box,
+//     `s3BoxPose`: fade, 3 % swell, short blur). It is gone by f2022, 10 frames before the camera has landed on the panel, so the stamp's 0 and the
+//     gauge's 0 are never on screen together but the box never lingers over the panel either. (Before patch 27 it was shrunk to a strip left of the
+//     panel and dragged off; that read as a half-finished exit.)
+//   - f2052-2088 the camera swings from the panel to the header nav (`nav`, padding NAV_PADDING), where S4 starts at f2100: the underline slides to
+//     "Attack Lab" (script.ts SCREEN_CHANGES, hover lead from f2080). The box has been gone for 30 frames by then, so it never crosses the nav.
 //
 // Hand-offs. Nothing here needs 14a or 14b changed. S4a (patch 15): its first camera keyframe starts at f2100 or later, from the pose this part ends
 // on (`nav`, padding 96, no tilt, no bias); its first cursor waypoint arrives after f2100.
@@ -22,18 +24,12 @@
 // scan that did not happen would be a claim without a measurement.
 import React from "react";
 import { Caption } from "../../fx/Caption";
-import { getCameraState, worldToStage } from "../../fx/Camera";
-import { MONO_ADVANCE, estimateWidth } from "../../fx/util";
 import { kf, type CameraKeyframe, type CursorWaypoint } from "../../config/camera";
 import { copy } from "../../config/copy";
-import { focusRect } from "../../config/focus";
-import { layout } from "../../config/theme";
 import { CUES } from "../../config/timeline";
-import { BOX_W } from "../../gfx/ContainerBox";
 import type { SceneOverlayProps } from "../types";
-import { containerChips } from "../../data/select";
 import { s3Data } from "./data";
-import { NAV_PADDING, S3_PULLBACK, S3_TIMING } from "./shared";
+import { NAV_PADDING, S3_TIMING } from "./shared";
 
 const s3 = copy.s3;
 
@@ -84,7 +80,7 @@ export const S3C_CURSOR: readonly CursorWaypoint[] = [];
   if (!(t.caption.end <= T.scrim.outTo)) throw new Error("S3c: the caption must be gone by the time the app is back (the scrim's out-ramp ends)");
   if (!(t.gauges.from + t.gauges.frames <= t.swing.from)) throw new Error("S3c: the camera must have arrived on the gauges before it swings to the nav");
   if (!(t.swing.from + t.swing.frames <= t.partEnd)) throw new Error("S3c: the swing must have landed on the nav by the end of S3");
-  if (!(T.exit.from + T.exit.frames <= t.swing.from + t.swing.frames + 8)) throw new Error("S3c: the box must be gone as the camera lands on the nav (it must never cross the header)");
+  if (!(T.exit.from + T.exit.frames <= t.swing.from)) throw new Error("S3c: the box must be gone before the camera swings to the nav (it must never cross the header)");
 
   const data = s3Data(); // throws now, naming what is missing, if the evidence cannot support S3
   const a = data.audit;
@@ -92,18 +88,8 @@ export const S3C_CURSOR: readonly CursorWaypoint[] = [];
     throw new Error(`S3c: the teardown audit found ${a.realSecretsInSandbox} real secret(s) in the sandbox; the film must not hide it, so the stamp "${copy.gfxA.stampSecrets}: 0" will not be shown`);
   }
   if (!a.scanned) throw new Error("S3c: the ledger has no sandbox.audit that scanned the sandbox, so \"0 real secrets\" would not be a measurement");
-
-  // The pulled-back box (and its right-hand chip) must stay left of the live panel, and inside the safe margin, at the camera's `blastPanel` pose.
-  const pose = getCameraState(2030, [kf(0, "blastPanel", { padding: 96 })]);
-  const panel = focusRect("blastPanel");
-  const panelLeft = worldToStage(pose, { x: panel.x, y: panel.y }).x;
-  // right chip ("128 processes"): ContainerBox's CHIP_FONT 22, CHIP_PAD_X 18, STEM 30 (private constants there)
-  const rightChipW = Math.round(estimateWidth(containerChips(copy.s3.chips)[3], 22, MONO_ADVANCE)) + 36;
-  const rightEdge = S3_PULLBACK.to.x + S3_PULLBACK.scale * (BOX_W + 30 + rightChipW);
-  if (!(rightEdge + 16 <= panelLeft)) throw new Error(`S3c: the pulled-back box's right chip reaches stage x ${rightEdge.toFixed(0)}, within 16 px of the live panel (x ${panelLeft.toFixed(0)})`);
-  // left edge of the ink: the seal ring (22 px off the box, 3 px stroke: ContainerBox's SEAL_GAP) at the pulled-back scale
-  const leftInk = S3_PULLBACK.to.x - S3_PULLBACK.scale * 25;
-  if (!(leftInk >= layout.safeMargin)) throw new Error(`S3c: the pulled-back box's seal ring reaches stage x ${leftInk.toFixed(0)}, inside the ${layout.safeMargin} px safe margin`);
+  // The box no longer moves (patch 27), so the old checks on the pulled-back box's position are gone: it dissolves where it was drawn, and S3a / S3Box
+  // already check that its chips stay inside the safe margin.
 })();
 
 // ---------------------------------------------------------------------------------------------- the overlay

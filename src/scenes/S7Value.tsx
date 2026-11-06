@@ -4,8 +4,8 @@
 //
 //   f4260-4289  the app defocuses and drops behind: a stage-sized backdrop layer ramps to blur 10 px and brightness .35 (S7Scrim; exported,
 //               so S8 can ramp it out). It stays at full strength to the last frame of the scene.
-//   f4275-4379  the reviewer's question, italic CMU Serif, two lines, KineticText (copy.s7.line, split after its colon, never retyped).
-//               The words land by f4335; "know?" is drawn in accent-ink and underlined.
+//   f4275-4379  the question to ask before trusting an agent (patch 27: said to the viewer, not to a reviewer), italic CMU Serif, two lines,
+//               KineticText (copy.s7.line, split after its colon, never retyped). The words land by f4335; "know?" is drawn in accent-ink and underlined.
 //   f4305       a change-ticket card pops in on the right (code-built: hairlines, skeleton bars, a dashed slot labelled copy.s7.ticket.attach).
 //   f4320       a Blast Radius report sheet rises on the left: its title is copy.rep.eyebrow, its body the report's real 3 x 3 grid of dimension
 //               cards drawn as a schematic (no words, no numbers, no status colors: nothing measured is shown here).
@@ -108,7 +108,7 @@ const TABLE_Y = 170;
 
 // ---------------------------------------------------------------------------------------------- copy helpers (words are never retyped)
 
-/** "The reviewer's first question: what could it touch, ..." -> two lines, split after the colon. */
+/** "Before you trust an AI agent, ask: what could it touch, ..." -> two lines, split after the colon. */
 function splitAfter(text: string, mark: ": " | ". ", who: string): [string, string] {
   const i = text.indexOf(mark);
   if (i < 0) throw new Error(`S7: ${who} has no "${mark}" to split at: ${text}`);

@@ -12,8 +12,9 @@
 //   egress         wall at stage x 1500. 14b: packets leave the module plate's right end (`s3ModulePlate(...).stageRight`), along `packetY`
 //                  (the plate's middle, stage y 746), through the box's right edge (x 1260) to the wall.
 //   14c            the audit line sweeps the box (box-local x 0-1100), the stamp sits on the box's centre (the rack and the plate step back behind it),
-//                  then the whole box (chips, ring, stamp) is pulled back in STAGE space to `S3_PULLBACK`: x 112-596, y 408-672 (+ chips), in the
-//                  strip of the stage LEFT of the live Blast panel (stage x 715-1205 when the camera frames `blastPanel`), where the ring closes on it.
+//                  the seal ring closes round the box at its full size (f1984-2004), and then the whole box (chips, ring, stamp) dissolves IN PLACE
+//                  (patch 27: fade, a 3 % swell and a short blur, f2004-2022) as the app comes back. It is not shrunk and not moved any more: the old
+//                  pull-back to the strip left of the Blast panel read as the box being minimised and dragged away.
 import React from "react";
 import { alpha, theme } from "../../config/theme";
 import { BEAT } from "../../config/timeline";
@@ -124,33 +125,23 @@ export const S3_TIMING = {
    * The rack and the module plate step back (to 28 % of their ink) over f1958-1976, so the stamp does not lie over live tile labels.
    */
   stamp: { at: 1965, frames: 18, dimFrom: 1958, dimFrames: 18, dim: 0.72 },
-  /** 14c: the pull-back: the box shrinks to `S3_PULLBACK` over f2004-2032 (the app is handed back at the same time: scrim out f2004-2018). */
-  pullback: { from: 2004, frames: 28 },
-  /** 14c: the seal ring closes round the pulled-back box, f2040-2066 (ContainerBox draws it from the top centre to the bottom centre). */
-  seal: { from: 2040, frames: 26 },
-  /** 14c: the sealed box leaves (fade and a short drift left) over f2078-2094, before the camera has landed on the nav. */
-  exit: { from: 2078, frames: 16 },
+  /** 14c: the seal ring closes round the box at full size, f1984-2004 (ContainerBox draws it from the top centre to the bottom centre). It starts the frame after the stamp has settled (f1983). */
+  seal: { from: 1984, frames: 20 },
+  /**
+   * 14c (patch 27): the sealed box dissolves in place over f2004-2022, on the frame the app is handed back (scrim out f2004-2018, camera to the Blast panel from f2004).
+   * f2004 is 1:06.8 of the film. Nothing is shrunk or moved: the group fades, swells `swell` and blurs `blurPx` px while it goes.
+   */
+  exit: { from: 2004, frames: 18, swell: 0.03, blurPx: 10 },
 } as const;
 
-/**
- * 14c: where the box rests while the camera shows the live gauges. `scale` of the whole box group (chips, ring and stamp included); `to` is the
- * stage position of the box's top-left corner at rest. With the camera on `blastPanel` (padding 96, zoom 1.067) the panel covers stage x 715-1205:
- * the box and its right chip stay left of x ~691. `exitDrift` px to the left while it leaves.
- */
-export const S3_PULLBACK = { scale: 0.44, to: { x: 112, y: 408 }, exitDrift: 48 } as const;
-
-/** 14c: pose of the box group on a frame, applied as `translate(tx, ty) scale(scale)` from the stage's top-left corner, and its opacity. */
-export function s3BoxPose(frame: number): { tx: number; ty: number; scale: number; opacity: number } {
+/** 14c: how the box group looks on a frame while it dissolves: scale (about the box's centre), the translate that keeps that centre fixed, opacity, blur in px. */
+export function s3BoxPose(frame: number): { tx: number; ty: number; scale: number; opacity: number; blurPx: number } {
   const t = S3_TIMING;
-  const e = signature(clamp01((frame - t.pullback.from) / t.pullback.frames));
   const x = signature(clamp01((frame - t.exit.from) / t.exit.frames));
-  const scale = 1 + (S3_PULLBACK.scale - 1) * e;
-  return {
-    tx: (S3_PULLBACK.to.x - S3_PULLBACK.scale * S3_BOX.x) * e - S3_PULLBACK.exitDrift * x,
-    ty: (S3_PULLBACK.to.y - S3_PULLBACK.scale * S3_BOX.y) * e,
-    scale,
-    opacity: 1 - x,
-  };
+  const scale = 1 + t.exit.swell * x;
+  const cx = S3_BOX.x + BOX_W / 2;
+  const cy = S3_BOX.y + BOX_H / 2;
+  return { tx: cx * (1 - scale), ty: cy * (1 - scale), scale, opacity: 1 - x, blurPx: t.exit.blurPx * x };
 }
 
 /** 14c: 0..1 sweep of the audit line (ContainerBox applies no easing to it: the line moves at a constant speed). */
@@ -264,9 +255,8 @@ export const S3Scrim: React.FC<{ frame: number }> = ({ frame }) => {
   if (t.stamp.at % BEAT !== 0) throw new Error(`S3: the stamp's frame f${t.stamp.at} is not on a beat (BEAT = ${BEAT})`);
   if (!(t.audit.from + t.audit.frames <= t.stamp.at)) throw new Error("S3: the audit line must have left the box before the stamp lands");
   if (!(t.stamp.dimFrom + t.stamp.dimFrames <= t.stamp.at + t.stamp.frames)) throw new Error("S3: the rack must have stepped back by the time the stamp has settled");
-  if (!(t.stamp.at + t.stamp.frames < t.pullback.from)) throw new Error("S3: the stamp must have settled before the pull-back starts");
-  if (!(t.pullback.from >= t.scrim.outFrom)) throw new Error("S3: the pull-back is the hand-back to the app: it must not start before the scrim's out-ramp");
-  if (!(t.seal.from >= t.pullback.from + t.pullback.frames)) throw new Error("S3: the seal ring closes on the pulled-back box, after the pull-back");
-  if (!(t.exit.from >= t.seal.from + t.seal.frames)) throw new Error("S3: the sealed box must hold before it leaves");
+  if (!(t.seal.from >= t.stamp.at + t.stamp.frames - 1)) throw new Error("S3: the seal ring must start after the stamp has settled");
+  if (!(t.exit.from >= t.seal.from + t.seal.frames)) throw new Error("S3: the sealed box must hold (the ring must be closed) before it dissolves");
+  if (!(t.exit.from >= t.scrim.outFrom)) throw new Error("S3: the box dissolves as the app is handed back: it must not start before the scrim's out-ramp");
   if (!(t.exit.from + t.exit.frames <= 2099)) throw new Error("S3: the box must be gone by the last frame of S3 (f2099)");
 })();

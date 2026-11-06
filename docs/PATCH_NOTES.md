@@ -1463,3 +1463,32 @@ Run `node tools/make-prompt.mjs 26 --repo ../MiniLocker` and paste the result in
 
 **Known issues / not verified:** S5 still throws on the real evidence (wrapper format differs, capture had trimmed it): re-run `npm run evidence`, then adapt the fence parsing. `evidence:final-check` fails on 13 nulls in `evidence/measured.json`. Nothing rendered; legibility, colors and beat alignment unverified.
 
+
+---
+
+## PATCH 27 - New opening, swappable stage background, clean S3 exit, public-facing S7 wording
+
+**What changed**
+- **S0 opening (f0-299, `src/scenes/S0Hook.tsx`, `copy.s0`).** The single page-and-terminal card is gone. Six agent screens (3 x 2) rise under the line
+  "Six agents. Six ordinary tasks.", each types a task and one command, and they fail one by one on the four beats f105 / f120 / f135 / f150 (same
+  `slam` sounds as before) with a verdict chip. The glitch (f165-177) drops the screens to 30 % opacity and 2 px blur, and the caption lands ON TOP of them
+  (f180 / f210). The screens leave f248-272 and the caption is still drawn into the dot at f270-285, so S1 starts exactly as before.
+  Kept untouched because other files read them: `S0_CAMERA`, `S0_CURSOR`, `HOOK_DOT`, `S0_TIMING.hits`, `S0_TIMING.glitch`. Removed: the page card, the
+  scan spotlight, the typed agent line and the hidden-text block (`S0_TIMING.scan / hidden / agentLine / pageRise`, `S0_TYPING_END` is now an array, one entry per screen).
+- **Stage background.** `src/config/background.ts` + `src/fx/StageBackground.tsx` + `public/backgrounds/stage.png`. The film (MiniLockerFilm.tsx) and S0
+  both draw it; the red grid floor of S1 / S9 is no longer drawn (`GridPaper` and `gridOpacity` stay in the repo, unused). To swap it: overwrite
+  `public/backgrounds/stage.png`, or change `STAGE_BACKGROUND.src`; `src: null` brings back the old graphite gradient with the crimson glow. `position`,
+  `dim`, `blurPx` and `drift` are in the same file. The supplied picture is portrait 736 x 1288: it is cropped to 16:9 and upscaled about 2.6 x, so a
+  landscape picture of 1920 x 1080 or more will render sharper.
+- **S3 explainer exit (`src/scenes/s3/shared.tsx`, `S3Box.tsx`, `S3c.tsx`).** The box is no longer shrunk to 44 % and dragged left (`S3_PULLBACK`, `S3_TIMING.pullback`
+  are gone). The seal ring now closes at full size f1984-2004, and the box dissolves in place f2004-2022 (fade, 3 % swell, 10 px blur) as the app comes back
+  (the scrim leaves f2004-2018 and the camera goes to the Blast panel from f2004). f2004 is 1:06.8. `s3BoxPose` now also returns `blurPx`.
+- **S7 wording (`copy.s7.line`, voice block V7).** "The reviewer's first question: ..." became "Before you trust an AI agent, ask: what could it touch, and how would you
+  know?", said to the viewer. V7 says the same. The scene still splits the line after the colon and underlines "know?".
+
+**Checked:** `npx tsc --noEmit` clean; `npm run sfx:check` ok (no sound moved); stills of f40, f110, f200, f235, f262, f292, f480, f1990, f2010, f2024, f4345 and f5060 rendered and looked at.
+
+**Not verified / known issues**
+- Not rendered as a film: only stills, on a scratch copy where `s5Data()` was stubbed, because **S5 still throws at import on the committed evidence** (the wrapper-format problem listed in the QA amendment above). That is not caused by this patch and is not fixed by it.
+- The V0 voice-over (f20) still says "One hostile page, one poisoned package ...": it matches the new screens, but re-check its length against the new beats when you record.
+- `drift` zooms the background 5 % over the whole film; on the small picture this adds a little softness at the end. Set `drift: 0` for a static background.
