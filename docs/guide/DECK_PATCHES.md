@@ -10,7 +10,7 @@ Every patch leaves a valid, shippable PDF (`npm run deck` skips slides that are 
 |---|---|---|---|---|
 | 1 | 01 cover, 03 product screen | kit (Dot, Note, Pill, backdrop/footer), `words.ts`, stable numbering, `mapPoint` | nothing | done |
 | 2 | 02 problem, 04 Pattern A, 11 why different | `SixVerdicts`, `LoopStrip`; `CompareTable` at progress 1; `facts.ts`; kit `Ratio`, `Tag` | nothing | done |
-| 3 | 05 containment, 06 bait | cutaway (`ContainerBox` + `EgressWall`), `AttemptTable`, `DecoyRack` | nothing | todo |
+| 3 | 05 containment, 06 bait | `Cutaway` (`ContainerBox` + `EgressWall` + `DecoyRack`), `AttemptTable`; `facts.ts` readers for the hook log and secrets tally | nothing | done |
 | 4 | 07 wipe / rewind / re-hash | `Storyboard3` (`FileLattice`, `HashTile`, `SnapshotTimeline`, `GhostContainer`) | nothing | todo |
 | 5 | 08 hostile page, 09 Attack Lab | `DefensePath`, `AttackCategories` | **`public/deck/R1.png`** (guide section 6) | todo |
 | 6 | 10 evidence, 12 Vultr + limits | `TamperSchematic`, `HashChain` from the rewind events, `ArchitectureDiagram`, `LimitsCard` | nothing | todo |
@@ -41,3 +41,11 @@ If time runs out, the seven-slide cut from the guide is 01, 03, 04, 05, 07, 10, 
 - **Slide 04 "say" line.** The guide says every other scene uses scripted attackers, but `evidence.s3Source` is `"task"`, so slides 05 and 06 show this same model-driven run. The line says what is true: a model drives this task, the Attack Lab's attacks are scripted.
 - **Section numbers** follow patch 1 (section = slide number - 1).
 - **Small text.** `CompareTable` row sentences on slide 11 are 22 px, below the 28 px floor. Left unscaled so the closing question fits.
+
+## Notes on patch 3
+
+- **Cutaway.** The film's `ContainerBox`, `DecoyRack` and `EgressWall` at progress 1, laid out with the film's own geometry (`src/scenes/s3/shared.tsx`) and scaled by 0.88 into the slide. The guide says the box is about 880 x 600; the real `ContainerBox` is 1100 x 600, so it is scaled instead of redrawn. The wall is shortened to the box's height so it does not run past the bottom chips.
+- **Slide 05 evidence.** Allowed hosts, refused host, module name and the Network gauge all come from `s3Data()`, the same data as the film's S3. The Infra screenshot the guide lists is not on the slide: no room beside a hero this size, and the plaque already prints the same allowlist.
+- **Slide 06 attempt table.** Rows are parsed from the `cat /tmp/.shop_hook.jsonl` tool result in the ledger (`facts.hookAttempts`), the same lines the terminal crop shows at frame 1000. `ok` rows read "read a decoy", `error:*` rows read "refused". Three rows say "read a decoy" but the Secrets card counts two decoys read: the two file reads are caught by the canary (atime), `read_env` reads environment values, and the audit found no real secret in the sandbox, so what it read was bait.
+- **Slide 06 Report crop.** The guide's second small crop (Report section 8 Secrets card) is replaced by the Report's own line, rebuilt in `copy.rep.headline` words ("6 decoys planted, 2 read, 0 used") plus the audit stamp.
+- **Small text.** Labels inside the scaled film components (chips, decoy tiles, plaque hosts) are about 19 px on the slide, below the 28 px floor. They are the product's own drawing; the claim, the hosts that matter and every numeral are 24 px or larger.

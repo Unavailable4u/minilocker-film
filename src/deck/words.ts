@@ -1,7 +1,7 @@
 // Deck wording that is NOT in src/config/copy.ts: kickers, slide titles and the notes beside screenshots.
 // Same rules as copy.ts: no measured value here (numbers, hosts, models, hashes come from src/data/select.ts), no exclamation marks,
 // never "secure", "unhackable", "provably safe", "zero risk". Anything the film already says is imported from copy.ts, not retyped.
-import { s0, s1, s2, s5, s7, ws } from "../config/copy";
+import { rep, s0, s1, s2, s3, s5, s7, ws } from "../config/copy";
 
 const cap = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -46,6 +46,28 @@ export const W = {
      * slides show this same model-driven run. The repo's own rule is narrower and true: the Attack Lab's attacks are scripted, no model is involved.
      */
     say: "A model drives this task. The Attack Lab's attacks are scripted: no model is involved.",
+  },
+  s05: {
+    kicker: "§ 04 · Containment",
+    title: s3.caption,
+    lead: s3.captionPhoneHome,
+    allowlist: s3.calloutAllowlist,
+  },
+  s06: {
+    kicker: "§ 05 · The bait",
+    title: s3.captionBait,
+    /** the two callouts of the film's S3 */
+    random: s3.calloutRandom,
+    alarm: s3.calloutAlarm,
+    attemptHead: "what the module tried",
+    outcomeHead: "outcome",
+    /** The attempt went through, on a planted decoy. The other outcome word is the film's own (copy.gfxA.refused). */
+    readDecoy: "read a decoy",
+    proof: "the module's own log",
+    realRuns: "runs with a real secret",
+    hookRuns: "runs where the hook got out",
+    /** The Report's Secrets card line, in the Report's own words (copy.rep.headline). */
+    secretsLine: { planted: rep.headline.decoysPlanted, read: rep.headline.read, used: rep.headline.used, noReal: rep.headline.noReal },
   },
   s11: {
     kicker: "§ 10 · Why this is different",
