@@ -23,6 +23,7 @@ import { STAGE } from "../../config/timeline";
 import { BOX_H, BOX_RADIUS, BOX_W, ContainerBox, StampBox } from "../../gfx/ContainerBox";
 import { DecoyRack, type DecoyTile } from "../../gfx/DecoyRack";
 import type { SceneOverlayProps } from "../types";
+import { containerChips } from "../../data/select";
 import { s3Data, type S3Data } from "./data";
 import {
   S3_BOX,
@@ -150,7 +151,7 @@ export const S3Box: React.FC<SceneOverlayProps> = ({ frame }) => {
       <ContainerBox
         x={S3_BOX.x}
         y={S3_BOX.y}
-        chips={copy.s3.chips}
+        chips={containerChips(copy.s3.chips)}
         chipProgress={s3ChipProgress(frame)}
         drawProgress={draw}
         auditProgress={s3AuditProgress(frame)}

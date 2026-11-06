@@ -1450,3 +1450,16 @@ Run `node tools/make-prompt.mjs 26 --repo ../MiniLocker` and paste the result in
 **Warnings**
 - `src/data/evidence.json` in git is still the SAMPLE file. Evidence captured before Object Storage was wired (product commit `be6ea6b`) shows
   `storage.vultr: false`, and S8 refuses to draw the chip: re-capture in that case.
+
+## PATCH 24 + 25 amendment - QA pass on the real evidence (report in docs/QA_REPORT.md)
+
+**Why:** the first `npm run motion` against the real capture (not the sample) threw at import time in three scenes, so no frame could render.
+
+**Files changed:** `src/scenes/s2/S2b.tsx`, `src/scenes/s4/data.ts`, `src/data/select.ts`, `src/scenes/s3/S3Box.tsx`, `src/scenes/s3/S3c.tsx`, `src/dev/DevGfxA.tsx`, `src/scenes/s5/data.ts` (clearer error only), `scripts/capture-evidence.mjs`; created `docs/QA_REPORT.md`.
+
+**PUBLIC API:** `containerChips(template): readonly string[]` (`src/data/select.ts`): the six S3 chips, numbers read from `sandbox.created.hardening`, throws on contradiction.
+
+**Decisions:** S2b first-output move is clamped after the form exit; the S2b chip check needs one pulse while drawn; `outputToken()` skips `[OPERATOR NOTICE:` lines; `capture-evidence.mjs` keeps a `[UNTRUSTED WEB CONTENT` tool.result whole (cap 6000).
+
+**Known issues / not verified:** S5 still throws on the real evidence (wrapper format differs, capture had trimmed it): re-run `npm run evidence`, then adapt the fence parsing. `evidence:final-check` fails on 13 nulls in `evidence/measured.json`. Nothing rendered; legibility, colors and beat alignment unverified.
+

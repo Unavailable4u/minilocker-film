@@ -22,7 +22,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import "../ui/theme.css";
 import { copy } from "../config/copy";
 import { fonts, theme } from "../config/theme";
-import { selectInfra, selectTask } from "../data/select";
+import { containerChips, selectInfra, selectTask } from "../data/select";
 import { describe, measure } from "../lib/derive";
 import { clamp01, signature } from "../lib/ease";
 import { FontsReady } from "../lib/fonts";
@@ -127,7 +127,7 @@ const Scene: React.FC<DevGfxAProps> = ({ specimenUsed = false }) => {
       <ContainerBox
         x={BOX.x}
         y={BOX.y}
-        chips={copy.s3.chips}
+        chips={containerChips(copy.s3.chips)}
         chipProgress={CHIP_FRAMES.map((f) => lin(frame, f, 14))}
         drawProgress={lin(frame, BOX_DRAW, 48)}
         sealProgress={lin(frame, SEAL_START, 45)}

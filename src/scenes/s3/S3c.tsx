@@ -31,6 +31,7 @@ import { layout } from "../../config/theme";
 import { CUES } from "../../config/timeline";
 import { BOX_W } from "../../gfx/ContainerBox";
 import type { SceneOverlayProps } from "../types";
+import { containerChips } from "../../data/select";
 import { s3Data } from "./data";
 import { NAV_PADDING, S3_PULLBACK, S3_TIMING } from "./shared";
 
@@ -97,7 +98,7 @@ export const S3C_CURSOR: readonly CursorWaypoint[] = [];
   const panel = focusRect("blastPanel");
   const panelLeft = worldToStage(pose, { x: panel.x, y: panel.y }).x;
   // right chip ("128 processes"): ContainerBox's CHIP_FONT 22, CHIP_PAD_X 18, STEM 30 (private constants there)
-  const rightChipW = Math.round(estimateWidth(copy.s3.chips[3], 22, MONO_ADVANCE)) + 36;
+  const rightChipW = Math.round(estimateWidth(containerChips(copy.s3.chips)[3], 22, MONO_ADVANCE)) + 36;
   const rightEdge = S3_PULLBACK.to.x + S3_PULLBACK.scale * (BOX_W + 30 + rightChipW);
   if (!(rightEdge + 16 <= panelLeft)) throw new Error(`S3c: the pulled-back box's right chip reaches stage x ${rightEdge.toFixed(0)}, within 16 px of the live panel (x ${panelLeft.toFixed(0)})`);
   // left edge of the ink: the seal ring (22 px off the box, 3 px stroke: ContainerBox's SEAL_GAP) at the pulled-back scale

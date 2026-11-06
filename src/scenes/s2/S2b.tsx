@@ -87,7 +87,8 @@ function buildMoves(): readonly Move[] {
   const finish = pinAt("finish");
   return [
     { start: S2B_TIMING.leaveForm, frames: 30, target: "runView", bias: 1, why: "leave the form" },
-    { start: out - 10, frames: 28, target: "runRight", bias: 1, why: "first output" },
+    // never earlier than the end of the previous move: the first output frame comes from the captured run, so it can land inside the form exit
+    { start: Math.max(out - 10, S2B_TIMING.leaveForm + 30), frames: 28, target: "runRight", bias: 1, why: "first output" },
     { start: fail - 6, frames: 40, target: "runRight", bias: 1.03, why: "tests fail: push" },
     { start: fail + 34, frames: 44, target: "runRight", bias: 1.06, why: "creep while the file is read" },
     { start: patch - 18, frames: 28, target: "runLeft", bias: 1.02, why: "the patch: transcript" },
@@ -130,7 +131,10 @@ export const S2B_CURSOR: readonly CursorWaypoint[] = [
   if (!(S2B_TIMING.chipOut + 12 <= 1200)) throw new Error("S2b: the chip must be gone by f1200");
   const steps = assistantStepFrames();
   if (steps.length === 0) throw new Error("S2b: the fix run has no assistant step (llm.response), so the inference chip would never pulse");
-  if (!(steps[0] >= S2B_TIMING.chipIn + 14)) throw new Error(`S2b: the first assistant step (f${steps[0]}) lands before the chip is drawn (f${S2B_TIMING.chipIn + 14})`);
+  // A real capture can answer within a second of the press (the first step lands under the form exit), so the chip only has to pulse at
+  // least once while it is fully drawn; a pulse that lands before it is drawn is simply not seen.
+  const seen = steps.filter((f) => f >= S2B_TIMING.chipIn + 14 && f < S2B_TIMING.chipOut);
+  if (seen.length === 0) throw new Error(`S2b: no assistant step lands while the chip is drawn (f${S2B_TIMING.chipIn + 14}-${S2B_TIMING.chipOut}); the chip would never pulse`);
 })();
 
 // ---------------------------------------------------------------------------------------------- the inference chip

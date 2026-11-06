@@ -27,6 +27,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CORE = ["rewind_after_rm_rf", "hostile_page_injection", "credential_theft_exfil", "malicious_repo_hook", "exfil_unknown_domain"];
 const TOOL_OUTPUT_MAX = 600;
+/** The one exception to TOOL_OUTPUT_MAX: the untrusted-content wrapper of a browse result (S5 fence). */
+const FENCE_OUTPUT_MAX = 6000;
 const TASK_TIMEOUT_MS = 10 * 60 * 1000;
 const CI_REPO = "shaikh-dotcom/MiniLocker";
 
@@ -151,6 +153,8 @@ function trimEvents(events) {
     if (e.type !== "tool.result") return e;
     const r = e.payload?.result;
     if (typeof r !== "string" || r.length <= TOOL_OUTPUT_MAX) return e;
+    // S5 shows the fence: the page text the model is given. That result must reach the film whole (capped far higher), or the fence is cut mid-page.
+    if (/\[UNTRUSTED WEB CONTENT/.test(r) && r.length <= FENCE_OUTPUT_MAX) return e;
     trimmedCount++;
     return { ...e, payload: { ...e.payload, result: `${r.slice(0, TOOL_OUTPUT_MAX)}\n...[film: trimmed ${r.length - TOOL_OUTPUT_MAX} chars]` } };
   });

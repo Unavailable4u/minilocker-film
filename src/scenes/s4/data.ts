@@ -74,7 +74,8 @@ function outputToken(result: string | null): string | null {
   const lines = result
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l.length > 0 && !/^exit_code=/.test(l));
+    // the product prepends "[OPERATOR NOTICE: ... rewound ...]" to the first command after a rewind: it is the product talking, not the file
+    .filter((l) => l.length > 0 && !/^exit_code=/.test(l) && !/^\[OPERATOR NOTICE:/.test(l));
   return lines.length > 0 ? lines[0] : null;
 }
 

@@ -182,3 +182,40 @@ export function lastByType(
   }
   return undefined;
 }
+
+/**
+ * The six container chips of S3 (rule 8: no number is typed). Each chip is rebuilt from the `hardening` of the first `sandbox.created`
+ * event of the attack ledgers; `template` (copy.s3.chips) supplies the words that are claims rather than measurements ("no route out").
+ * Throws when the evidence contradicts a chip, because the film would then say something its own evidence does not.
+ */
+export function containerChips(template: readonly string[]): readonly string[] {
+  if (template.length !== 6) throw new Error("containerChips: copy.s3.chips must have six entries");
+  const names = selectAttackNames();
+  let h: Record<string, unknown> | null = null;
+  for (const n of names) {
+    const ev = selectAttackEvents(n).find((e) => e.type === "sandbox.created");
+    const hard = ev?.payload?.hardening;
+    if (hard && typeof hard === "object") {
+      h = hard as Record<string, unknown>;
+      break;
+    }
+  }
+  if (!h) return template; // no hardening in the evidence: the fallback is the words, as before
+  const bad = (what: string): never => {
+    throw new Error(`containerChips: the evidence's sandbox.created hardening says ${what}, which contradicts the chip; fix copy.s3.chips or re-capture`);
+  };
+  const user = String(h.user ?? "");
+  if (user === "" || user === "root" || /^0(:|$)/.test(user)) bad(`user "${user}"`);
+  if (h.read_only_rootfs !== true) bad("the root filesystem is not read-only");
+  const drop = Array.isArray(h.cap_drop) ? (h.cap_drop as string[]) : [];
+  const add = Array.isArray(h.cap_add) ? (h.cap_add as string[]) : [];
+  if (!drop.includes("ALL") || add.length > 0 || h.privileged === true) bad("capabilities are not all dropped");
+  const pids = h.pids_limit;
+  if (typeof pids !== "number" || !Number.isFinite(pids) || pids <= 0) bad("no pids_limit");
+  const mem = h.memory;
+  if (typeof mem !== "number" || !Number.isFinite(mem) || mem <= 0) bad("no memory limit");
+  if (h.memory_swap !== mem) bad("a swap allowance (memory_swap differs from memory)");
+  const mb = Math.round((mem as number) / (1024 * 1024));
+  return [template[0], template[1], template[2], `${pids} processes`, `${mb} MB, no swap`, template[5]];
+}
+

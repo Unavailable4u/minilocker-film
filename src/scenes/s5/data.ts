@@ -90,7 +90,13 @@ export function s5Data(): S5Data {
 
   // the fence: the tool result that wrapped the page text in the untrusted-data markers
   const wrap = events.find((e) => e.type === "tool.result" && typeof e.payload.result === "string" && /<<[^\n]*begins>>/.test(e.payload.result));
-  if (!wrap) fail(`the ledger of ${NAME} has no tool.result that wraps the page text in untrusted-data markers (<<... begins>> / <<... ends>>); the fence cannot be shown`);
+  if (!wrap) {
+    const real = events.find((e) => e.type === "tool.result" && typeof e.payload.result === "string" && /\[UNTRUSTED WEB CONTENT/.test(e.payload.result));
+    if (real && /\[film: trimmed \d+ chars\]/.test(String(real.payload.result))) {
+      fail(`the ledger of ${NAME} has the product's untrusted-content wrapper, but capture-evidence.mjs trimmed it (the page text is cut, the end marker is gone). Re-run "npm run evidence" with the current scripts/capture-evidence.mjs, then adapt the fence parsing below to the wrapper's real end marker`);
+    }
+    fail(`the ledger of ${NAME} has no tool.result that wraps the page text in untrusted-data markers (<<... begins>> / <<... ends>>); the fence cannot be shown`);
+  }
   const rows = String(wrap.payload.result).split("\n");
   const b = rows.findIndex((r) => /^<<.*begins>>$/.test(r.trim()));
   const e2 = rows.findIndex((r, i) => i > b && /^<<.*ends>>$/.test(r.trim()));
