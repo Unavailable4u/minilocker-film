@@ -9,7 +9,7 @@ Every patch leaves a valid, shippable PDF (`npm run deck` skips slides that are 
 | Patch | Slides | New code | Needs from you | Status |
 |---|---|---|---|---|
 | 1 | 01 cover, 03 product screen | kit (Dot, Note, Pill, backdrop/footer), `words.ts`, stable numbering, `mapPoint` | nothing | done |
-| 2 | 02 problem, 04 Pattern A, 11 why different | `SixVerdicts`, `LoopStrip`; `CompareTable` at progress 1 | nothing | todo |
+| 2 | 02 problem, 04 Pattern A, 11 why different | `SixVerdicts`, `LoopStrip`; `CompareTable` at progress 1; `facts.ts`; kit `Ratio`, `Tag` | nothing | done |
 | 3 | 05 containment, 06 bait | cutaway (`ContainerBox` + `EgressWall`), `AttemptTable`, `DecoyRack` | nothing | todo |
 | 4 | 07 wipe / rewind / re-hash | `Storyboard3` (`FileLattice`, `HashTile`, `SnapshotTimeline`, `GhostContainer`) | nothing | todo |
 | 5 | 08 hostile page, 09 Attack Lab | `DefensePath`, `AttackCategories` | **`public/deck/R1.png`** (guide section 6) | todo |
@@ -32,3 +32,12 @@ If time runs out, the seven-slide cut from the guide is 01, 03, 04, 05, 07, 10, 
 - Slide 3's title is the film's second tagline line without "and" (derived from `s1.tagline` in `words.ts`); the first tagline line is the lead.
 - The dial's own arc labels (Network, Policy, ...) are below the 28 px floor on the cover and in the screenshot. They are the product's own labels; the verdict word and the claim carry the slide.
 - Rendering needs a Chrome. If Remotion cannot download one, set `REMOTION_BROWSER_EXECUTABLE`.
+
+## Notes on patch 2
+
+- **`src/deck/facts.ts`** is where evidence values for the slides are read (fix-task pass rate, the hidden check, sandbox destroyed, bake-off line, hostile page status). A missing value throws and names the evidence path. Later patches add their readers here.
+- **Slide 04 frames.** The guide's frame table has drifted: frame 1100 now shows the poisoned module's log, not passing tests. "Before" uses frame 880, "after" uses frame 1330.
+- **Hidden check.** The guide's `hiddenCheck` event is `scenario.check` in the ledger. The label is the app's own event-log line.
+- **Slide 04 "say" line.** The guide says every other scene uses scripted attackers, but `evidence.s3Source` is `"task"`, so slides 05 and 06 show this same model-driven run. The line says what is true: a model drives this task, the Attack Lab's attacks are scripted.
+- **Section numbers** follow patch 1 (section = slide number - 1).
+- **Small text.** `CompareTable` row sentences on slide 11 are 22 px, below the 28 px floor. Left unscaled so the closing question fits.

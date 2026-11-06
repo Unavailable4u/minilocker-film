@@ -10,11 +10,17 @@ import "../ui/theme.css";
 import { FontsReady } from "../lib/fonts";
 import { DECK, Pending } from "./kit";
 import { S01 } from "./slides/S01";
+import { S02 } from "./slides/S02";
 import { S03 } from "./slides/S03";
+import { S04 } from "./slides/S04";
+import { S11 } from "./slides/S11";
 
 const BUILT: Readonly<Record<number, React.FC>> = {
   1: S01,
+  2: S02,
   3: S03,
+  4: S04,
+  11: S11,
 };
 
 export const DECK_SLIDES = DECK.total;

@@ -26,6 +26,36 @@ export const Numeral: React.FC<{ value: React.ReactNode; label: string; tone?: "
   </div>
 );
 
+/** "10 of 10" as a Numeral value: the first count big, "of N" smaller and quieter. Both counts and the word come from the evidence / copy.ts. */
+export const Ratio: React.FC<{ a: number; of: string; b: number }> = ({ a, of, b }) => (
+  <span>
+    {a}
+    <span style={{ fontSize: 48, color: theme.ink3 }}>
+      {" "}
+      {of} {b}
+    </span>
+  </span>
+);
+
+/**
+ * A callout tag in the film's glass style: a crimson dot and a short serif-italic phrase (copy.ts, five words at most). `lead` draws a leader line of that
+ * length to the left of the dot, so the tag can point at the numeral or line beside it.
+ */
+export const Tag: React.FC<{ children: string; lead?: number }> = ({ children, lead = 0 }) => (
+  <div style={{ display: "inline-flex", alignItems: "center" }}>
+    {lead > 0 ? <div style={{ width: lead, height: 3, borderRadius: 2, background: theme.accent }} /> : null}
+    <div
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 12, padding: "8px 22px 8px 16px", borderRadius: 999, background: theme.sheet,
+        border: `1px solid ${theme.rule2}`, boxShadow: theme.panelShadow, fontFamily: fonts.serif, fontStyle: "italic", fontSize: 30, lineHeight: 1.1, color: theme.ink, whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ flex: "none", width: 14, height: 14, borderRadius: 7, background: theme.accent }} />
+      {children}
+    </div>
+  </div>
+);
+
 /** The numbered crimson dot on its own (inline use, e.g. in a note list). */
 export const Dot: React.FC<{ n: number; size?: number }> = ({ n, size = 44 }) => (
   <div
