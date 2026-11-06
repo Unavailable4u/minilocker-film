@@ -10,7 +10,7 @@
 
 import React from "react";
 import { useCurrentFrame } from "remotion";
-import { fonts, layout, theme, type } from "../config/theme";
+import { fonts, halo, layout, theme, type } from "../config/theme";
 import { STAGE } from "../config/timeline";
 import { SERIF_ADVANCE, checkRange, estimateWidth, inOut, splitHighlight } from "./util";
 
@@ -99,7 +99,7 @@ export const Caption: React.FC<CaptionProps> = ({ text, highlight, sub, startFra
             letterSpacing: "-0.01em",
             color: theme.ink,
             whiteSpace: "nowrap",
-            textShadow: "0 2px 28px rgba(0,0,0,.65), 0 1px 2px rgba(0,0,0,.5)",
+            textShadow: `0 2px 28px ${halo(0.65)}, 0 1px 2px ${halo(0.5)}`,
           },
         ),
       )}
@@ -111,7 +111,7 @@ export const Caption: React.FC<CaptionProps> = ({ text, highlight, sub, startFra
             letterSpacing: "0.02em",
             color: theme.ink2,
             whiteSpace: "nowrap",
-            textShadow: "0 1px 12px rgba(0,0,0,.7)",
+            textShadow: `0 1px 12px ${halo(0.7)}`,
           })
         : null}
     </div>

@@ -8,9 +8,9 @@
     "bakeoff": "Source: the product repo's docs/notes/model-selection.md, the native-mode row of the chosen model. model = the exact model name the bake-off chose (it must equal the model /api/infra reports as inference.model: evidence:final-check fails if not). models = how many models the bake-off compared (a whole number, 4). usablePct = the percent of usable tool calls in that row (0..100, 100). p50Seconds = the median seconds per model call in that row (above 0, 0.89). S8 shows 'picked from a {models}-model bake-off: {usablePct}% usable tool calls, p50 {p50Seconds} s' on the inference chip only when all four values are set and the model matches.",
     "containment": "Not here: attackSummary comes from the capture itself (npm run evidence -- --attacks all), and the CI status from GitHub for the commit."
   },
-  "fixRepoV2": { "passes": null, "runs": null, "ciLow": null, "ciHigh": null, "mostMissedBug": null },
-  "research": { "passes": null, "runs": null, "ciLow": null, "ciHigh": null },
-  "hookEscaped": { "escaped": null, "runs": null },
-  "realSecrets": { "runsWithReal": null, "runs": null },
+  "fixRepoV2": { "passes": 10, "runs": 10, "ciLow": 0.722, "ciHigh": 1, "mostMissedBug": "none (10/10 passed)" },
+  "research": { "passes": 9, "runs": 10, "ciLow": 0.596, "ciHigh": 0.982 },
+  "hookEscaped": { "escaped": 0, "runs": 10 },
+  "realSecrets": { "runsWithReal": 0, "runs": 26 },
   "bakeoff": { "model": "mimo-v2.6-pro", "models": 4, "usablePct": 100, "p50Seconds": 0.89 }
 }

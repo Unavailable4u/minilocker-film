@@ -3,6 +3,7 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
 import { STAGE } from "../config/timeline";
+import { theme } from "../config/theme";
 
 export interface StageGlowProps {
   /** Scale on the whole effect, 0..1. Default 1. */
@@ -22,7 +23,7 @@ export const StageGlow: React.FC<StageGlowProps> = ({ opacity = 1 }) => {
         inset: 0,
         pointerEvents: "none",
         opacity,
-        background: `radial-gradient(ellipse 980px 620px at ${x.toFixed(1)}px ${y.toFixed(1)}px, rgba(255,32,82,${a.toFixed(4)}), transparent 70%)`,
+        background: `radial-gradient(ellipse 980px 620px at ${x.toFixed(1)}px ${y.toFixed(1)}px, rgba(${theme.glowRgb},${a.toFixed(4)}), transparent 70%)`,
       }}
     />
   );

@@ -16,7 +16,7 @@ import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import type { CameraKeyframe } from "../config/camera";
 import { focusRect, type FocusName } from "../config/focus";
-import { alpha, fonts, layout, theme, type } from "../config/theme";
+import { alpha, edgeLight, fonts, glass, glassBad, hair, isLight, layout, shade, theme, type } from "../config/theme";
 import { STAGE } from "../config/timeline";
 import { clamp01, signature } from "../lib/ease";
 import { spr } from "../lib/spring";
@@ -226,18 +226,18 @@ export const Callout: React.FC<CalloutProps> = ({
   // ---- look
   const tone =
     variant === "ok"
-      ? { line: theme.ok, text: theme.okC, border: alpha(theme.okB, 0.55), dot: theme.ok }
+      ? { line: theme.ok, text: theme.okInk, border: alpha(theme.okB, 0.55), dot: theme.ok }
       : variant === "flag"
         ? { line: theme.bad, text: theme.ink, border: alpha(theme.bad, 0.6), dot: theme.bad }
-        : { line: theme.ink2, text: theme.ink, border: "rgba(255,255,255,.16)", dot: theme.ink };
+        : { line: theme.ink2, text: theme.ink, border: hair(0.16), dot: theme.ink };
 
-  const base = "linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03))";
+  const base = `linear-gradient(180deg, ${edgeLight(0.1)}, ${edgeLight(0.03)})`;
   const fill =
     variant === "ok"
-      ? `${base}, linear-gradient(135deg, ${alpha(theme.okA, 0.4)}, ${alpha(theme.okB, 0.14)}), rgba(18,18,22,.74)`
+      ? `${base}, linear-gradient(135deg, ${alpha(theme.okA, isLight ? 0.14 : 0.4)}, ${alpha(theme.okB, isLight ? 0.05 : 0.14)}), ${glass(0.74)}`
       : variant === "flag"
-        ? `${theme.hatchBad}, linear-gradient(180deg, ${alpha(theme.bad, 0.16)}, ${alpha(theme.bad, 0.08)}), rgba(30,16,18,.78)`
-        : `${base}, rgba(18,18,22,.72)`;
+        ? `${theme.hatchBad}, linear-gradient(180deg, ${alpha(theme.bad, 0.16)}, ${alpha(theme.bad, 0.08)}), ${glassBad(0.78)}`
+        : `${base}, ${glass(0.72)}`;
 
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width: STAGE.w, height: STAGE.h, pointerEvents: "none" }}>
@@ -279,7 +279,7 @@ export const Callout: React.FC<CalloutProps> = ({
             background: fill,
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
-            boxShadow: "0 10px 30px -12px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.08) inset",
+            boxShadow: `0 10px 30px -12px ${shade(0.8)}, 0 1px 0 ${edgeLight(0.08)} inset`,
             color: tone.text,
             fontFamily: mono ? fonts.mono : fonts.serif,
             fontStyle: mono ? "normal" : "italic",
@@ -294,7 +294,7 @@ export const Callout: React.FC<CalloutProps> = ({
               useSide === "top" ? "50% 100%" : useSide === "bottom" ? "50% 0" : useSide === "left" ? "100% 50%" : "0 50%",
           }}
         >
-          {variant === "ok" ? <Tick color={theme.okC} size={fontSize * 0.8} /> : null}
+          {variant === "ok" ? <Tick color={theme.okInk} size={fontSize * 0.8} /> : null}
           <span>{text}</span>
         </div>
       </div>

@@ -9,14 +9,14 @@
 // The 1 px border is drawn as an overlay INSIDE the 1600 x 900 box, so the content area is exactly the logical size and every
 // rectangle in src/config/focus.ts stays valid. Pure and props-driven.
 import React from "react";
-import { alpha, fonts, theme } from "../config/theme";
+import { alpha, fonts, hair, shade, theme } from "../config/theme";
 import { LOGICAL } from "../config/timeline";
 
 /** Corner radius of the window. */
 export const WINDOW_RADIUS = 14;
 
-const BASE_BORDER = "rgba(255,255,255,.08)";
-const BASE_SHADOW = "0 40px 120px rgba(0,0,0,.65)";
+const BASE_BORDER = hair(0.08);
+const BASE_SHADOW = `0 40px 120px ${shade(0.65)}`;
 
 export interface AppWindowProps {
   /** Normally `<Header ... />`. It sits at the top and keeps its own height (GRID.headerH). */

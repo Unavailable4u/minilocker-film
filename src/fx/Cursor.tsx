@@ -18,7 +18,7 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
 import type { CursorWaypoint } from "../config/camera";
-import { theme } from "../config/theme";
+import { alpha, theme } from "../config/theme";
 import { clamp01, overshoot } from "../lib/ease";
 import { randRange } from "../lib/prng";
 
@@ -220,7 +220,7 @@ export const Cursor: React.FC<CursorProps> = ({ waypoints, size = 26, zoom }) =>
             height: ring.r * 2,
             borderRadius: "50%",
             border: `${2 * k}px solid ${theme.accent}`,
-            background: `radial-gradient(circle, rgba(240,26,73,${0.12 * (1 - s.ripple.t)}), transparent 70%)`,
+            background: `radial-gradient(circle, ${alpha(theme.accent, 0.12 * (1 - s.ripple.t))}, transparent 70%)`,
             opacity: ring.o,
           }}
         />

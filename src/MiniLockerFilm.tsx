@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import "./ui/theme.css";
-import { theme } from "./config/theme";
+import { THEME_MODE, theme } from "./config/theme";
 import { LOGICAL, SCENE_ORDER, SCENES, STAGE } from "./config/timeline";
 import { FontsReady } from "./lib/fonts";
 import { Camera, getCameraState } from "./fx/Camera";
@@ -33,6 +33,7 @@ const Stage: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     <AbsoluteFill style={{ background: "#000" }}>
       <div
         className="film-root"
+        data-film-theme={THEME_MODE}
         style={{
           position: "relative",
           // flex: none, or the AbsoluteFill's flex layout shrinks the stage to the composition height in the 960x540 Preview

@@ -10,7 +10,7 @@
 
 import React from "react";
 import { useCurrentFrame } from "remotion";
-import { fonts, theme } from "../config/theme";
+import { alpha, fonts, theme } from "../config/theme";
 import { clamp01, signature } from "../lib/ease";
 
 export interface KineticUnderline {
@@ -174,7 +174,7 @@ export const KineticText: React.FC<KineticTextProps> = ({
                         height: Math.max(3, fontSize * 0.045),
                         borderRadius: 2,
                         background: theme.accent,
-                        boxShadow: `0 0 ${fontSize * 0.22}px rgba(240,26,73,.55)`,
+                        boxShadow: `0 0 ${fontSize * 0.22}px ${alpha(theme.accent, 0.55)}`,
                         transformOrigin: "0 50%",
                         transform: `scaleX(${ulP * (1 - ulOut)})`,
                       }}

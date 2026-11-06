@@ -8,6 +8,7 @@
   },
   "scripts": {
     "studio": "remotion studio src/index.ts",
+    "studio:light": "remotion studio src/index.light.ts",
     "typecheck": "tsc --noEmit",
     "assets": "node scripts/fetch-assets.mjs",
     "evidence": "node scripts/capture-evidence.mjs",
@@ -17,10 +18,13 @@
     "sfx": "node scripts/make-sfx.mjs",
     "sfx:check": "node scripts/make-sfx.mjs --check",
     "check": "node scripts/check-stills.mjs",
+    "check:light": "node scripts/check-stills.mjs --theme=light",
     "motion": "node tools/audit-motion.mjs",
     "sheets": "node scripts/make-sheets.mjs",
     "render": "node scripts/render.mjs",
+    "render:light": "node scripts/render.mjs --theme=light",
     "render:4k": "node scripts/render.mjs --4k",
+    "render:light:4k": "node scripts/render.mjs --4k --theme=light",
     "render:frames": "node scripts/render.mjs --frames",
     "submission": "node scripts/make-submission-assets.mjs"
   },

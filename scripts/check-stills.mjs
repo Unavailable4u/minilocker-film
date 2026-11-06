@@ -3,6 +3,7 @@
 //   node scripts/check-stills.mjs --frames=60,480      only these frames (integers, 0 to 5099)
 //   node scripts/check-stills.mjs --scale=2            render at 2x (3840x2160)
 //   node scripts/check-stills.mjs --concurrency=4      parallel renders (default: half of the CPUs)
+//   node scripts/check-stills.mjs --theme=light        the LIGHT film (src/index.light.ts) into out/stills-light/
 //   node scripts/check-stills.mjs --help
 // Exit codes: 0 success | 1 failure (a "Fix:" line is always printed) | 2 usage error.
 // Pure Node 20+, ESM, Windows-friendly. Imports only node built-ins, @remotion/bundler and @remotion/renderer.
@@ -13,7 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUT_DIR = path.join(ROOT, "out", "stills");
+let OUT_DIR = path.join(ROOT, "out", "stills"); // out/stills-light with --theme=light (set after the flags are parsed)
+let ENTRY = "index.ts"; // index.light.ts with --theme=light
 const COMPOSITION_ID = "MiniLockerFilm";
 const TOTAL_FRAMES = 5100;
 
@@ -39,14 +41,15 @@ const SCENES = [
 
 const NEARLY_EMPTY_BYTES = 15 * 1024;
 
-const USAGE = `Usage: node scripts/check-stills.mjs [--frames=60,200,...] [--scale=N] [--concurrency=N] [--help]
+const USAGE = `Usage: node scripts/check-stills.mjs [--frames=60,200,...] [--scale=N] [--concurrency=N] [--theme=dark|light] [--help]
 
   --frames=a,b,c   replace the default list of 25 frames (integers from 0 to ${TOTAL_FRAMES - 1})
   --scale=N        render scale, default 1 (2 gives 3840x2160)
   --concurrency=N  parallel renders, default half of the CPUs (at least 1)
+  --theme=light    render the light film (src/index.light.ts) into out/stills-light/ instead; default is dark (out/stills/)
   --help           show this text
 
-Writes out/stills/fNNNNN.png (frame padded to 5 digits). Exit codes: 0 ok, 1 failure, 2 usage error.`;
+Writes out/stills/fNNNNN.png (out/stills-light/ with --theme=light; frame padded to 5 digits). Exit codes: 0 ok, 1 failure, 2 usage error.`;
 
 function usageError(message) {
   console.error(`Usage error: ${message}`);
@@ -61,7 +64,7 @@ function defaultConcurrency() {
 }
 
 function parseArgs(argv) {
-  const opts = { frames: null, scale: 1, concurrency: defaultConcurrency(), help: false };
+  const opts = { frames: null, scale: 1, concurrency: defaultConcurrency(), theme: "dark", help: false };
   for (const arg of argv) {
     if (arg === "--help" || arg === "-h") {
       opts.help = true;
@@ -85,6 +88,9 @@ function parseArgs(argv) {
       const n = Number(value);
       if (!Number.isFinite(n) || n <= 0 || n > 4) usageError(`--scale needs a number above 0 and at most 4 (got "${value}")`);
       opts.scale = n;
+    } else if (key === "theme") {
+      if (value !== "dark" && value !== "light") usageError(`--theme needs dark or light (got "${value}")`);
+      opts.theme = value;
     } else if (key === "concurrency") {
       if (!/^\d+$/.test(value) || Number(value) < 1) usageError(`--concurrency needs an integer of at least 1 (got "${value}")`);
       opts.concurrency = Number(value);
@@ -148,6 +154,10 @@ function readTextIfExists(file) {
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.theme === "light") {
+    OUT_DIR = path.join(ROOT, "out", "stills-light");
+    ENTRY = "index.light.ts";
+  }
   if (opts.help) {
     console.log(USAGE);
     return 0;
@@ -197,10 +207,10 @@ async function main() {
   let composition;
   let browser = null;
   try {
-    console.log(`Bundling src/index.ts (once) ...`);
+    console.log(`Bundling src/${ENTRY} (once) ...`);
     let lastPct = -1;
     serveUrl = await bundle({
-      entryPoint: path.join(ROOT, "src", "index.ts"),
+      entryPoint: path.join(ROOT, "src", ENTRY),
       onProgress: (pct) => {
         const step = Math.floor(pct / 25) * 25;
         if (step !== lastPct && pct < 100) {

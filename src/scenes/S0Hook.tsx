@@ -21,7 +21,7 @@ import { StageBackground } from "../fx/StageBackground";
 import { GlitchLayer } from "../ui/GlitchLayer";
 import { kf, type CameraKeyframe, type CursorWaypoint } from "../config/camera";
 import { copy } from "../config/copy";
-import { alpha, fonts, theme } from "../config/theme";
+import { alpha, fonts, scrim, shade, theme } from "../config/theme";
 import { FPS, STAGE } from "../config/timeline";
 import { clamp01, easeOutBack, signature } from "../lib/ease";
 import { spr } from "../lib/spring";
@@ -137,7 +137,7 @@ const Screen: React.FC<{ frame: number; i: number }> = ({ frame, i }) => {
         borderRadius: 14,
         background: theme.sheet,
         border: `1.5px solid ${failed ? alpha(theme.bad, 0.35 + 0.6 * flash) : theme.rule2}`,
-        boxShadow: `0 28px 70px rgba(0,0,0,.65), 0 0 ${(40 * flash).toFixed(1)}px ${alpha(theme.bad, 0.5 * flash)}, inset 0 0 ${(34 * flash).toFixed(1)}px ${alpha(theme.bad, 0.3 * flash)}`,
+        boxShadow: `0 28px 70px ${shade(0.65)}, 0 0 ${(40 * flash).toFixed(1)}px ${alpha(theme.bad, 0.5 * flash)}, inset 0 0 ${(34 * flash).toFixed(1)}px ${alpha(theme.bad, 0.3 * flash)}`,
         opacity: clamp01(rise * 1.4),
         transform: `translate(${knock.toFixed(2)}px, ${((1 - Math.min(1, rise)) * 90).toFixed(2)}px)`,
         overflow: "hidden",
@@ -283,7 +283,7 @@ export const S0Hook: React.FC<SceneOverlayProps> = ({ frame }) => {
                 position: "absolute",
                 inset: 0,
                 opacity: poolOpacity,
-                background: "radial-gradient(ellipse 1250px 380px at 50% 50%, rgba(5,5,6,0.5), rgba(5,5,6,0) 72%)",
+                background: `radial-gradient(ellipse 1250px 380px at 50% 50%, ${scrim(0.5)}, ${scrim(0)} 72%)`,
               }}
             />
           )}

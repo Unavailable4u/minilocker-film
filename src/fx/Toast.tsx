@@ -9,7 +9,7 @@
 
 import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
-import { alpha, fonts, layout, theme } from "../config/theme";
+import { alpha, edgeLight, fonts, layout, shade, theme } from "../config/theme";
 import { STAGE } from "../config/timeline";
 import { signature, clamp01 } from "../lib/ease";
 import { spr } from "../lib/spring";
@@ -88,7 +88,7 @@ export const Toast: React.FC<ToastProps> = ({ title, text, tone = "info", startF
             borderRadius: 14,
             border: `1px solid ${alpha(t.c, 0.5)}`,
             background: `${tone === "bad" ? `${theme.hatchBad}, ` : ""}linear-gradient(180deg, ${alpha(t.c, 0.1)}, transparent), ${t.wash}`,
-            boxShadow: "0 24px 50px -22px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.06) inset",
+            boxShadow: `0 24px 50px -22px ${shade(0.9)}, 0 1px 0 ${edgeLight(0.06)} inset`,
           }}
         >
           <div style={{ width: 10, height: 10, borderRadius: 5, background: t.c, marginTop: 9, flex: "none", boxShadow: `0 0 12px ${alpha(t.c, 0.6)}` }} />

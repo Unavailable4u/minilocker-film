@@ -9,7 +9,7 @@
 // Pill text is mono, at least 20 px (BIBLE 4.2). The text must come from copy.ts (badges) or from evidence selectors.
 
 import React from "react";
-import { alpha, fonts, theme } from "../config/theme";
+import { alpha, edgeLight, fonts, glassDeep, shade, theme } from "../config/theme";
 import { clamp01, signature } from "../lib/ease";
 
 export type BadgeTone = "accent" | "ok" | "bad" | "warn" | "info" | "mute";
@@ -63,8 +63,8 @@ export const Badge: React.FC<BadgeProps> = ({ label, tone = "accent", pulse = 1,
         padding: `0 ${fs * 0.75}px`,
         borderRadius: fs * 1.0,
         border: `1px solid ${alpha(c, 0.55)}`,
-        background: `linear-gradient(180deg, ${alpha(c, 0.16)}, ${alpha(c, 0.06)}), rgba(12,12,16,.7)`,
-        boxShadow: "0 8px 24px -12px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.06) inset",
+        background: `linear-gradient(180deg, ${alpha(c, 0.16)}, ${alpha(c, 0.06)}), ${glassDeep(0.7)}`,
+        boxShadow: `0 8px 24px -12px ${shade(0.8)}, 0 1px 0 ${edgeLight(0.06)} inset`,
         fontFamily: fonts.mono,
         fontWeight: 700,
         fontSize: fs,

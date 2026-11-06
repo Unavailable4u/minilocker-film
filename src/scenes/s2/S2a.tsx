@@ -18,7 +18,7 @@ import { kf, type CameraKeyframe, type CursorWaypoint } from "../../config/camer
 import { anchorPoint, workspaceAnchors } from "../../config/anchors";
 import { copy } from "../../config/copy";
 import { FORM, FIX_RUN } from "../../config/script";
-import { alpha, fonts, theme } from "../../config/theme";
+import { alpha, fonts, glassDeep, theme } from "../../config/theme";
 import { CUES } from "../../config/timeline";
 import { clamp01, signature } from "../../lib/ease";
 import type { SceneOverlayProps } from "../types";
@@ -167,7 +167,7 @@ const FlowCard: React.FC<{ i: number; label: string; frame: number }> = ({ i, la
         padding: "0 22px",
         borderRadius: 18,
         border: `1px solid ${border}`,
-        background: `linear-gradient(180deg, ${alpha(theme.ink, 0.07)}, ${alpha(theme.ink, 0.02)}), rgba(12,12,16,.74)`,
+        background: `linear-gradient(180deg, ${alpha(theme.ink, 0.07)}, ${alpha(theme.ink, 0.02)}), ${glassDeep(0.74)}`,
         boxShadow: `${theme.panelShadow}, 0 0 ${28 * lit}px -8px ${alpha(accent, 0.5 * lit)}`,
         clipPath: `inset(0 ${(1 - reveal) * 100}% 0 0 round 18px)`,
         WebkitClipPath: `inset(0 ${(1 - reveal) * 100}% 0 0 round 18px)`,

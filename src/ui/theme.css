@@ -1,4 +1,4 @@
-/* MiniLocker film: tokens as CSS variables (dark theme of the real app) and the type utilities.
+/* MiniLocker film: tokens as CSS variables (dark theme of the real app; the light film overrides them below) and the type utilities.
    Variables live on :root. Base text styles are scoped to .film-root so the Remotion Studio chrome is untouched.
    No transitions, no animations: every motion is driven by the frame number. */
 :root {
@@ -39,6 +39,45 @@
   --elev-lift: 0 30px 80px -24px rgba(0, 0, 0, 0.85);
   --font-serif: "CMU Serif", "Latin Modern Roman", "Computer Modern", "Times New Roman", Georgia, serif;
   --font-mono: "CMU Typewriter Text", "Latin Modern Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* The light film (src/index.light.ts): the app's :root "Paper" theme. The Stage wrapper in MiniLockerFilm.tsx sets data-film-theme="light" on
+   .film-root, and these variables win over the dark ones on :root for everything inside it. The terminal stays dark, as in the real app. */
+.film-root[data-film-theme="light"] {
+  color-scheme: light;
+  --paper: #f2f0eb;
+  --sheet: #faf9f6;
+  --raised: #ffffff;
+  --sunken: #e9e6df;
+  --rule: #d9d5cb;
+  --rule-2: #bfbaad;
+  --ink: #121216;
+  --ink-2: #44434a;
+  --ink-3: #6a6972;
+  --accent: #d90f3d;
+  --accent-ink: #c20c36;
+  --accent-2: #7c5cd6;
+  --on-accent: #ffffff;
+  --ok: #1d4ed8;
+  --ok-wash: #dfe4f2;
+  --bad: #c8321f;
+  --bad-wash: #f4dfda;
+  --warn: #9a5800;
+  --warn-wash: #eee4d6;
+  --on-warn: #fffaf0;
+  --info: #6d4fc4;
+  --info-wash: #e9e5f0;
+  --ok-a: #1a3fc4;
+  --ok-b: #2f6fe8;
+  --ok-c: #5b9cf5;
+  --term-bg: #09090c;
+  --term-fg: #f2f1ed;
+  --term-dim: #8e8c86;
+  --grid: rgba(60, 40, 40, 0.05);
+  --glow-a: rgba(217, 15, 61, 0.08);
+  --glow-b: rgba(124, 92, 214, 0.07);
+  --elev-panel: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 1px 0 #d9d5cb, 0 18px 34px -26px rgba(40, 30, 30, 0.45);
+  --elev-lift: 0 24px 60px -24px rgba(30, 20, 20, 0.45);
 }
 
 .film-root {
@@ -87,6 +126,9 @@
 /* flagged things get hatching as well as color */
 .hatch-bad {
   background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255, 90, 79, 0.16) 5px 6px);
+}
+.film-root[data-film-theme="light"] .hatch-bad {
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(200, 50, 31, 0.16) 5px 6px);
 }
 
 /* clean is a blue gradient, wherever it is drawn as a fill */

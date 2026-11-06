@@ -5,8 +5,9 @@
 //   npm run render -- --allow-sample     same, on SAMPLE evidence (test render only, never submit it)
 //   npm run render:4k                    3840x2160 (Remotion scale 2): out/minilocker-demo-4k.mp4
 //   npm run render:frames                PNG sequence of the whole film in out/frames (no audio)
+//   npm run render:light                 the LIGHT film (src/index.light.ts): out/minilocker-demo-light.mp4, poster-light.png, preview-light.gif
 //
-// Flags: --allow-sample, --4k, --frames, --concurrency=N, --help.   Exit codes: 0 ok, 1 failure or refusal, 2 usage error.
+// Flags: --allow-sample, --4k, --frames, --theme=dark|light, --concurrency=N, --help.   Exit codes: 0 ok, 1 failure or refusal, 2 usage error.
 // Method (split contract 3.4): @remotion/bundler + @remotion/renderer Node API. The API does not read remotion.config.ts,
 // so its settings (JPEG frames at quality 95, yuv420p, overwrite) are passed explicitly below.
 
@@ -45,6 +46,8 @@ const HELP = `Usage: node scripts/render.mjs [flags]
   --allow-sample     render even when the evidence is SAMPLE (test only; writes out/SAMPLE_EVIDENCE_WARNING.txt)
   --4k               3840x2160 render (Remotion scale 2) to out/minilocker-demo-4k.mp4 (no poster, no gif)
   --frames           PNG sequence of the whole film to out/frames (scale 1, no audio, no mp4)
+  --theme=light      render the LIGHT film (src/index.light.ts). Every output gets a -light suffix, so the dark files are never overwritten:
+                     out/minilocker-demo-light.mp4, poster-light.png, preview-light.gif, minilocker-demo-light-4k.mp4, frames-light/. Default: dark.
   --concurrency=N    parallel browser tabs (default: half the CPU count, at least 1; lower it if you run out of memory)
   --help             this text
 
@@ -52,12 +55,17 @@ Normal run writes out/minilocker-demo.mp4 (H.264 crf 16, yuv420p, AAC 192 kbps, 
 (frame ${POSTER_FRAME}) and out/preview.gif (720 px, 15 fps, at most 8 MB, the 6 s wipe excerpt).`;
 
 function parseFlags(argv) {
-  const o = { allowSample: false, k4: false, frames: false, concurrency: Math.max(1, Math.floor(os.cpus().length / 2)), help: false };
+  const o = { allowSample: false, k4: false, frames: false, theme: "dark", concurrency: Math.max(1, Math.floor(os.cpus().length / 2)), help: false };
   for (const a of argv) {
     if (a === "--allow-sample") o.allowSample = true;
     else if (a === "--4k") o.k4 = true;
     else if (a === "--frames") o.frames = true;
     else if (a === "--help") o.help = true;
+    else if (/^--theme=/.test(a)) {
+      const t = a.split("=")[1];
+      if (t !== "dark" && t !== "light") usage(`--theme needs dark or light (got "${t}")`);
+      o.theme = t;
+    }
     else if (/^--concurrency=/.test(a)) {
       const n = Number(a.split("=")[1]);
       if (!Number.isInteger(n) || n < 1 || n > 64) usage(`--concurrency needs a whole number from 1 to 64 (got "${a.split("=")[1]}")`);
@@ -73,6 +81,10 @@ function usage(msg) {
 }
 
 const flags = parseFlags(process.argv.slice(2));
+// The light film is the same composition built from another entry point (src/index.light.ts sets the theme before anything else loads).
+// Its outputs carry a -light suffix so a dark and a light render sit side by side in out/.
+const ENTRY = flags.theme === "light" ? "src/index.light.ts" : "src/index.ts";
+const SUF = flags.theme === "light" ? "-light" : "";
 if (flags.help) {
   say(HELP);
   process.exit(0);
@@ -146,7 +158,7 @@ function preflight() {
     const r = run(bin, ["-version"]);
     if (r.error || r.status !== 0) throw new Fail(`${bin} is not available on PATH`, FFMPEG_FIX);
   }
-  if (!fs.existsSync(path.join(ROOT, "src/index.ts"))) throw new Fail("src/index.ts not found", "run this from the minilocker-film repo");
+  if (!fs.existsSync(path.join(ROOT, ENTRY))) throw new Fail(`${ENTRY} not found`, "run this from the minilocker-film repo (and apply the light-theme patch if you want --theme=light)");
   if (!fs.existsSync(path.join(ROOT, "node_modules/@remotion/renderer")) || !fs.existsSync(path.join(ROOT, "node_modules/@remotion/bundler"))) {
     throw new Fail("@remotion/renderer or @remotion/bundler is not installed", "run npm install");
   }
@@ -250,7 +262,7 @@ async function prepare() {
   const { bundle, renderer } = await loadRemotion();
   const tick = stepper("bundle", 25);
   const serveUrl = await bundle({
-    entryPoint: path.join(ROOT, "src/index.ts"),
+    entryPoint: path.join(ROOT, ENTRY),
     onProgress: (p) => tick(p),
   });
   const composition = await renderer.selectComposition({ serveUrl, id: COMP_ID, inputProps: {}, browserExecutable, logLevel: "warn" });
@@ -377,7 +389,7 @@ function verify(file, width, height) {
 
 // ---------- 8. poster and gif ------------------------------------------------------------------------------------------
 async function makePoster({ renderer, serveUrl, composition }) {
-  const file = path.join(OUT, "poster.png");
+  const file = path.join(OUT, `poster${SUF}.png`);
   say(`[8/8] poster (frame ${POSTER_FRAME}) and preview gif`);
   await renderer.renderStill({
     composition,
@@ -396,7 +408,7 @@ async function makePoster({ renderer, serveUrl, composition }) {
 }
 
 function makeGif(mp4) {
-  const file = path.join(OUT, "preview.gif");
+  const file = path.join(OUT, `preview${SUF}.gif`);
   const ladder = [
     { w: 720, fps: 15, colors: 256 },
     { w: 720, fps: 15, colors: 128 },
@@ -421,7 +433,7 @@ function makeGif(mp4) {
 
 // ---------- frames mode -------------------------------------------------------------------------------------------------
 async function renderFrameSequence({ renderer, serveUrl, composition }) {
-  const dir = path.join(OUT, "frames");
+  const dir = path.join(OUT, `frames${SUF}`);
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
   say(`[5/8] rendering ${composition.durationInFrames} PNG frames to ${rel(dir)}, concurrency ${flags.concurrency}`);
@@ -447,7 +459,7 @@ async function renderFrameSequence({ renderer, serveUrl, composition }) {
   const pattern = m ? `${m[1]}%0${m[2].length}d${m[3]}` : "element-%04d.png";
   say(`  ${files.length} frames, first file ${files[0]}, last ${files[files.length - 1]}`);
   say("  to make a video from them (no audio):");
-  say(`  ffmpeg -framerate ${FPS} -i out/frames/${pattern} -c:v libx264 -crf 16 -pix_fmt yuv420p -movflags +faststart out/frames-video.mp4`);
+  say(`  ffmpeg -framerate ${FPS} -i out/frames${SUF}/${pattern} -c:v libx264 -crf 16 -pix_fmt yuv420p -movflags +faststart out/frames-video${SUF}.mp4`);
 }
 
 // ---------- main --------------------------------------------------------------------------------------------------------
@@ -467,8 +479,8 @@ async function main() {
   }
 
   const scale = flags.k4 ? 2 : 1;
-  const raw = path.join(OUT, flags.k4 ? "raw-4k.mp4" : "raw.mp4");
-  const final = path.join(OUT, flags.k4 ? "minilocker-demo-4k.mp4" : "minilocker-demo.mp4");
+  const raw = path.join(OUT, flags.k4 ? `raw${SUF}-4k.mp4` : `raw${SUF}.mp4`);
+  const final = path.join(OUT, flags.k4 ? `minilocker-demo${SUF}-4k.mp4` : `minilocker-demo${SUF}.mp4`);
   await renderVideo(ctx, scale, raw);
   finalizeAudio(raw, final);
   const duration = verify(final, ctx.composition.width * scale, ctx.composition.height * scale);

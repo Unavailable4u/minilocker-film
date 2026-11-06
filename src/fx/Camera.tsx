@@ -24,6 +24,7 @@ import { FPS, LOGICAL, STAGE, sceneAt } from "../config/timeline";
 import { clamp01, mapRange, signature } from "../lib/ease";
 import { rand } from "../lib/prng";
 import { spr } from "../lib/spring";
+import { veil } from "../config/theme";
 
 const ORIGIN = { x: STAGE.w / 2, y: STAGE.h / 2 } as const;
 
@@ -241,7 +242,7 @@ export const Camera: React.FC<CameraProps> = ({ keyframes, dof = true, wideTilt,
             width: STAGE.w,
             height: STAGE.h,
             pointerEvents: "none",
-            background: `rgba(0,0,0,${CAMERA_LIMITS.dofDim})`,
+            background: veil(CAMERA_LIMITS.dofDim),
             backdropFilter: `blur(${CAMERA_LIMITS.dofBlurPx}px)`,
             WebkitBackdropFilter: `blur(${CAMERA_LIMITS.dofBlurPx}px)`,
             maskImage: hole,

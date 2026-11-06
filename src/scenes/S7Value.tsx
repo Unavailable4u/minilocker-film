@@ -18,7 +18,7 @@
 // Every word is copy.ts (copy.s7, copy.rep.eyebrow, copy.gfxC). Nothing measured is shown, so this scene reads nothing from the evidence.
 // Only generic categories appear: no competitor names. The marks of the table are an editorial judgement and say so nowhere but in copy.gfxC.
 import React from "react";
-import { alpha, fonts, layout, theme } from "../config/theme";
+import { alpha, fonts, layout, scrim, theme } from "../config/theme";
 import { kf, type CameraKeyframe, type CursorWaypoint } from "../config/camera";
 import { copy } from "../config/copy";
 import { BEAT, FPS, SCENES, STAGE } from "../config/timeline";
@@ -128,7 +128,7 @@ export const S7Scrim: React.FC<{ frame: number }> = ({ frame }) => {
   const a = s7ScrimAmount(frame);
   if (a <= 0.001) return null;
   // Dim only (brightness .35 = 65 % black). The 10 px blur is applied to the app layer by MiniLockerFilm (appLook.ts): a backdrop-filter here drew mirrored copies of the window (f4270).
-  return <div style={{ position: "absolute", inset: 0, background: `rgba(5,5,6,${((1 - S7_SCRIM.brightness) * a).toFixed(3)})`, pointerEvents: "none" }} />;
+  return <div style={{ position: "absolute", inset: 0, background: scrim(+((1 - S7_SCRIM.brightness) * a).toFixed(3)), pointerEvents: "none" }} />;
 };
 
 // ---------------------------------------------------------------------------------------------- the two cards

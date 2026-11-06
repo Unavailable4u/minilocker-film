@@ -39,6 +39,15 @@ Run these in order. Each line says what the step produces.
 
 Files made with `--allow-sample` must not be submitted.
 
+## Light theme film
+
+The film also builds in a light look (the real app's "Paper" theme), from a second entry point, `src/index.light.ts`. Same scenes, timing and audio; the dark film is the default and is not changed.
+
+- `npm run studio:light` opens the Studio on the light film.
+- `npm run check:light` renders the check stills into `out/stills-light/`.
+- `npm run render:light` (or `render:light:4k`) writes `out/minilocker-demo-light.mp4`, `poster-light.png` and `preview-light.gif`. The same flags as `render` apply (for example `-- --allow-sample`).
+- The light stage picture is `public/backgrounds/stage-light.png`; swap it the same way as `stage.png` (see `src/config/background.ts`, `STAGE_BACKGROUND_LIGHT`).
+
 ## Commands reference
 
 Pass flags after `--`, for example `npm run render -- --allow-sample`. An unknown flag is a usage error (exit code 2) for

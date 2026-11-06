@@ -6,7 +6,7 @@
 
 import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
-import { fonts, theme } from "../config/theme";
+import { edgeLight, fonts, shade, theme } from "../config/theme";
 import { clamp01 } from "../lib/ease";
 import { spr } from "../lib/spring";
 
@@ -64,7 +64,7 @@ export const KeyCap: React.FC<KeyCapProps> = ({ label, startFrame = 0, pressAt =
           borderRadius: size * 0.34,
           border: `1px solid ${theme.rule2}`,
           background: `linear-gradient(180deg, ${theme.raised}, ${theme.sheet})`,
-          boxShadow: `0 ${depth}px 0 ${theme.rule2}, 0 ${depth + 10}px 20px -8px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.07) inset`,
+          boxShadow: `0 ${depth}px 0 ${theme.rule2}, 0 ${depth + 10}px 20px -8px ${shade(0.8)}, 0 1px 0 ${edgeLight(0.07)} inset`,
           transform: `translateY(${dip}px)`,
           fontFamily: fonts.mono,
           fontWeight: 700,

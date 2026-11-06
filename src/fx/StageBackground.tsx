@@ -4,7 +4,7 @@
 import React from "react";
 import { Img, staticFile, useCurrentFrame } from "remotion";
 import { STAGE_BACKGROUND } from "../config/background";
-import { theme } from "../config/theme";
+import { scrim, theme } from "../config/theme";
 import { TOTAL } from "../config/timeline";
 import { clamp01 } from "../lib/ease";
 import { StageGlow } from "./StageGlow";
@@ -38,7 +38,7 @@ export const StageBackground: React.FC = () => {
           filter: b.blurPx > 0 ? `blur(${b.blurPx}px)` : undefined,
         }}
       />
-      {b.dim > 0 && <div style={{ position: "absolute", inset: 0, background: `rgba(5,5,6,${b.dim})` }} />}
+      {b.dim > 0 && <div style={{ position: "absolute", inset: 0, background: scrim(b.dim) }} />}
     </div>
   );
 };
