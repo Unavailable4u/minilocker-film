@@ -9,8 +9,10 @@
 //
 // Always a failure: infra.vultr.available false; attackSummary.total not 15; a ledger whose verification says "not verified";
 // the string "[[" or "TODO" in any text; anything shaped like a private key, an AWS key id, an sk-/ghp_ token or your API token;
-// missing required paths. The rewind verdict is a failure unless it is "breached", which is a loud warning (with --final it is
-// a failure too: the film must not be made around it).
+// missing required paths (a missing measured key too: use null until it is measured). The rewind verdict is a failure unless it is
+// "breached", which is a loud warning (with --final it is a failure too: the film must not be made around it).
+// With --final, measured.bakeoff must also be consistent: its model equals infra.inference.model, models is a whole number >= 1,
+// usablePct is 0..100 and p50Seconds is above 0.
 
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -203,7 +205,7 @@ const MEASURED_KEYS = {
   research: ["passes", "runs", "ciLow", "ciHigh"],
   hookEscaped: ["escaped", "runs"],
   realSecrets: ["runsWithReal", "runs"],
-  bakeoff: ["model"],
+  bakeoff: ["model", "models", "usablePct", "p50Seconds"],
 };
 const measured = req("measured", isObj, "an object");
 if (measured) {
@@ -214,10 +216,28 @@ if (measured) {
     }
     for (const k of keys) {
       const p = `measured.${group}.${k}`;
-      if (!(k in measured[group])) fail(p, "is missing (use null until it is measured)");
+      if (!(k in measured[group])) fail(p, "is missing (use null until it is measured; `npm run evidence -- --measured-only` copies it from evidence/measured.json)");
       else if (measured[group][k] === null) {
-        if (FINAL) fail(p, "is null. Fill it in evidence/measured.json (see its _how key) and run `npm run evidence` again.");
+        if (FINAL) fail(p, "is null. Fill it in evidence/measured.json (see its _how key) and run `npm run evidence -- --measured-only`.");
       }
+    }
+  }
+
+  // The bake-off must describe the model the deployment really uses, with sane numbers (only when they are filled in: a null is reported above).
+  if (FINAL && isObj(measured.bakeoff)) {
+    const b = measured.bakeoff;
+    const infraModel = ev.infra?.inference?.model;
+    if (b.model != null && isStr(infraModel) && b.model !== infraModel) {
+      fail("measured.bakeoff.model", `is ${JSON.stringify(b.model)} but infra.inference.model is ${JSON.stringify(infraModel)}. The bake-off must name the model the deployment uses: fix evidence/measured.json, then run \`npm run evidence -- --measured-only\`.`);
+    }
+    if (b.models != null && !(Number.isInteger(b.models) && b.models >= 1)) {
+      fail("measured.bakeoff.models", `is ${JSON.stringify(b.models)} but should be a whole number of at least 1 (how many models the bake-off compared)`);
+    }
+    if (b.usablePct != null && !(isNum(b.usablePct) && b.usablePct >= 0 && b.usablePct <= 100)) {
+      fail("measured.bakeoff.usablePct", `is ${JSON.stringify(b.usablePct)} but should be a number from 0 to 100 (percent of usable tool calls)`);
+    }
+    if (b.p50Seconds != null && !(isNum(b.p50Seconds) && b.p50Seconds > 0)) {
+      fail("measured.bakeoff.p50Seconds", `is ${JSON.stringify(b.p50Seconds)} but should be a number above 0 (median seconds per model call)`);
     }
   }
 }

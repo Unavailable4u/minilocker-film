@@ -11,17 +11,30 @@
 //   f4900       caption (copy.s8.caption), it leaves at the cut (S9 starts f4980).
 //   f4560       the stale cursor (S6's last waypoint never hides) fades out in place; S8_CURSOR has that one waypoint.
 //
-// Every word is copy.ts. What is measured (region, plan, inference host, model) comes from the evidence through selectInfra(), and the Vultr
-// claims are only made if the evidence supports them: otherwise the S8 frames throw (the film must be captured on the real VM).
+// Chips (patch 26): the VM chip says the region (and the plan only if the metadata service returns one). The inference chip says "{host}/v1 - {model}" and,
+// ONLY when the evidence holds the bake-off (models, usablePct, p50Seconds) for that same model, a third line: copy.s8.bakeoff. The storage chip says
+// "{endpoint host} - {bucket}" from /api/infra; a host too long for the chip is shortened in the middle, never the bucket.
+//
+// Every word is copy.ts. What is measured (region, plan, inference host, model, storage host and bucket, the bake-off) comes from the evidence through
+// selectInfra() and selectMeasured(), and the Vultr claims are only made if the evidence supports them: otherwise the S8 frames throw (the film must be captured on the real VM).
 // The sample evidence is NOT refused here (the rest of the film accepts it; scripts/capture-evidence.mjs and the render script refuse it).
 import React from "react";
 import { holdShot, kf, type CameraKeyframe, type CursorWaypoint } from "../config/camera";
 import { copy } from "../config/copy";
 import { VULTR } from "../config/script";
 import { BEAT, SCENES } from "../config/timeline";
-import { selectInfra } from "../data/select";
+import { selectInfra, selectMeasured } from "../data/select";
 import { Caption } from "../fx/Caption";
-import { ARCH_EDGE_IDS, ARCH_NODE_IDS, ArchitectureDiagram, type ArchChip, type ArchHighlight } from "../gfx/ArchitectureDiagram";
+import { estimateWidth, MONO_ADVANCE } from "../fx/util";
+import {
+  ARCH_CHIP_FONT,
+  ARCH_EDGE_IDS,
+  ARCH_NODE_IDS,
+  ArchitectureDiagram,
+  archChipTextRoom,
+  type ArchChip,
+  type ArchHighlight,
+} from "../gfx/ArchitectureDiagram";
 import { LimitsCard } from "../gfx/LimitsCard";
 import { clamp01, signature } from "../lib/ease";
 import { S6_CURSOR } from "./S6Evidence";
@@ -130,6 +143,42 @@ export const S8_CURSOR: readonly CursorWaypoint[] = [{ frame: SCENES.S8.start, x
 
 let chipCache: readonly ArchChip[] | null = null;
 
+const isCount = (v: number | null | undefined): v is number => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * The bake-off line of the inference chip, or undefined. It is only said when the evidence holds all three numbers AND names the very model the
+ * deployment reports (otherwise the line would describe a model the film is not showing). Undefined and null mean the same thing: nothing is claimed.
+ */
+function bakeoffNote(inferenceModel: string): string | undefined {
+  const b = selectMeasured().bakeoff;
+  if (!b || b.model !== inferenceModel || !isCount(b.models) || !isCount(b.usablePct) || !isCount(b.p50Seconds)) return undefined;
+  const line = copy.s8.bakeoff
+    .replace("{models}", String(b.models))
+    .replace("{usablePct}", String(b.usablePct))
+    .replace("{p50}", String(b.p50Seconds)); // String(0.89) is "0.89": the shortest exact form
+  if (/[{}]/.test(line)) throw new Error(`S8: copy.s8.bakeoff still has an unfilled placeholder: "${line}"`);
+  return line;
+}
+
+/** Shortens the HOST in the middle with an ellipsis until "{host} - {bucket}" fits `room` px of mono. The bucket is never shortened. */
+function fitHost(host: string, bucket: string, room: number): string {
+  const tail = ` - ${bucket}`;
+  if (estimateWidth(host + tail, ARCH_CHIP_FONT, MONO_ADVANCE) <= room) return host;
+  const hostRoom = room - estimateWidth(tail, ARCH_CHIP_FONT, MONO_ADVANCE);
+  const keep = Math.floor(hostRoom / (ARCH_CHIP_FONT * MONO_ADVANCE)) - 1; // characters of the host that stay, besides the ellipsis
+  if (keep < 6) throw new Error(`S8: the bucket "${bucket}" alone leaves no room for the storage host on the chip (${Math.round(room)} px): the bucket must not be shortened, so widen the chip`);
+  const head = Math.ceil(keep / 2);
+  const end = keep - head;
+  return `${host.slice(0, head)}\u2026${host.slice(host.length - end)}`;
+}
+
+/** The storage chip's facts line: "{endpoint host} - {bucket}" from /api/infra, or the plain words when either is missing. */
+function storageFacts(): string {
+  const { endpoint_host: host, bucket } = selectInfra().storage;
+  if (typeof host !== "string" || host.trim() === "" || typeof bucket !== "string" || bucket.trim() === "") return copy.gfxC.storageFacts;
+  return `${fitHost(host, bucket, archChipTextRoom(2))} - ${bucket}`;
+}
+
 /** The three chips. Names are copy; the facts are measured. Throws (S8 frames only) if the evidence does not show Vultr. */
 function chips(): readonly ArchChip[] {
   if (chipCache) return chipCache;
@@ -141,11 +190,13 @@ function chips(): readonly ArchChip[] {
   if (!vultr.available) throw new Error(`S8: evidence.infra.vultr.available is false (${vultr.reason ?? "no reason"}): the film must be captured on the real VM`);
   if (!inference.vultr) throw new Error("S8: evidence.infra.inference.vultr is false: the inference service must be Vultr");
   if (!storage.attached || !storage.vultr) throw new Error("S8: evidence.infra.storage is not an attached Vultr bucket");
+  const model = text("infra.inference.model", inference.model);
+  const note = bakeoffNote(model);
   const [vm, inf, obj] = copy.s8.lowerThirds;
   chipCache = [
     { name: vm, facts: vultr.plan ? `${text("infra.vultr.region", vultr.region)} - ${vultr.plan}` : text("infra.vultr.region", vultr.region) },
-    { name: inf, facts: `${text("infra.inference.host", inference.host)}/v1 - ${text("infra.inference.model", inference.model)}` },
-    { name: obj, facts: copy.gfxC.storageFacts },
+    { name: inf, facts: `${text("infra.inference.host", inference.host)}/v1 - ${model}`, ...(note !== undefined ? { note } : {}) },
+    { name: obj, facts: storageFacts() },
   ];
   return chipCache;
 }

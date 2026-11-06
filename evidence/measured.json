@@ -1,11 +1,11 @@
 {
   "_how": {
-    "where": "Fill this file BY HAND from real runs on the frozen code (docs/SUBMISSION.md, 'Measured claims'; BIBLE 7.2 step 3). Leave a key null until you have the number. If a number is bad the film shows the bad number: do not rerun until it looks nicer.",
+    "where": "Fill this file BY HAND from real runs on the frozen code (docs/SUBMISSION.md, 'Measured claims'; BIBLE 7.2 step 3). Leave a key null until you have the number. If a number is bad the film shows the bad number: do not rerun until it looks nicer. After editing, copy it into the film with: npm run evidence -- --measured-only",
     "fixRepoV2": "On the VM, in MiniLocker/backend: python -m minilocker.scenarios --scenario fix_repo_v2 --runs 10. passes = runs that finished with the hidden check passed (out of runs, normally 10). ciLow / ciHigh = the 95% interval the command prints, as fractions 0..1 (0.6 means 60%). mostMissedBug = the bug name the command reports models missed most (parse, discount or tax_rounding).",
     "research": "python -m minilocker.scenarios --scenario research --runs 10. Same fields, without mostMissedBug.",
     "hookEscaped": "The hook_escaped fact across the fix_repo_v2 runs above: escaped = how many runs had hook_escaped true; runs = how many runs.",
     "realSecrets": "secrets.real_secrets_in_sandbox across ALL runs' reports (both scenarios plus the attacks): runsWithReal = in how many runs a real secret was found inside a sandbox; runs = how many runs you looked at.",
-    "bakeoff": "model = the exact model name the bake-off chose (the same name /api/infra reports as inference.model).",
+    "bakeoff": "Source: the product repo's docs/notes/model-selection.md, the native-mode row of the chosen model. model = the exact model name the bake-off chose (it must equal the model /api/infra reports as inference.model: evidence:final-check fails if not). models = how many models the bake-off compared (a whole number, 4). usablePct = the percent of usable tool calls in that row (0..100, 100). p50Seconds = the median seconds per model call in that row (above 0, 0.89). S8 shows 'picked from a {models}-model bake-off: {usablePct}% usable tool calls, p50 {p50Seconds} s' on the inference chip only when all four values are set and the model matches.",
     "containment": "Not here: attackSummary comes from the capture itself (npm run evidence -- --attacks all), and the CI status from GitHub for the commit."
   },
   "fixRepoV2": { "passes": null, "runs": null, "ciLow": null, "ciHigh": null, "mostMissedBug": null },

@@ -5,7 +5,7 @@
 //   browser.page             -> the address row of the fixture page (url, status)
 //   tool.result of the goto  -> the text the model is given, between the untrusted-data markers (the fence)
 //   injection.suspected      -> the scanner's ledger line, its score and its findings (how many are hidden from a human reader)
-//   tool.call after it       -> the compromised agent's follow-up command (the obeyCall pin)
+//   tool.call after it       -> the attack's scripted follow-up command (the obeyCall pin)
 //   policy.decision deny     -> "Policy deny (high): ..." (the deny pin)
 //   egress.blocked           -> "Egress blocked -> host" lines, ONLY if the ledger has them (the hostile run is denied before it reaches the proxy,
 //                               so the sample has none: the scene then shows none and does not invent one)
@@ -88,23 +88,34 @@ export function s5Data(): S5Data {
   const hidden = findings.filter((f) => f.hidden === true).length;
   const score = num(inj.payload.score, "injection.suspected score");
 
-  // the fence: the tool result that wrapped the page text in the untrusted-data markers
-  const wrap = events.find((e) => e.type === "tool.result" && typeof e.payload.result === "string" && /<<[^\n]*begins>>/.test(e.payload.result));
+  // the fence: the tool result that wrapped the page text in the product's untrusted-data markers. The real wrapper (backend policy/injection.py fence())
+  // is "[UNTRUSTED WEB CONTENT from <url>. ...]", an optional "[WARNING: ...]" line, then "<<<BEGIN UNTRUSTED <nonce>>>>", the page text and
+  // "<<<END UNTRUSTED <nonce>>>>", where <nonce> is 8 hex characters chosen per call.
+  // BUT the product clips a browse result to 1500 characters before it writes it to the ledger (agent/loop.py: clip(result, 1500), which appends
+  // "...[truncated N chars]"), so for a page of this size the END marker is NOT in the ledger. fence() always ends its output with the END marker
+  // carrying the same nonce, so when the clip marker is there instead, the end line is rebuilt from the BEGIN marker's nonce and the text is
+  // the part the ledger holds, followed by an ellipsis. Nothing else is invented.
+  const BEGIN = /^<<<BEGIN UNTRUSTED ([0-9a-f]{8})>>>$/;
+  const CLIPPED = /^\.\.\.\[(?:truncated|film: trimmed) \d+ chars\]$/;
+  const wrap = events.find((e) => e.type === "tool.result" && typeof e.payload.result === "string" && /^<<<BEGIN UNTRUSTED [0-9a-f]{8}>>>$/m.test(e.payload.result));
   if (!wrap) {
-    const real = events.find((e) => e.type === "tool.result" && typeof e.payload.result === "string" && /\[UNTRUSTED WEB CONTENT/.test(e.payload.result));
-    if (real && /\[film: trimmed \d+ chars\]/.test(String(real.payload.result))) {
-      fail(`the ledger of ${NAME} has the product's untrusted-content wrapper, but capture-evidence.mjs trimmed it (the page text is cut, the end marker is gone). Re-run "npm run evidence" with the current scripts/capture-evidence.mjs, then adapt the fence parsing below to the wrapper's real end marker`);
-    }
-    fail(`the ledger of ${NAME} has no tool.result that wraps the page text in untrusted-data markers (<<... begins>> / <<... ends>>); the fence cannot be shown`);
+    fail(`the ledger of ${NAME} has no tool.result that wraps the page text in untrusted-data markers (<<<BEGIN UNTRUSTED nonce>>> ... <<<END UNTRUSTED nonce>>>); the fence cannot be shown. If the ledger holds "[film: trimmed N chars]" the capture cut the result before the BEGIN marker: re-capture with "npm run evidence -- --refresh-attack ${NAME} --base https://<domain>"`);
   }
-  const rows = String(wrap.payload.result).split("\n");
-  const b = rows.findIndex((r) => /^<<.*begins>>$/.test(r.trim()));
-  const e2 = rows.findIndex((r, i) => i > b && /^<<.*ends>>$/.test(r.trim()));
-  if (b < 0 || e2 < 0) fail("the untrusted-data markers of the tool result are not on lines of their own");
-  const text = rows.slice(b + 1, e2).join(" ").replace(/\s+/g, " ").trim();
-  if (text === "") fail("the page text between the untrusted-data markers is empty");
+  const rows = String(wrap.payload.result).split("\n").map((r) => r.replace(/\r$/, ""));
+  const b = rows.findIndex((r) => BEGIN.test(r.trim()));
+  const nonce = b < 0 ? "" : (BEGIN.exec(rows[b].trim()) as RegExpExecArray)[1];
+  const endLine = `<<<END UNTRUSTED ${nonce}>>>`;
+  const realEnd = b < 0 ? -1 : rows.findIndex((r, i) => i > b && r.trim() === endLine);
+  const clipAt = b < 0 || realEnd >= 0 ? -1 : rows.findIndex((r, i) => i > b && CLIPPED.test(r.trim()));
+  if (b < 0 || (realEnd < 0 && clipAt < 0)) {
+    fail("the untrusted-data BEGIN marker is not on a line of its own, or after it the tool result has neither the END marker of the same nonce nor the product's clip marker");
+  }
+  const last = realEnd >= 0 ? realEnd : clipAt;
+  const body = rows.slice(b + 1, last).join(" ").replace(/\s+/g, " ").trim();
+  const text = realEnd >= 0 ? body : `${body} \u2026`;
+  if (body === "") fail("the page text between the untrusted-data markers is empty");
 
-  // the compromised agent obeys, and the policy denies
+  // the attack's scripted follow-up command is issued, and the policy denies it
   const obeyIndex = session.pinIndex.get("obeyCall");
   const obey = at(obeyIndex, "tool call after the injection");
   const command = toolLine(obey.payload);
@@ -166,7 +177,7 @@ export function s5Data(): S5Data {
   cached = {
     page: { url, status, seq },
     injection: { index: injIndex as number, line, score, findings, hidden, visible: findings.length - hidden },
-    fence: { begin: rows[b].trim(), text, end: rows[e2].trim() },
+    fence: { begin: rows[b].trim(), text, end: endLine },
     command,
     deny: { index: denyIndex as number, line: denyLine, risk: String(denyEv.payload.risk ?? ""), reason: reasons[0] ?? null },
     egress,

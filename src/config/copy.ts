@@ -600,7 +600,7 @@ export const gfxC = {
     apiLlm: "inference calls",
     apiArtifact: "artifacts",
   },
-  /** Facts line of the Object Storage chip. Words only; the bucket and endpoint are not shown. */
+  /** Fallback facts line of the Object Storage chip, used only when the evidence has no storage endpoint host or bucket (S8 normally shows "{host} - {bucket}"). */
   storageFacts: "S3-compatible bucket",
 
   /** CompareTable column heads (BIBLE 11 C). */
@@ -626,6 +626,11 @@ export const s8 = {
   /** Product names only. Details (host, model, region, plan) come from evidence. */
   lowerThirds: ["Vultr VM", "Vultr Serverless Inference", "Vultr Object Storage"],
   caption: "What it does, and what it does not.",
+  /**
+   * Patch 26: the third line of the inference chip. A TEMPLATE: S8Vultr.tsx fills {models}, {usablePct} and {p50} from evidence.measured.bakeoff,
+   * and only when all three are set and bakeoff.model equals the model the deployment reports. No number is typed here.
+   */
+  bakeoff: "picked from a {models}-model bake-off: {usablePct}% usable tool calls, p50 {p50} s",
   limits: [
     "The container shares the host kernel.",
     "The policy engine is an early warning, not the boundary.",

@@ -1492,3 +1492,48 @@ Run `node tools/make-prompt.mjs 26 --repo ../MiniLocker` and paste the result in
 - Not rendered as a film: only stills, on a scratch copy where `s5Data()` was stubbed, because **S5 still throws at import on the committed evidence** (the wrapper-format problem listed in the QA amendment above). That is not caused by this patch and is not fixed by it.
 - The V0 voice-over (f20) still says "One hostile page, one poisoned package ...": it matches the new screens, but re-check its length against the new beats when you record.
 - `drift` zooms the background 5 % over the whole film; on the small picture this adds a little softness at the end. Set `drift: 0` for a static background.
+
+## PATCH 28 - Marketing pass (the patch 26 prompt) and the S5 fence fix
+
+**Changed files:** `src/scenes/s5/data.ts`, `scripts/capture-evidence.mjs`, `scripts/validate-evidence.mjs`, `evidence/measured.json`, `src/data/types.ts`, `src/gfx/ArchitectureDiagram.tsx`, `src/scenes/S8Vultr.tsx`, `src/config/copy.ts` (`s8.bakeoff`, one comment), `docs/PATCH_NOTES.md`. `src/data/evidence.json` is NOT touched (see "Do this first").
+
+### Do this first: the S5 error (`the ledger of hostile_page_injection has the product's untrusted-content wrapper, but capture-evidence.mjs trimmed it`)
+Two causes, both real:
+1. **The committed `evidence.json` is stale.** It was captured before `FENCE_OUTPUT_MAX` (6000) existed in `capture-evidence.mjs`, so the browse result of `hostile_page_injection` was cut to 600 characters: it ends inside the `[WARNING ...]` line with `[film: trimmed 924 chars]`, and the BEGIN and END markers are not in the file at all.
+2. **The parser looked for markers the product never writes.** `s5/data.ts` searched for `<<... begins>>` / `<<... ends>>`. The product (`backend/minilocker/policy/injection.py`, `fence()`) writes `[UNTRUSTED WEB CONTENT from ...]`, an optional `[WARNING ...]` line, then `<<<BEGIN UNTRUSTED {nonce}>>>`, the page text and `<<<END UNTRUSTED {nonce}>>>` (nonce = 8 hex chars). Even a whole capture would have failed.
+
+Fixed here: the parser reads the real markers and pairs the END marker with the BEGIN marker's nonce. The one remaining step is data: re-run just this attack, which keeps every other number in the file:
+
+```
+$env:MINILOCKER_TOKEN="<token>"
+npm run evidence -- --refresh-attack hostile_page_injection --base https://minilocker.duckdns.org
+```
+
+It runs the attack once more on the live VM, replaces only `attacks.hostile_page_injection` (and the `attackSummary` counts if the verdict changed), and prints `fence wrapper: whole (BEGIN and END markers present)`. Refuses any attack that is not one of the 5 core ones.
+
+### What the patch contains
+- **`capture-evidence.mjs`:** `--measured-only [--measured f] [--repo p] [--out f]` (replaces only `measured`, and `ci` + `meta.commit` with `--repo`; a failed git or CI lookup leaves them as they were) and `--refresh-attack <name>`. `FENCE_OUTPUT_MAX` and the fence exception in `trimEvents` are kept. Files are written through a temporary file.
+- **`validate-evidence.mjs`:** `measured.bakeoff` has four keys (a missing key FAILs, null is allowed until `--final`). With `--final`: `model` equals `infra.inference.model`, `models` a whole number >= 1, `usablePct` 0..100, `p50Seconds` > 0.
+- **`types.ts`:** `Measured["bakeoff"]` = `{ model; models?; usablePct?; p50Seconds? }`; undefined is read as null.
+- **S8 chips:** inference chip = `{host}/v1 - {model}` plus a third line `copy.s8.bakeoff`, ONLY when `models`, `usablePct`, `p50Seconds` are all set and `bakeoff.model` equals the deployment's model. Storage chip = `{endpoint host} - {bucket}` (host shortened in the middle if needed, never the bucket; falls back to `copy.gfxC.storageFacts`). VM chip unchanged.
+- **Wording audit (item 3):** two comment lines in `s5/data.ts` now say "the attack's scripted follow-up command". Identifiers `obeyCall`, `obeyIndex`, `obey` stay (never on screen; `script.ts` owns them). Item 4 (S9 and S6): all three checks pass, nothing changed.
+
+### Chip layout (ArchitectureDiagram)
+- `ArchChip.note?` is a third mono 20 px line. A chip with a note is 88 px tall (72 without).
+- A chip beside a node has its TOP at `max(96, ay - h/2)` and grows downward; the stem at y = ay still meets it.
+- Inference chip (with the sample note): **729 x 88 px**, x 961-1690, y 96-184 (its stem is 84 px, the other two stay 70). It is 48 px above the VM frame (y 232) and 22.5 px right of the word "inference calls" (x 781-938, y 188-212).
+- Storage chip (`ewr1.vultrobjects.com - minilocker-data`): **446 x 72 px**, x 141-587, y 804-876. Text room 455 px, the facts line needs about 420.
+- `validateArchChips(chips, edgeLabels?)` runs on every render: safe margins (96 px), nodes (4 px), edges (2 px), other chips (4 px), edge words (**16 px**), the VM frame (inference and storage outside, the VM chip inside). A failure throws and names the chip. `archChipTextRoom(index)` and `ARCH_CHIP_FONT` are exported.
+- Timing untouched (`VULTR.chipFrames` 4650 / 4710 / 4770, `chipLightFrames` 16, S8 timing). From those files: the chips are fully drawn at f4666, f4726 and f4786. The diagram starts to fade on f4785, so the storage chip is whole one frame after the fade begins (opacity about 0.99). Stills: use f4745 (inference) and f4784 (storage), not f4720 / f4780.
+
+### Known issues
+- Not rendered here: no browser in the session that wrote it. Checked: `tsc --noEmit` (clean), `validateArchChips` on the real chip texts (passes; a longer note throws as intended), the new fence parser on a realistic wrapper (including a forged END marker inside the page text), `--measured-only`, and `--refresh-attack` against a mock server.
+- `--refresh-attack` was never run against the live VM.
+- Widths are estimates (`estimateWidth`), not browser measurements.
+- `evidence:final-check` still fails on the null measured groups (fixRepoV2, research, hookEscaped, realSecrets) until `evidence/measured.json` is filled and `npm run evidence -- --measured-only` is run.
+
+### PATCH 28 follow-up: the product clips browse results in the ledger
+After `--refresh-attack`, S5 still threw: the BEGIN marker was there but no END marker. The product (`backend/minilocker/agent/loop.py`, line 514) writes a browse result to the ledger as `clip(result, 1500)`, i.e. the first 1500 characters plus `...[truncated N chars]`. A fenced page of this size is longer, so the END marker is never in the ledger, however the capture script behaves. (The earlier statement that the whole wrapper would be captured was wrong; `FENCE_OUTPUT_MAX` only matters for results the product did not already clip.)
+- `s5/data.ts`: when the END marker is absent and the clip marker follows the text, the film shows the page text the ledger holds, ends it with an ellipsis, and rebuilds the end line from the BEGIN marker's nonce. The product's `fence()` always writes that line, so nothing is invented beyond the nonce-matching marker. When the END marker is present it is used as before.
+- `capture-evidence.mjs --refresh-attack` now says which of the two it found instead of "whole".
+- No new capture is needed: the evidence you refreshed already holds what the parser needs.

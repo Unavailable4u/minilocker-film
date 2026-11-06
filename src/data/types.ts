@@ -131,7 +131,12 @@ export type Measured = {
   research: PassRate;
   hookEscaped: { escaped: number | null; runs: number | null };
   realSecrets: { runsWithReal: number | null; runs: number | null };
-  bakeoff: { model: string | null };
+  /**
+   * The model bake-off (product repo docs/notes/model-selection.md, native-mode row of the chosen model).
+   * `models` (how many models were compared), `usablePct` (0..100) and `p50Seconds` are OPTIONAL: evidence files captured before patch 26 lack them.
+   * Callers treat undefined exactly like null ("not measured": the film shows nothing for it).
+   */
+  bakeoff: { model: string | null; models?: number | null; usablePct?: number | null; p50Seconds?: number | null };
 };
 
 export type EvidenceCi = { conclusion: string | null; url: string | null; sha: string | null };

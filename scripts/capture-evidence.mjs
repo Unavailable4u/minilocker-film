@@ -4,15 +4,24 @@
 //
 //   PowerShell:  $env:MINILOCKER_TOKEN="<token>"
 //                npm run evidence -- --base https://<domain> --repo ..\MiniLocker --attacks all --takes 3
+//   Measured numbers only (no capture, no token, no deployment):
+//                npm run evidence -- --measured-only [--measured <file>] [--repo <path>] [--out <file>]
+//   One core attack again (patch 26: the S5 fence needs the whole wrapper; everything else in the file is kept):
+//                npm run evidence -- --refresh-attack hostile_page_injection --base https://<domain>
 //
 // Flags
-//   --base <https://host>      the deployment (required)
+//   --base <https://host>      the deployment (required, except with --measured-only)
 //   --token <token>            API token; or the env var MINILOCKER_TOKEN. Never written anywhere.
 //   --takes <n>                how many fix_repo_v2 attempts to make at most (default 3)
 //   --attacks core|all         the 5 core attacks (default) or all 15 (needed for the "15/15" claim)
 //   --measured <file>          the hand-filled numbers (default evidence/measured.json)
 //   --out <file>               default src/data/evidence.json
 //   --repo <path>              clone of the MiniLocker repo, to record its commit (git rev-parse HEAD)
+//   --measured-only            do NOT capture: read the existing --out file, replace ONLY its `measured` block (and, with --repo,
+//                              `ci` and `meta.commit`), write it back atomically. The only network call is the GitHub CI lookup,
+//                              and only when --repo is given. If git or that lookup fails, `ci` and `meta.commit` are left as they were.
+//   --refresh-attack <name>    run ONE core attack again on --base and replace only attacks.<name> (and the attackSummary counts if its
+//                              verdict changed) in the existing --out file. Needs --base and the token; no fix_repo_v2 takes are made.
 //
 // What it does, in order: GET /api/infra, /api/scenarios, /api/attacks; run the attacks one at a time (waits out 429);
 // for each attack GET its task, events (SSE replay), report and ledger verification; start fix_repo_v2 tasks until one has
@@ -34,7 +43,7 @@ const CI_REPO = "shaikh-dotcom/MiniLocker";
 
 // ---------- arguments -----------------------------------------------------------------------------------------------
 function parseArgs(argv) {
-  const a = { takes: 3, attacks: "core", measured: "evidence/measured.json", out: "src/data/evidence.json", repo: null, base: null, token: null };
+  const a = { takes: 3, attacks: "core", measured: "evidence/measured.json", out: "src/data/evidence.json", repo: null, base: null, token: null, measuredOnly: false, refreshAttack: null };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     const v = () => {
@@ -48,15 +57,21 @@ function parseArgs(argv) {
     else if (k === "--measured") a.measured = v();
     else if (k === "--out") a.out = v();
     else if (k === "--repo") a.repo = v();
+    else if (k === "--measured-only") a.measuredOnly = true;
+    else if (k === "--refresh-attack") a.refreshAttack = v();
     else if (k === "--help" || k === "-h") {
-      console.log(readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(1, 20).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
+      console.log(readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(1, 30).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
       process.exit(0);
     } else die(`unknown flag ${k} (try --help)`);
   }
   a.token = a.token || process.env.MINILOCKER_TOKEN || "";
-  if (!a.base) die("--base <https://host> is required");
-  if (!/^https?:\/\//i.test(a.base)) die("--base must start with https:// (or http:// for a local test)");
-  a.base = a.base.replace(/\/+$/, "");
+  if (a.measuredOnly && a.refreshAttack) die("--measured-only and --refresh-attack cannot be used together");
+  if (a.refreshAttack && !CORE.includes(a.refreshAttack)) die(`--refresh-attack takes one of the 5 core attacks: ${CORE.join(", ")}`);
+  if (!a.measuredOnly) {
+    if (!a.base) die("--base <https://host> is required (or use --measured-only to refresh only the measured numbers)");
+    if (!/^https?:\/\//i.test(a.base)) die("--base must start with https:// (or http:// for a local test)");
+  }
+  if (a.base) a.base = a.base.replace(/\/+$/, "");
   if (!Number.isInteger(a.takes) || a.takes < 1 || a.takes > 20) die("--takes must be a whole number from 1 to 20");
   if (a.attacks !== "core" && a.attacks !== "all") die('--attacks must be "core" or "all"');
   return a;
@@ -194,7 +209,7 @@ function gitCommit(repo) {
   try {
     return execFileSync("git", ["-C", resolve(repo), "rev-parse", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
   } catch {
-    console.warn(`warning: could not run git rev-parse in ${repo}; meta.commit stays null`);
+    console.warn(`warning: could not run git rev-parse in ${repo}; meta.commit stays as it was`);
     return null;
   }
 }
@@ -224,7 +239,7 @@ function readMeasured(path) {
     research: { passes: null, runs: null, ciLow: null, ciHigh: null },
     hookEscaped: { escaped: null, runs: null },
     realSecrets: { runsWithReal: null, runs: null },
-    bakeoff: { model: null },
+    bakeoff: { model: null, models: null, usablePct: null, p50Seconds: null },
   };
   if (!existsSync(file)) {
     console.warn(`warning: ${path} not found; every measured number stays null (evidence:final-check will fail until it is filled)`);
@@ -234,6 +249,116 @@ function readMeasured(path) {
   const out = {};
   for (const k of Object.keys(blank)) out[k] = { ...blank[k], ...(m[k] ?? {}) };
   return out;
+}
+
+/** Writes `text` to `out` through a temporary file, so a failed write never leaves half a file behind. */
+function writeAtomic(out, text) {
+  mkdirSync(dirname(out), { recursive: true });
+  const tmp = `${out}.tmp`;
+  writeFileSync(tmp, text + "\n", "utf8");
+  renameSync(tmp, out);
+}
+
+/** The measured lines (and the CI line when `ci` is given), exactly as they will read on screen. */
+function printMeasured(m, ci) {
+  const fmt = (n, d) => (n === null || n === undefined ? "NOT SET" : `${n}${d === undefined ? "" : `/${d ?? "?"}`}`);
+  console.log(`fix_repo_v2:     ${fmt(m.fixRepoV2.passes, m.fixRepoV2.runs)}  95% [${fmt(m.fixRepoV2.ciLow)}, ${fmt(m.fixRepoV2.ciHigh)}]  most missed: ${fmt(m.fixRepoV2.mostMissedBug)}`);
+  console.log(`research:        ${fmt(m.research.passes, m.research.runs)}  95% [${fmt(m.research.ciLow)}, ${fmt(m.research.ciHigh)}]`);
+  console.log(`hook escaped:    ${fmt(m.hookEscaped.escaped, m.hookEscaped.runs)}`);
+  console.log(`real secrets:    ${fmt(m.realSecrets.runsWithReal, m.realSecrets.runs)} runs`);
+  console.log(`bake-off model:  ${fmt(m.bakeoff.model)}  (${fmt(m.bakeoff.models)} models, ${fmt(m.bakeoff.usablePct)}% usable, p50 ${fmt(m.bakeoff.p50Seconds)} s)`);
+  if (ci) console.log(`CI:              ${ci.conclusion ?? "unknown"}  ${ci.url ?? ""}`);
+}
+
+/** Reads the existing evidence file for --measured-only and --refresh-attack, or stops with a clear message. */
+function readExisting() {
+  const out = resolve(ROOT, args.out);
+  if (!existsSync(out)) die(`${args.out} does not exist. Capture it first: npm run evidence -- --base https://<domain> ...`);
+  let ev;
+  try {
+    ev = JSON.parse(readFileSync(out, "utf8"));
+  } catch (e) {
+    die(`${args.out} is not valid JSON (${e.message}). Restore it from git or capture it again; nothing was written.`);
+  }
+  if (ev === null || typeof ev !== "object" || Array.isArray(ev)) die(`${args.out} is not a JSON object; nothing was written.`);
+  return { out, ev };
+}
+
+// ---------- --measured-only -----------------------------------------------------------------------------------------
+async function measuredOnly() {
+  const { out, ev } = readExisting();
+  ev.measured = readMeasured(args.measured);
+
+  let ci = null;
+  if (args.repo) {
+    const commit = gitCommit(args.repo);
+    if (commit) {
+      ci = await fetchCi(commit);
+      ev.ci = ci;
+      ev.meta = { ...(ev.meta ?? {}), commit };
+    } else {
+      console.warn("warning: --repo was given but its commit could not be read: ci and meta.commit were NOT changed");
+    }
+  }
+
+  const text = JSON.stringify(ev);
+  if (args.token && text.includes(args.token)) die("the API token appears inside the evidence file; NOT writing it. Find what put it there and rotate the token.");
+  writeAtomic(out, text);
+
+  console.log("\n==================== MEASURED ONLY ====================");
+  console.log(`file:            ${args.out} (${(text.length / 1024).toFixed(0)} KB); only "measured"${args.repo ? ", ci and meta.commit" : ""} were replaced`);
+  printMeasured(ev.measured, ci ?? ev.ci ?? null);
+  console.log("=======================================================");
+  console.log("next: npm run evidence:check");
+}
+
+// ---------- --refresh-attack ------------------------------------------------------------------------------------------
+async function refreshAttack() {
+  const name = args.refreshAttack;
+  const { out, ev } = readExisting();
+  if (!ev.attacks?.[name]) die(`${args.out} has no attacks.${name}; capture the whole file first`);
+  if (!args.token) console.warn("warning: no token given (--token or MINILOCKER_TOKEN); this only works if the server has no token set");
+  const listed = ((await getJson("/api/attacks")).attacks ?? []).map((a) => a.name);
+  if (!listed.includes(name)) die(`the server does not list the attack ${name}`);
+
+  const old = ev.attacks[name];
+  const oldVerdict = old.result?.verdict ?? null;
+  const oldTrims = (old.events ?? []).filter((e) => typeof e.payload?.result === "string" && /\[film: trimmed \d+ chars\]/.test(e.payload.result)).length;
+
+  log(`running ${name} again on ${args.base} ...`);
+  const result = await postWith429(`/api/attacks/${name}/run`, undefined, 180_000);
+  log(`  -> ${result.verdict} in ${Number(result.duration_s).toFixed(1)}s`);
+  trimmedCount = 0;
+  const fresh = await captureAttackData(result);
+  if (!fresh.events.length) die(`the server returned no task for ${name}; nothing was written`);
+  ev.attacks[name] = fresh;
+
+  // keep the summary honest when the verdict changed (the counts always add up to what the file holds)
+  if (ev.attackSummary && oldVerdict !== result.verdict) {
+    const sum = ev.attackSummary;
+    if (typeof oldVerdict === "string" && Number.isInteger(sum[oldVerdict]) && sum[oldVerdict] > 0) sum[oldVerdict] -= 1;
+    sum[result.verdict] = (Number.isInteger(sum[result.verdict]) ? sum[result.verdict] : 0) + 1;
+    console.warn(`warning: the verdict of ${name} changed from ${oldVerdict} to ${result.verdict}; attackSummary was adjusted`);
+  }
+  if (ev.meta && typeof ev.meta === "object") {
+    const total = Math.max(0, (Number(ev.meta.trimmedToolOutputs) || 0) - oldTrims) + trimmedCount;
+    if (total > 0) ev.meta.trimmedToolOutputs = total;
+    else delete ev.meta.trimmedToolOutputs;
+  }
+
+  const text = JSON.stringify(ev);
+  if (args.token && text.includes(args.token)) die("the API token appears inside the captured data; NOT writing the file. Tell the maintainer: something echoed the token.");
+  writeAtomic(out, text);
+
+  const wrapped = fresh.events.find((e) => e.type === "tool.result" && /<<<BEGIN UNTRUSTED [0-9a-f]{8}>>>/.test(String(e.payload?.result ?? "")));
+  console.log("\n==================== REFRESH ATTACK ====================");
+  console.log(`file:            ${args.out} (${(text.length / 1024).toFixed(0)} KB); only attacks.${name} was replaced`);
+  console.log(`attack:          ${name}  ${oldVerdict} -> ${result.verdict}  task ${result.task_id}, ${fresh.events.length} events, ledger ${fresh.verify?.verified ? "verified" : "NOT VERIFIED"}`);
+  const fenceText = String(wrapped?.payload?.result ?? "");
+  const fenceNote = !wrapped ? "BEGIN marker NOT found in this attack's ledger" : fenceText.includes("<<<END UNTRUSTED ") ? "BEGIN and END markers present" : "BEGIN marker present; END marker absent (the product clips a browse result to 1500 characters in the ledger: the film rebuilds the END line from the nonce)";
+  console.log(`fence wrapper:   ${fenceNote}`);
+  console.log("========================================================");
+  console.log("next: npm run evidence:check");
 }
 
 // ---------- main ------------------------------------------------------------------------------------------------------
@@ -322,14 +447,9 @@ async function main() {
   const text = JSON.stringify(evidence);
   if (args.token && text.includes(args.token)) die("the API token appears inside the captured data; NOT writing the file. Tell the maintainer: something echoed the token.");
   const out = resolve(ROOT, args.out);
-  mkdirSync(dirname(out), { recursive: true });
-  const tmp = `${out}.tmp`;
-  writeFileSync(tmp, text + "\n", "utf8");
-  renameSync(tmp, out);
+  writeAtomic(out, text);
 
   // ---- what you will see on screen -----------------------------------------------------------------------------------
-  const m = measured;
-  const fmt = (n, d) => (n === null || n === undefined ? "NOT SET" : `${n}${d === undefined ? "" : `/${d ?? "?"}`}`);
   console.log("\n==================== SUMMARY ====================");
   console.log(`file:            ${args.out} (${(text.length / 1024).toFixed(0)} KB), captured in ${elapsed()}`);
   console.log(`deployment:      ${args.base}   Vultr VM: ${infra.vultr?.available ? "yes" : "NO"} (${infra.vultr?.region ?? "-"}, ${infra.vultr?.plan ?? "-"})`);
@@ -340,18 +460,13 @@ async function main() {
   console.log(`rewind verdict:  ${verdicts.rewind_after_rm_rf}`);
   console.log(`task:            ${task.id}  ${task.events.length} events, ledger ${verify.verified ? "verified" : "NOT VERIFIED"} (${verify.detail})`);
   console.log(`takes:           ${takes.length} made; S3 uses ${s3Source}`);
-  console.log(`fix_repo_v2:     ${fmt(m.fixRepoV2.passes, m.fixRepoV2.runs)}  95% [${fmt(m.fixRepoV2.ciLow)}, ${fmt(m.fixRepoV2.ciHigh)}]  most missed: ${fmt(m.fixRepoV2.mostMissedBug)}`);
-  console.log(`research:        ${fmt(m.research.passes, m.research.runs)}  95% [${fmt(m.research.ciLow)}, ${fmt(m.research.ciHigh)}]`);
-  console.log(`hook escaped:    ${fmt(m.hookEscaped.escaped, m.hookEscaped.runs)}`);
-  console.log(`real secrets:    ${fmt(m.realSecrets.runsWithReal, m.realSecrets.runs)} runs`);
-  console.log(`bake-off model:  ${fmt(m.bakeoff.model)}`);
-  console.log(`CI:              ${ci.conclusion ?? "unknown"}  ${ci.url ?? ""}`);
+  printMeasured(measured, ci);
   if (trimmedCount) console.log(`note:            ${trimmedCount} long tool output(s) were trimmed to ${TOOL_OUTPUT_MAX} chars (their hashes no longer match; the server's own verification is stored in "verify")`);
   console.log("=================================================");
   console.log("next: npm run evidence:check   then   npm run evidence:final-check");
 }
 
-main().catch((e) => {
+(args.measuredOnly ? measuredOnly() : args.refreshAttack ? refreshAttack() : main()).catch((e) => {
   console.error(`\ncapture-evidence failed after ${elapsed()}: ${e.message}`);
   process.exit(1);
 });

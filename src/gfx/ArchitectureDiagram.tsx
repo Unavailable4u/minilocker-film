@@ -10,6 +10,8 @@
 //   chips (hostname, region, plan, inference host, model) from the evidence through src/data/select.ts. Nothing measured is typed here.
 // - Outside the VM (shape = pill): Browser UI, LLM provider, Artifact store, Internet. Inside: boxes; Host Docker and Ledger have a drum
 //   lid; the two sandboxes have a double outline. One accent per drawing: crimson marks the highlighted path and the chips' attach dots.
+// - Patch 26: a chip may carry an optional third line (`note`, mono 20 px, ink-2). Every chip is checked on every render (validateArchChips): inside the
+//   96 px safe margins, clear of nodes, edges, other chips and (by 16 px) the edge words; a failure throws and names the chip.
 import React, { useId } from "react";
 import { alpha, fonts, theme } from "../config/theme";
 import { STAGE } from "../config/timeline";
@@ -314,12 +316,14 @@ export interface ArchNodeText {
   sub?: string;
 }
 
-/** A Vultr product chip: the product name and one line of facts. */
+/** A Vultr product chip: the product name, one line of facts and (patch 26) an optional third line. */
 export interface ArchChip {
   /** copy.s8.lowerThirds[i] */
   name: string;
-  /** From the evidence (VM: hostname, region, plan; inference: host and model) or copy.gfxC.storageFacts. */
+  /** From the evidence (VM: hostname, region, plan; inference: host and model; storage: endpoint host and bucket) or copy.gfxC.storageFacts. */
   facts: string;
+  /** Optional third line under `facts` (mono 20 px, ink-2), drawn in THIS chip only. It makes the chip taller (CHIP_H_NOTE). */
+  note?: string;
 }
 
 export interface ArchitectureDiagramProps {
@@ -425,28 +429,57 @@ const NodeView: React.FC<{ id: ArchNodeId; text: ArchNodeText; progress: number;
 
 // ---------------------------------------------------------------------------------------------- chips
 
+/** Chip height without / with a `note` line. 88 = name 28 + facts 24 + note 24 + 12 of padding. */
 const CHIP_H = 72;
+const CHIP_H_NOTE = 88;
 const CHIP_PAD_X = 18;
 const CHIP_NAME_FONT = 24;
-const CHIP_FACTS_FONT = 20;
+/** Mono size of a chip's facts and note lines. Exported so a scene can size its text against `archChipTextRoom`. */
+export const ARCH_CHIP_FONT = 20;
+const CHIP_FACTS_FONT = ARCH_CHIP_FONT;
+/** Safe margins (BIBLE 5 layout): no chip leaves them. */
+const SAFE_X = 96;
+const SAFE_Y = 96;
+/** Clear space kept between a chip and an edge word (the word "inference calls" sits right under the inference chip). */
+const WORD_CLEAR = 16;
 
 type ChipDir = "down" | "right" | "left";
 
-/** Where each chip attaches. The VM chip hangs below the top edge of the frame, at its top-right. */
+/**
+ * Where each chip attaches. The VM chip hangs below the top edge of the frame, at its top-right.
+ * The inference chip's stem is 84 px (the others 70): with its third line the chip is 88 px tall and clamped to the top safe margin (y 96-184),
+ * which leaves only 4 px above the word "inference calls" (y 188-212, x 781-938), so the chip moves right until it clears that word by 16 px or more.
+ */
 const CHIP_ATTACH: readonly { dir: ChipDir; ax: number; ay: number; stem: number }[] = [
   { dir: "down", ax: 0, ay: ARCH_FRAME.y, stem: 14 },
-  { dir: "right", ax: rightOf("llm"), ay: midYOf("llm"), stem: 70 },
+  { dir: "right", ax: rightOf("llm"), ay: midYOf("llm"), stem: 84 },
   { dir: "left", ax: leftOf("artifact"), ay: midYOf("artifact"), stem: 70 },
 ];
 
-const ChipView: React.FC<{ index: number; chip: ArchChip; progress: number }> = ({ index, chip, progress }) => {
-  const p = clamp01(progress);
-  if (p <= 0.001) return null;
-  const att = CHIP_ATTACH[index];
-  const w = Math.ceil(
-    Math.max(estimateWidth(chip.name, CHIP_NAME_FONT, SERIF_ADVANCE), estimateWidth(chip.facts, CHIP_FACTS_FONT, MONO_ADVANCE)) + CHIP_PAD_X * 2,
-  );
+interface ChipRect {
+  left: number;
+  top: number;
+  w: number;
+  h: number;
+  /** The attach dot (stage px). */
+  ax: number;
+  ay: number;
+}
 
+/**
+ * The estimated stage rectangle of chip `index`. A chip beside a node is centred on the node's midline but never rises above the top safe margin:
+ * its top is max(96, ay - h / 2) and it grows downward, so the stem (at y = ay) always meets it.
+ */
+function chipRect(index: number, chip: ArchChip): ChipRect {
+  const att = CHIP_ATTACH[index];
+  const hasNote = chip.note !== undefined;
+  const h = hasNote ? CHIP_H_NOTE : CHIP_H;
+  const widest = Math.max(
+    estimateWidth(chip.name, CHIP_NAME_FONT, SERIF_ADVANCE),
+    estimateWidth(chip.facts, CHIP_FACTS_FONT, MONO_ADVANCE),
+    hasNote ? estimateWidth(chip.note as string, CHIP_FACTS_FONT, MONO_ADVANCE) : 0,
+  );
+  const w = Math.ceil(widest + CHIP_PAD_X * 2);
   let left = 0;
   let top = 0;
   let ax = att.ax;
@@ -457,11 +490,95 @@ const ChipView: React.FC<{ index: number; chip: ArchChip; progress: number }> = 
     ax = left + w / 2;
   } else if (att.dir === "right") {
     left = ax + att.stem;
-    top = ay - CHIP_H / 2;
+    top = Math.max(SAFE_Y, ay - h / 2);
   } else {
     left = ax - att.stem - w;
-    top = ay - CHIP_H / 2;
+    top = Math.max(SAFE_Y, ay - h / 2);
   }
+  return { left, top, w, h, ax, ay };
+}
+
+/**
+ * The widest text (px, mono) that chip `index` can show without leaving the 96 px safe margins. For a scene that has to shorten a long fact
+ * (the storage host) before it reaches the diagram. 0 = the VM chip's room inside its frame, 1 = inference (to the right), 2 = storage (to the left).
+ */
+export function archChipTextRoom(index: number): number {
+  const att = CHIP_ATTACH[index];
+  if (!att) throw new Error(`ArchitectureDiagram: there is no chip ${index} (0 = VM, 1 = Serverless Inference, 2 = Object Storage)`);
+  let room: number;
+  if (att.dir === "left") room = att.ax - att.stem - SAFE_X;
+  else if (att.dir === "right") room = STAGE.w - SAFE_X - (att.ax + att.stem);
+  else room = ARCH_FRAME.w - 48;
+  return room - CHIP_PAD_X * 2;
+}
+
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+const boxesHit = (a: Box, b: Box, pad: number): boolean =>
+  a.x < b.x + b.w + pad && a.x + a.w + pad > b.x && a.y < b.y + b.h + pad && a.y + a.h + pad > b.y;
+
+/**
+ * Throws, naming the chip, when a chip would leave the safe margins or touch a node, an edge line, another chip, or come within 16 px of an edge word.
+ * Chips 1 and 2 must also stay outside the VM frame, and chip 0 (the VM) inside it. The geometry is static, so this is checked on every render,
+ * whatever the progress.
+ */
+export function validateArchChips(chips: readonly ArchChip[], edgeLabels: Partial<Record<ArchEdgeId, string>> = {}): void {
+  if (chips.length !== CHIP_ATTACH.length) {
+    throw new Error(`ArchitectureDiagram: chips needs ${CHIP_ATTACH.length} entries (VM, Serverless Inference, Object Storage), got ${chips.length}`);
+  }
+  const rects = chips.map((c, i) => chipRect(i, c));
+  const frame: Box = { x: ARCH_FRAME.x, y: ARCH_FRAME.y, w: ARCH_FRAME.w, h: ARCH_FRAME.h };
+
+  rects.forEach((r, i) => {
+    const name = chips[i].name;
+    const bad = (why: string): never => {
+      throw new Error(
+        `ArchitectureDiagram: the "${name}" chip (x ${Math.round(r.left)}-${Math.round(r.left + r.w)}, y ${Math.round(r.top)}-${Math.round(r.top + r.h)}) ${why}`,
+      );
+    };
+    const box: Box = { x: r.left, y: r.top, w: r.w, h: r.h };
+
+    if (r.left < SAFE_X || r.left + r.w > STAGE.w - SAFE_X || r.top < SAFE_Y || r.top + r.h > STAGE.h - SAFE_Y) {
+      bad(`leaves the ${SAFE_X} px safe margin: shorten its text`);
+    }
+    if (i === 0) {
+      const inside = r.left >= frame.x + 12 && r.left + r.w <= frame.x + frame.w - 12 && r.top >= frame.y + 4 && r.top + r.h <= frame.y + frame.h - 12;
+      if (!inside) bad("does not fit inside the Vultr VM frame");
+    } else if (boxesHit(box, frame, 0)) {
+      bad("touches the Vultr VM frame (this chip belongs outside it)");
+    }
+    for (const id of ARCH_NODE_IDS) {
+      if (boxesHit(box, archNodeRect(id), 4)) bad(`overlaps the "${id}" node`);
+    }
+    for (const id of ARCH_EDGE_IDS) {
+      for (const s of GEOM[id].segs) {
+        const seg: Box = { x: Math.min(s.x0, s.x1), y: Math.min(s.y0, s.y1), w: Math.abs(s.x1 - s.x0), h: Math.abs(s.y1 - s.y0) };
+        if (boxesHit(box, seg, 2)) bad(`crosses the "${id}" edge`);
+      }
+      const spec = EDGES[id].label;
+      const text = edgeLabels[id];
+      if (spec && text !== undefined) {
+        const lw = estimateWidth(text, 20, MONO_ADVANCE);
+        const lx = spec.anchor === "middle" ? spec.x - lw / 2 : spec.x;
+        if (boxesHit(box, { x: lx, y: spec.y - 12, w: lw, h: 24 }, WORD_CLEAR)) bad(`is closer than ${WORD_CLEAR} px to the word of the "${id}" edge`);
+      }
+    }
+    rects.forEach((o, j) => {
+      if (j > i && boxesHit(box, { x: o.left, y: o.top, w: o.w, h: o.h }, 4)) bad(`overlaps the "${chips[j].name}" chip`);
+    });
+  });
+}
+
+const ChipView: React.FC<{ index: number; chip: ArchChip; progress: number }> = ({ index, chip, progress }) => {
+  const p = clamp01(progress);
+  if (p <= 0.001) return null;
+  const att = CHIP_ATTACH[index];
+  const { left, top, w, h, ax, ay } = chipRect(index, chip);
 
   const stemP = signature(clamp01(p / 0.35));
   const bodyP = signature(clamp01((p - 0.2) / 0.8));
@@ -504,7 +621,7 @@ const ChipView: React.FC<{ index: number; chip: ArchChip; progress: number }> = 
           background: theme.accent,
         }}
       />
-      <div style={{ position: "absolute", left, top, width: w, height: CHIP_H, clipPath: clip }}>
+      <div style={{ position: "absolute", left, top, width: w, height: h, clipPath: clip }}>
         <div
           style={{
             boxSizing: "border-box",
@@ -527,6 +644,11 @@ const ChipView: React.FC<{ index: number; chip: ArchChip; progress: number }> = 
           <div style={{ fontFamily: fonts.mono, fontWeight: 500, fontSize: CHIP_FACTS_FONT, lineHeight: "24px", color: theme.ink2 }}>
             {chip.facts}
           </div>
+          {chip.note !== undefined ? (
+            <div style={{ fontFamily: fonts.mono, fontWeight: 500, fontSize: CHIP_FACTS_FONT, lineHeight: "24px", color: theme.ink2 }}>
+              {chip.note}
+            </div>
+          ) : null}
         </div>
       </div>
     </>
@@ -630,6 +752,7 @@ export const ArchitectureDiagram: React.FC<ArchitectureDiagramProps> = ({
   if (vultrChip.length !== CHIP_ATTACH.length || chips.length !== CHIP_ATTACH.length) {
     throw new Error(`ArchitectureDiagram: vultrChip and chips need ${CHIP_ATTACH.length} entries each (VM, Serverless Inference, Object Storage)`);
   }
+  validateArchChips(chips, edgeLabels);
 
   const amount = clamp01(highlightAmount);
   const path = highlight === "none" ? null : ARCH_PATHS[highlight];
