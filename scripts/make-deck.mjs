@@ -3,7 +3,7 @@
 //   node scripts/make-deck.mjs --scale=2       3840x2160 PNGs (the PDF page stays 1920x1080 pt, so it is just sharper)
 //   node scripts/make-deck.mjs --only=3,5      re-render only these slides (1-based), then rebuild the PDF from the built slides' PNGs
 //   Slides that are not built yet (not in BUILT of src/deck/Deck.tsx) are neither rendered nor put in the PDF.
-//   Slides that need a file from you (NEEDS below, e.g. the real screenshot public/deck/R1.png for slide 9) are skipped the same way, with a line saying
+//   Slides that need a file from you (NEEDS below, e.g. the Attack Lab screenshot public/deck/attacklab_complete.png for slide 9) are skipped the same way, with a line saying
 //   which file is missing, so a placeholder frame can never reach the PDF.
 //   node scripts/make-deck.mjs --comp=DeckProbe   another composition id (testing)
 // Needs Chrome: Remotion downloads one on first use, or set REMOTION_BROWSER_EXECUTABLE.
@@ -21,8 +21,8 @@ const compId = arg("comp", "MiniLockerDeck");
 const only = arg("only", "") ? arg("only", "").split(",").map(Number) : null;
 const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE || undefined;
 const outDir = path.join(ROOT, "out", "deck");
-// Files a slide cannot be rendered without (guide section 6, real-app screenshots). Slide number -> paths relative to the repo root.
-const NEEDS = { 9: ["public/deck/R1.png"] };
+// Files a slide cannot be rendered without (real-app screenshots). Slide number -> paths relative to the repo root.
+const NEEDS = { 9: ["public/deck/attacklab_complete.png"] };
 const missingFor = (n) => (NEEDS[n] || []).filter((f) => !fs.existsSync(path.join(ROOT, f)));
 fs.mkdirSync(outDir, { recursive: true });
 

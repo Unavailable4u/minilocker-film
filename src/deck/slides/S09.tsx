@@ -1,6 +1,6 @@
 // Slide 09 · The Attack Lab. Claim: the Attack Lab's own sentence (copy.lab.summary.explainLead): "Each attack is a scripted attacker driving the real agent
 // loop, policy engine and Docker sandbox. No model is involved."
-// Left: a REAL screenshot of the Attack Lab after "Run all attacks" (public/deck/R1.png, guide section 6, shot R1): the rebuilt film screen only shows the
+// Left: a REAL screenshot of the Attack Lab after "Run all attacks" (public/deck/attacklab_complete.png, cropped to the app page): the rebuilt film screen only shows the
 // attacks the film ran. Under it the evidence: attacks contained of total, breached, and the CI run of the same definitions. Right: E7, the attacks by
 // category, straight from the capture's attack catalog (no per-attack verdict: the evidence holds a full result for five of the fifteen).
 // Wording rule: the verdict words are the product's: Contained, Breached, Inconclusive (copy.lab.verdicts).
@@ -15,8 +15,11 @@ import { W } from "../words";
 
 const CONTENT_W = DECK.w - 2 * DECK.mx;
 const BODY_TOP = 184;
+// attacklab_complete.png is a 1920 x 1080 desktop capture; the app page is the 1860 x 971 part below the browser bar and left of the taskbar.
+const SHOT_FILE = "deck/attacklab_complete.png";
+const SHOT_CROP = { x: 0, y: 109, w: 1860, h: 971 };
 const SHOT_W = 880;
-const SHOT_H = Math.round((SHOT_W * 900) / 1600);
+const SHOT_H = Math.round((SHOT_W * SHOT_CROP.h) / SHOT_CROP.w);
 const CAT_LEFT = SHOT_W + 64;
 const CAT_W = CONTENT_W - CAT_LEFT;
 const STRIP_TOP = BODY_TOP + SHOT_H + 12 + 30 + 20;
@@ -34,7 +37,7 @@ export const S09: React.FC = () => {
         <Title size={56}>{w.title}</Title>
 
         <div style={{ position: "absolute", left: 0, top: BODY_TOP }}>
-          <RealShot file="deck/R1.png" width={SHOT_W} missing={w.missing} />
+          <RealShot file={SHOT_FILE} crop={SHOT_CROP} width={SHOT_W} missing={w.missing} />
         </div>
         <div style={{ position: "absolute", left: 0, top: BODY_TOP + SHOT_H + 12, width: SHOT_W, fontFamily: fonts.mono, fontSize: 24, color: theme.ink3 }}>{w.shotCaption}</div>
 

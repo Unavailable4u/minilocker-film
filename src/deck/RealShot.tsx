@@ -1,4 +1,7 @@
-// A real screenshot of the live app (guide section 6), framed like <Shot>: 1 px rule2, 14 px radius, soft shadow. `file` is under public/ ("deck/R1.png").
+// A real screenshot of the live app (guide section 6), framed like <Shot>: 1 px rule2, 14 px radius, soft shadow. `file` is under public/ ("deck/attacklab_complete.png").
+//
+// `crop` (in pixels of the source file) shows only that part of a larger capture, e.g. the app page inside a full desktop screenshot, so the browser
+// tabs, the address bar and the taskbar never reach the slide. The frame then takes the crop's proportions instead of `ratio`.
 //
 // The page waits for the image (delayRender), so a still never captures a half-loaded picture. When the file is not there the frame shows `missing`
 // instead of failing the render: slide 09 is then readable in the Studio, and scripts/make-deck.mjs refuses to put such a slide in the PDF.
@@ -14,11 +17,15 @@ export interface RealShotProps {
   /** Words for the empty frame when the file does not exist. */
   missing: string;
   radius?: number;
+  /** Part of the file to show, in source pixels. */
+  crop?: { x: number; y: number; w: number; h: number };
+  /** Pixel size of the file. Only used with `crop`. Default: a 1920 x 1080 desktop capture. */
+  source?: { w: number; h: number };
 }
 
 type LoadState = "loading" | "ok" | "missing";
 
-export const RealShot: React.FC<RealShotProps> = ({ file, width, ratio = 900 / 1600, missing, radius = 14 }) => {
+export const RealShot: React.FC<RealShotProps> = ({ file, width, ratio = 900 / 1600, missing, radius = 14, crop, source = { w: 1920, h: 1080 } }) => {
   const [state, setState] = React.useState<LoadState>("loading");
   const [handle] = React.useState(() => delayRender(`RealShot ${file}`));
   React.useEffect(() => {
@@ -33,7 +40,8 @@ export const RealShot: React.FC<RealShotProps> = ({ file, width, ratio = 900 / 1
     };
     img.src = staticFile(file);
   }, [file, handle]);
-  const height = Math.round(width * ratio);
+  const height = crop ? Math.round((width * crop.h) / crop.w) : Math.round(width * ratio);
+  const k = crop ? width / crop.w : 1;
   return (
     <div
       style={{
@@ -48,7 +56,14 @@ export const RealShot: React.FC<RealShotProps> = ({ file, width, ratio = 900 / 1
       }}
     >
       {state === "ok" ? (
-        <img src={staticFile(file)} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "top left" }} />
+        crop ? (
+          <img
+            src={staticFile(file)}
+            style={{ position: "absolute", left: -crop.x * k, top: -crop.y * k, width: source.w * k, height: source.h * k, maxWidth: "none", display: "block" }}
+          />
+        ) : (
+          <img src={staticFile(file)} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "top left" }} />
+        )
       ) : state === "missing" ? (
         <div
           style={{

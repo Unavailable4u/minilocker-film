@@ -137,8 +137,8 @@ export const W = {
     breached: lab.summary.breached,
     /** "The same definitions run in CI as" + code, then the conclusion of the capture's CI run */
     ci: { lead: lab.summary.explainCi, code: lab.summary.explainCode, run: "CI run" },
-    /** shown in the Studio (never in the PDF) while public/deck/R1.png is not there */
-    missing: "public/deck/R1.png is missing: take shot R1 (docs/guide/SLIDE_DECK_GUIDE.md, section 6)",
+    /** shown in the Studio (never in the PDF) while public/deck/attacklab_complete.png is not there */
+    missing: "public/deck/attacklab_complete.png is missing",
   },
   s10: {
     kicker: "§ 09 · The evidence",

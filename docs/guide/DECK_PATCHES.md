@@ -12,9 +12,9 @@ Every patch leaves a valid, shippable PDF (`npm run deck` skips slides that are 
 | 2 | 02 problem, 04 Pattern A, 11 why different | `SixVerdicts`, `LoopStrip`; `CompareTable` at progress 1; `facts.ts`; kit `Ratio`, `Tag` | nothing | done |
 | 3 | 05 containment, 06 bait | `Cutaway` (`ContainerBox` + `EgressWall` + `DecoyRack`), `AttemptTable`; `facts.ts` readers for the hook log and secrets tally | nothing | done |
 | 4 | 07 wipe / rewind / re-hash | `Storyboard3` (`FileLattice`, `HashTile`, `SnapshotTimeline`, `GhostContainer`); `facts.ts` readers for the rewind attack | nothing | done |
-| 5 | 08 hostile page, 09 Attack Lab | `DefensePath`, `AttackCategories`, `RealShot` | **`public/deck/R1.png`** (guide section 6) | done (slide 09 is not in the PDF until `R1.png` exists) |
+| 5 | 08 hostile page, 09 Attack Lab | `DefensePath`, `AttackCategories`, `RealShot` | `public/deck/attacklab_complete.png` (patch 7: slide 09 uses it, cropped) | done |
 | 6 | 10 evidence, 12 Vultr + limits | `TamperSchematic`, `HashChain` from the rewind events, `ArchitectureDiagram`, `LimitsCard` | nothing (confirm `urls.repo`, see notes) | done |
-| 7 | QA | evidence audit script, checklist run | nothing | todo |
+| 7 | 09 screenshot fix | `RealShot` `crop` prop; slide 09 reads `attacklab_complete.png` | nothing | done |
 
 If time runs out, the seven-slide cut from the guide is 01, 03, 04, 05, 07, 10, 12.
 
@@ -65,7 +65,7 @@ If time runs out, the seven-slide cut from the guide is 01, 03, 04, 05, 07, 10, 
 
 ## Notes on patch 5
 
-- **R1.png is the one thing you owe this patch.** Slide 09 draws it through `RealShot` (`src/deck/RealShot.tsx`, same frame as `Shot`). While `public/deck/R1.png` is missing the Studio shows a hatched frame that names the file, and `make-deck.mjs` skips slide 09 with `slide 9 skipped (not in the PDF): missing public/deck/R1.png`, so a placeholder can never reach the PDF. The list of files a slide needs is `NEEDS` at the top of the script. Take the shot as guide section 6 says: Attack Lab, Paper theme, 1600 x 900, after **Run all attacks** reads all contained. The image is shown whole (top-left anchored, 16:9), so any 16:9 capture works.
+- **Slide 09 screenshot.** Patch 7 replaced the separate `R1.png` with the screenshot you already have: slide 09 draws `public/deck/attacklab_complete.png` through `RealShot` with a `crop` (`{ x: 0, y: 109, w: 1860, h: 971 }`), so the browser tabs, address bar and taskbar are cut off and nothing has to be re-shot. `NEEDS` at the top of `make-deck.mjs` lists the file.
 - **Slide 08 path.** The guide draws one packet. The ledger of `hostile_page_injection` holds two follow-up attempts, so the path draws two, each stopped where the ledger stopped it: the `curl` command at the policy gate (`policy.decision` deny) and the navigation at the approval gate (`approval.requested` then `approval.denied`). The rail is dashed after the first stop because what follows is a second attempt, not the same packet. The egress wall has no `egress.blocked` line in this ledger (network attempts 0), so it is drawn as an outlined bar with no packet and the chip says "not reached". If a re-capture does hold egress lines, the gate turns into a stop with the hosts printed and the word "refused"; if it holds no approval event, the approval gate is left out. Nothing is drawn as a stop the ledger does not hold.
 - **Scanner counts.** The page hides three layers, but the scanner reported 6 findings of which 2 are hidden (`injection.suspected`). The card prints the ledger's counts ("6 findings, 2 hidden"), not "three".
 - **Fence evidence** is the BEGIN marker with the nonce the product chose for that call. The END marker is not in the ledger (the product clips a browse result before it writes it, see `s5/data.ts`), so it is not printed.
@@ -95,3 +95,8 @@ If time runs out, the seven-slide cut from the guide is 01, 03, 04, 05, 07, 10, 
 - **CHECK BEFORE SUBMISSION: `urls.repo`.** `src/config/copy.ts` has `urls.repo = "https://github.com/shaikh-dotcom/MiniLocker"`, and slide 12 prints it. Confirm that is the repository you actually submit before the deck ships. Nothing else in the patch depends on it.
 - **Section numbers** follow patch 1: "§ 09" and "§ 11".
 - **Rendering here.** `REMOTION_BROWSER_EXECUTABLE=/usr/bin/google-chrome npm run deck -- --only=10,12`.
+
+## Notes on patch 7
+
+- **No audit script.** Patch 7 is the slide 09 screenshot fix only. Your screenshot is taken as correct; nothing checks it.
+- **Build the PDF:** `npm run deck` writes `out/deck/MiniLocker-deck.pdf` (12 pages, 1920 x 1080 pt). `npm run deck:hd` is the same at 2x sharpness.
